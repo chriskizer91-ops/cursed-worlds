@@ -10,7 +10,8 @@ import {load} from './engine.mjs';
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const GAMES = +opt('games', 48), MAX_DAYS = +opt('days', 365), VERBOSE = args.includes('--verbose');
-const SMART = args.includes('--smart');
+const SMART = args.includes('--smart'), QUESTS = args.includes('--quests');
+const QSTAT = {};   // quest id -> {done: games that finished it, days: total day it was finished on, stuck: games that ended on it}
 const FILE = opt('file'), TRACE = opt('trace'), TRIAL = args.includes('--trial'), LEVELS = (opt('levels', '') || '').split(',').filter(Boolean);
 
 const {E, D} = load(FILE);
@@ -98,6 +99,29 @@ function move(s, ctx){
     const turning = E.foodList(s).filter(f => !f.rack && !f.bitter && !f.raw && f.hrs < 14);
     if (turning.length && h.food < 96 && s.day.kcal < 4300){ const R = E.eat(s, turning[0].id); if (R && !R.err) return {kind: 'eat', R}; }
   }
+  // --quests: follow the quest card, the way the new game is played; right-now needs still cut in
+  if (QUESTS && E.quests){
+    const U = E.advice(s);
+    // a player getting hungry goes after food before the next project, the way the card's food tip suggests
+    const tip = E.foodTip && (E.hud(s).food < 70 || s.gear.bars < 20 * s.P) ? E.foodTip(s) : null;
+    if (tip && U && U.tone !== 'urgent'){
+      ctx.lastAdvice = 'FOOD ' + tip.text;
+      if (tip.go && tip.go !== s.loc) return {kind: 'travel', R: E.travel(s, tip.go), step: tip};
+      if (tip.act){ const a = E.actions(s).find(x => x.id === tip.act); if (a && a.ok) return {kind: 'act', R: E.run(s, tip.act), step: tip}; }
+      if (tip.recipe || tip.craft){ const p = tip.craft ? {craft: tip.craft} : E.plan(s, tip.recipe); if (p && p.craft) return {kind: 'craft', R: E.craft(s, p.craft), step: tip}; }
+    }
+    if (U && U.tone !== 'urgent'){
+      const q = E.quests(s).current, st = q && q.step;
+      if (st && !st.wait && !st.later){
+        ctx.lastAdvice = 'QUEST ' + q.title + ': ' + st.text + ' | ' + (st.how || '');
+        if (st.craft) return {kind: 'craft', R: E.craft(s, st.craft), step: st};
+        if (st.go && st.go !== s.loc) return {kind: 'travel', R: E.travel(s, st.go), step: st};
+        if (st.act){ const a = E.actions(s).find(x => x.id === st.act); if (a && a.ok) return {kind: 'act', R: E.run(s, st.act), step: st}; }
+        if (/clean water/.test(st.text) && s.water.clean > 0.1 && s.body.hyd < 99){ const R = E.drink(s, 'clean'); if (R && !R.err) return {kind: 'drink', R}; }
+        if (/fatty or starchy/.test(st.text)){ const f = E.foodList(s).find(f => !f.lean && !f.rack && !f.bitter && !f.raw); const R = f ? E.eat(s, f.id) : E.eatBars(s, 1); if (R && !R.err) return {kind: 'eat', R}; }
+      }
+    }
+  }
   const A = E.advice(s);
   if (!A) return {kind: 'none', R: null};
   let step = A;
@@ -182,6 +206,10 @@ function play(seed, start, party, diff){
     }
   }
   checkState(s, tag + ' end'); checkViews(s, tag + ' end');
+  if (QUESTS && E.quests){
+    for (const id in s.quest.done){ const Q = QSTAT[id] = QSTAT[id] || {done: 0, days: 0, stuck: 0}; Q.done++; Q.days += s.quest.done[id]; }
+    const cur = E.quests(s).current; if (cur){ const Q = QSTAT[cur.id] = QSTAT[cur.id] || {done: 0, days: 0, stuck: 0}; Q.stuck++; }
+  }
   if (moves >= 40000) problem('a game ran 40,000 moves without ending', tag);
   return {s, tag, errs, moves, food};
 }
@@ -215,6 +243,10 @@ console.log('  by season (days lived there, deaths per 100 days, health and food
 for (const k in SEASONS){ const S = SEASONS[k]; if (!S.days) continue;
   console.log('   ', k.padEnd(7), String(S.days).padStart(6), 'days', (S.deaths / S.days * 100).toFixed(2).padStart(6), 'deaths/100d', (S.hp / S.days).toFixed(2).padStart(7), 'hp/day', String(Math.round(S.food / S.days)).padStart(6), 'Cal/day', ' ', Object.keys(S.causes).map(c => c + ' ' + S.causes[c]).join(', ')); }
 
+if (QUESTS && D.QUESTS){
+  console.log('  quests (games that finished it, average day finished, games that ended while on it):');
+  for (const q of D.QUESTS){ const Q = QSTAT[q.id]; if (!Q) continue; console.log('   ', (q.side ? '(side) ' : 'ch' + q.ch + ' ') + q.title.padEnd(24), String(Q.done).padStart(4), Q.done ? ('day ' + Math.round(Q.days / Q.done)).padStart(9) : '         ', Q.stuck ? '  ended on it: ' + Q.stuck : ''); }
+}
 if (!problems.size){ console.log('\nall good'); process.exit(0); }
 console.log('\nProblems:');
 for (const [k, p] of [...problems].sort((a, b) => b[1].count - a[1].count)) console.log(`\n- ${k} (${p.count}x)\n    ${p.example.replace(/\n/g, '\n    ')}`);

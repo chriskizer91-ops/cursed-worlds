@@ -876,6 +876,154 @@ D.ACH = {
   camp5:{name:'Homestead', how:'Build all five camp upgrades'}
 };
 
+/* Quests: the survivor's first days and seasons, in chapters. One main quest is followed at a time; side quests open
+   when their season or chance comes. A step is done when the game state says so, so a step you already did counts.
+   Step checks:  recipe: built it   did: did that job (id+ means it brought food back)   n: how many times
+   inv / stat / tool / found / ach / flag / visits / shelter: what you have or have done   any: any one of these
+   at: [place, job] puts the marker on the map; hint: how to do it, when the game can't work that out itself. */
+D.QUESTS = [
+  {id:'water', ch:1, title:'Water first',
+   story:'Your mouth is already dry. A person lasts weeks without food but only days without water, and the summer heat here doubles what you lose. The river is a short walk south of the boulders.',
+   steps:[
+     {text:'Walk to the River Bank', visits:'river', at:['river'], hint:'Take the trail off the south edge of camp.'},
+     {text:'Drink', any:[{did:'drink_river'}, {did:'drink_pond'}, {did:'drink_spring'}, {did:'drink_seep'}, {stat:'cleanL', n:0.1}], at:['river', 'drink_river'], hint:'Kneel at the water\'s edge, on the flat rock.'}],
+   done:'Muddy, but wet. Every sip of untreated water is a gamble: animals upstream shed giardia into it. Making it safe comes later. First, fire.'},
+  {id:'fire', ch:1, title:'Fire',
+   story:'Fire is warmth, safety, cooked food and safe water. There are no matches here, so you will make it the old way: a cedar bow drill, cedar-bark tinder, and dry wood.',
+   steps:[
+     {text:'Carve a bow-drill kit from a cedar pole', recipe:'bowdrill'},
+     {text:'Strip cedar bark for tinder', any:[{inv:'bark', n:1}, {stat:'fires', n:1}], at:['cedar', 'bark'], hint:'The stringy bark peels off the cedars at the Cedar Stand.'},
+     {text:'Gather an armload of firewood', any:[{inv:'wood', n:1}, {stat:'fires', n:1}], at:['cedar', 'woodC'], hint:'Dry deadwood: the pile at the Cedar Stand, or fallen limbs in the Oak Woods.'},
+     {text:'Light a fire in the ring at camp', stat:'fires', n:1, at:['camp', 'firestart'], hint:'Saw the bow drill steady and fast until it smokes, then blow the coal into the bark.'}],
+   done:'Smoke, a coal, a flame. You made fire with your hands. Keep it fed: an armload of wood burns about four hours.'},
+  {id:'roof', ch:1, title:'A roof',
+   story:'A night soaked to the skin can kill, even in spring. Lean poles against the tallest boulder and stretch half a tarp over them.',
+   steps:[{text:'Build a lean-to at the boulders', recipe:'leanto'}],
+   done:'A dry place to sleep. The boulders block the wind on two sides.'},
+  {id:'carry', ch:1, title:'Carry water',
+   story:'Walking to the river every time you are thirsty wastes the day. Fold a square of tarp into a bag and you can carry water home.',
+   steps:[
+     {text:'Fold a tarp water bag', recipe:'bag'},
+     {text:'Fill it at the water', any:[{did:'fill_river'}, {did:'fill_pond'}, {did:'fill_spring'}, {did:'fill_seep'}], at:['river', 'fill_river'], hint:'Fill your containers at the river\'s edge.'}],
+   done:'Five liters on your back. Now make it safe to drink.'},
+  {id:'boil', ch:2, title:'Boil it',
+   story:'Boiling kills giardia and bacteria. You have no pot yet, but there is an old trick: burn a bowl out of an oak log, then drop stones heated in the fire into the water until it boils.',
+   steps:[
+     {text:'Burn out a wooden bowl', any:[{recipe:'bowl'}, {tool:'pot'}]},
+     {text:'Collect four dry cooking stones on the Prairie', any:[{inv:'stones', n:4}, {tool:'pot'}], at:['prairie', 'stones'], hint:'Fist-sized stones from the dry limestone ridge. Never river rocks: trapped water can make them burst in a fire.'},
+     {text:'Boil water at camp', did:'boil', at:['camp', 'boil'], hint:'Bring untreated water in your bag, with the fire burning.'},
+     {text:'Drink clean water', stat:'cleanL', n:0.5, hint:'Drink from your pack: the clean water you boiled.'}],
+   done:'Safe water, as much as you have the wood and the patience for. One less way to die.'},
+  {id:'wild', ch:2, title:'Wild food',
+   story:'A hundred ration bars is less than a week of eating. Fifteen bars a day just keeps you even. The land has food in every season, if you know where to look.',
+   steps:[{text:'Find wild food and eat it', did:'eat', guide:'food', hint:'Pick what is ripe, dig cattail roots, catch crawfish, or forage. The field guide in the Journal says what is in season.'}],
+   done:'Every wild meal is ration bars saved for a hard day.'},
+  {id:'bed', ch:2, title:'Off the cold ground',
+   story:'The ground steals more heat from a sleeper than the air does. A thick bed of dry grass and cedar boughs keeps it in.',
+   steps:[{text:'Make a grass bed', recipe:'bedding'}],
+   done:'It smells of cedar and summer hay. You will sleep better, and warmer.'},
+  {id:'trap', ch:3, title:'Fish while you sleep',
+   story:'The ration bars won\'t last forever. A funnel trap catches fish all night while you do nothing at all.',
+   steps:[
+     {text:'Weave a funnel fish trap', any:[{recipe:'trap'}, {did:'trapset'}]},
+     {text:'Dig grubs for bait', any:[{inv:'grubs', n:2}, {did:'trapset'}], at:['cedar', 'grubs'], hint:'Roll the rotten log at the Cedar Stand.'},
+     {text:'Set the trap in the river', did:'trapset', at:['river', 'trapset'], hint:'Wedge it behind the snag, in the current.'},
+     {text:'Check it after a night', did:'trapcheck+', at:['river', 'trapcheck'], hint:'Fish swim in at night. Check it the next day.'}],
+   done:'Fish in the trap. Food that came to you while you slept.'},
+  {id:'spear', ch:3, title:'A fishing spear',
+   story:'The pond is full of fish: bass, sunfish, and gar that rise to gulp air. A split-tip cedar gig and a steady hand will bring them in.',
+   steps:[
+     {text:'Carve a fishing spear', recipe:'spear'},
+     {text:'Spear a fish at the Pond', did:'spear+', at:['pond', 'spear'], hint:'Wade the shallows, stand still as a heron, and strike when a fish slides under the point.'}],
+   done:'Supper on the end of a stick.'},
+  {id:'hunt', ch:3, title:'Meat',
+   story:'Nothing brings in food like a deer. Game moves most at dawn and dusk. Every shot spooks the woods for the rest of the day.',
+   steps:[{text:'Hunt and bring home game', stat:'game', n:1, at:['oak', 'hunt_oak'], hint:'Hunt the Oak Woods at dawn or dusk. Hold still, steady your aim, and squeeze.'}],
+   done:'Meat, and a lot of it. Smoke what you can\'t eat in a day.'},
+  {id:'rack', ch:3, title:'Food that keeps',
+   story:'Fresh meat rots in a day or two in this heat. Thin-sliced and smoked over a fire, it keeps for weeks. Build the rack before you bring home a deer.',
+   steps:[
+     {text:'Build a drying rack', recipe:'rack'},
+     {text:'Smoke meat or dry fruit on it', ach:'jerky', at:['camp', 'rack'], hint:'Load the rack at camp. Meat needs about 30 hours of smoke; fruit needs sunny hours.'}],
+   done:'A pantry. Food you can put by for the hard months.'},
+  {id:'hang', ch:3, title:'Keep the raccoons out',
+   story:'Raccoons, coyotes and bears can smell food from far away. Hang it from a high limb, far from the trunk.',
+   steps:[{text:'Rig a food hang', recipe:'hang'}],
+   done:'Your food sways out of reach in the dark.'},
+  {id:'roof2', ch:4, title:'A stone room',
+   story:'Move the tarp up across all three boulders and you have stone walls on three sides, a real roof, and a fire that rain can\'t drown.',
+   steps:[{text:'Roof the boulder triangle', recipe:'roof'}],
+   done:'A stone room with a fire at the door. The rock holds the fire\'s heat all night.'},
+  {id:'explore', ch:4, title:'Know the land',
+   story:'Nobody has ever mapped these woods, because nobody has ever been here. See every place within reach, then go deeper.',
+   steps:[
+     {text:'Visit every place around camp', visits:8, guide:'visit', hint:'Cedar Stand, Oak Woods, Prairie, Berry Thicket, River Bank, Pond and Creek Bottom.'},
+     {text:'Explore deeper in the Oak Woods', did:'explore_oak', at:['oak', 'explore_oak'], hint:'Follow the darker path north into the woods.'}],
+   done:'You know the clearing now: where the water is, where the wood is, and where the game moves.'},
+  {id:'walls', ch:4, title:'Four walls',
+   story:'Winter nights here drop below freezing, and a blue norther can blow for days. Weave cedar withes across the gaps between the boulders and pack them with clay and grass.',
+   steps:[{text:'Build wattle-and-daub walls', recipe:'walls'}],
+   done:'A hut. Snug and dark, and the wind can\'t find you.'},
+  {id:'blanket', ch:4, title:'Ready for winter',
+   story:'Winter is the hardest season: freezing nights, ice storms, short days, and little to forage after January. Get ready while the weather is kind.',
+   steps:[
+     {text:'Sew a hide blanket', recipe:'blanket'},
+     {text:'Keep six armloads of firewood at camp', any:[{inv:'wood', n:6}, {tool:'woodstore'}], hint:'Gather firewood until you have six armloads.'},
+     {text:'Put food by: smoke, dry, or store nuts', ach:'jerky', hint:'Smoked meat, dried fruit, pecans and acorns all keep for weeks.'}],
+   done:'Let the north wind blow.'},
+  {id:'bow', ch:5, title:'Bois d\'arc',
+   story:'The rifle will run dry. Somewhere along the creek grows Osage orange, bois d\'arc, the best bow wood there is.',
+   steps:[
+     {text:'Find bois d\'arc along the creek', any:[{found:'osage'}, {inv:'stave', n:1}, {tool:'bow'}], at:['creek', 'explore_creek'], hint:'Explore downstream from the Creek Bottom. It can take more than one trip.'},
+     {text:'Cut a stave', any:[{inv:'stave', n:1}, {tool:'bow'}], at:['creek', 'stave'], hint:'Cut a straight young trunk in the bois d\'arc grove.'},
+     {text:'Carve a bois d\'arc bow', recipe:'bow'},
+     {text:'Make arrows', any:[{inv:'arrows', n:1}, {did:'craft:arrows'}], recipe2:'arrows'}],
+   done:'A bow that never runs out of bullets.'},
+  {id:'pot', ch:5, title:'The potter',
+   story:'Gray clay from the river\'s cut bank, shaped, dried for three days, then fired in the coals: a pot that boils water right in the fire.',
+   steps:[{text:'Shape a clay pot', any:[{flag:'potShaped'}, {tool:'pot'}], recipe2:'pot'}, {text:'Fire the pot without cracking it', tool:'pot', recipe2:'firepot'}],
+   done:'It rings like a bell when you tap it.'},
+  {id:'home', ch:5, title:'Homestead',
+   story:'A camp becomes a home one improvement at a time.',
+   steps:[{text:'Build a workbench', recipe:'workbench'}, {text:'Build a covered wood store', recipe:'woodstore'}, {text:'Build an insulated food cache', recipe:'cache'}, {text:'Build a clay-and-stone hearth', recipe:'hearth'}, {text:'Build a lookout platform', recipe:'lookout'}],
+   done:'This is a home now.'},
+  {id:'year', ch:5, title:'A year in the clearing',
+   story:'Survive as long as you can. That is Dagr\'s rule.',
+   steps:[{text:'Survive 30 days', ach:'d30'}, {text:'Live into a new season', ach:'season'}, {text:'Survive a full year', ach:'d365'}],
+   done:'A whole year. Every season, its hunger and its plenty.'},
+
+  // side quests: they open when their time comes
+  {id:'mulberry', side:true, title:'Mulberry rain', when:{crop:'mulberry', n:3},
+   story:'The big red mulberry is loaded. Shaking it over a spread tarp brings down more fruit in an hour than a day of picking.',
+   steps:[{text:'Shake the mulberry over a tarp', did:'shake', at:['berry', 'shake'], hint:'Spread the tarp under the tree and shake the limbs.'}],
+   done:'Mulberries by the hundreds. They spoil in a day: eat them, or dry them on the rack.'},
+  {id:'pecans', side:true, title:'Pecan harvest', when:{crop:'pecan', n:2},
+   story:'Pecans are falling in the Creek Bottom: about 690 Calories in every 100 grams, the richest wild food there is. The squirrels know it too.',
+   steps:[{text:'Gather pecans three times', did:'pecans+', n:3, at:['creek', 'pecans'], hint:'Under the big pecans by the creek.'}],
+   done:'A store of nuts that keeps for months.'},
+  {id:'acorns', side:true, title:'Acorn flour', when:{crop:'acorn', n:8},
+   story:'The oaks are dropping acorns by the thousand. They are too bitter to eat until the tannins are boiled out.',
+   steps:[{text:'Gather acorns in the Oak Woods', any:[{food:'acornraw'}, {did:'craft:leach'}], at:['oak', 'forage_oak'], hint:'Forage under the oaks.'}, {text:'Leach and roast a batch', did:'craft:leach', recipe2:'leach'}],
+   done:'Nutty, filling, and it keeps.'},
+  {id:'herd', side:true, title:'The herd', when:{world:'bison'},
+   story:'A low rumble from the east. In this world the great herds never disappeared.',
+   steps:[{text:'Go and see the bison on the Prairie', flag:'bisonSeen', at:['prairie'], hint:'Walk out onto the Prairie.'}],
+   done:'Hundreds of animals, grunting and rolling in the dust. One would be weeks of meat, if you could keep it.'},
+  {id:'flock', side:true, title:'The flock', when:{world:'pigeons'},
+   story:'Passenger pigeons, extinct in our world since 1914, are pouring overhead in a flock miles long.',
+   steps:[{text:'See the pigeons roosting in the woods', flag:'pigeonSeen', at:['oak'], hint:'They roost in the Oak Woods and the Creek Bottom.'}],
+   done:'Branches crack under the weight of them. The sky roars.'},
+  {id:'snares', side:true, title:'Snare line', when:{tool:'snares', n:1},
+   story:'Snares work while you do other things. Set them on the rabbit runs and check them every day, before a coyote does.',
+   steps:[{text:'Set your snares', did:'snareset', at:['prairie', 'snareset'], hint:'The Prairie has good rabbit runs.'}, {text:'Bring home a catch', did:'snarecheck+', at:['prairie', 'snarecheck'], hint:'Check the line every day.'}],
+   done:'A rabbit, for an hour of work days ago.'},
+  {id:'lean', side:true, title:'Lean times', when:{flag:'leanWarn'},
+   story:'Rabbit and fish are nearly pure protein. Living on them alone makes you sick: the old trappers called it rabbit starvation. Your body needs fat or starch too.',
+   steps:[{text:'Eat something fatty or starchy', did:'eatrich', hint:'Pecans, acorn meal, cattail roots, sunflower seeds, raccoon, bear, bison, or ration bars.'}],
+   done:'Your body thanks you.'}
+];
+D.CHAPTERS = ['', 'Stranded', 'Safe water', 'Food that lasts', 'A real camp', 'The long haul'];
+
 D.CAUSES = {
   dehydration:'Dehydration. Water always comes first.',
   starvation:'Starvation. The body ran out of reserves.',
@@ -902,6 +1050,11 @@ const RES_MAX = 30000;   // kcal of body reserve per person before starvation hi
 const HYD_L = 7.5;       // liters of body water a person can lose before it turns deadly
 E.RES_MAX = RES_MAX; E.HYD_L = HYD_L;
 const LV = s => D.LEVELS[s.opt.diff] || D.LEVELS.hard;
+/* How well the skill moment for the job at hand went: 0 fumbled, 0.5 an ordinary try (the odds the game always had),
+   1 as well as it can be done. The screen passes it in; set only while one job runs. */
+let SK = 0.5;
+const skillOf = o => o && typeof o.skill === 'number' && Number.isFinite(o.skill) ? Math.max(0, Math.min(1, o.skill)) : 0.5;
+const skm = () => 0.55 + 0.9 * SK;
 
 /* ---------- seeded random numbers, so a saved game keeps its own dice ---------- */
 function rnd(s){ s.rng = (s.rng + 0x6D2B79F5) >>> 0; let t = s.rng; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
@@ -1537,6 +1690,7 @@ E.newGame = function(opt){
     day: {kcal: 0, lean: 0}, leanDays: 0,
     stats: {kcal: 0, bars: 0, fish: 0, game: 0, cleanL: 0, rawL: 0, fires: 0},
     flags: {}, msgs: [], pendingNotes: [], pendingAch: [], log: [], pending: null,
+    did: {}, quest: {done: {}, open: {}},
     dead: false, cause: null, deathT: 0, dmg: {}, startSeason: D.SEASON_OF[st.m]
   };
   s.t = s.t0 = Math.round((D.SUNRISE[st.m] + 0.5) * 4) / 4;
@@ -1569,8 +1723,10 @@ E.intro = function(s){
 
 /* ---------- results ---------- */
 function snapshot(s){ return {hp: s.body.hp, hyd: s.body.hyd, food: foodPct(s), en: s.body.en, t: s.t}; }
-function newR(title, icon){ return {title, icon, lines: [], gains: [], notes: [], ach: [], delta: null}; }
-function errR(text){ return {err: true, title: 'Not yet', icon: '✋', lines: [text], gains: [], notes: [], ach: []}; }
+function newR(title, icon){ return {title, icon, lines: [], gains: [], notes: [], ach: [], quests: [], opened: [], delta: null}; }
+function errR(text){ return {err: true, title: 'Not yet', icon: '✋', lines: [text], gains: [], notes: [], ach: [], quests: [], opened: []}; }
+// what you've done, counted, so quests can ask "have you speared a fish?"
+function did(s, k, n){ s.did[k] = (s.did[k] || 0) + (n || 1); }
 function begin(s){ s.flags.soaked = false; }
 function checkAch(s, R){
   const days = (s.t - s.t0) / 24;
@@ -1589,7 +1745,7 @@ function finish(s, R, snap){
   if (s.msgs.length){ R.lines = R.lines.concat(s.msgs); s.msgs = []; }
   if (s.pendingNotes.length){ for (const k of s.pendingNotes) if (R.notes.indexOf(k) < 0) R.notes.push(k); s.pendingNotes = []; }
   if (s.pendingAch.length){ for (const k of s.pendingAch) if (R.ach.indexOf(k) < 0) R.ach.push(k); s.pendingAch = []; }
-  if (!s.dead) checkAch(s, R);
+  if (!s.dead){ checkAch(s, R); checkQuests(s, R); }
   const now = snapshot(s);
   R.t0 = snap.t; R.t1 = s.t;
   R.delta = {hp: now.hp - snap.hp, hyd: now.hyd - snap.hyd, food: now.food - snap.food, en: now.en - snap.en};
@@ -1632,7 +1788,7 @@ E.eat = function(s, id){
   lot.kg = r2(lot.kg * (1 - fr)); lot.kcal = Math.round(lot.kcal - take);
   trimLot(s, lot);
   const each = take / s.P;
-  gainKcal(s, each, !!F.lean);
+  gainKcal(s, each, !!F.lean); did(s, 'eat'); if (!F.lean) did(s, 'eatrich');
   R.lines.push((s.P > 1 ? 'You each eat' : 'You eat') + ' about ' + Math.round(each) + ' Calories of ' + name.toLowerCase() + '.');
   if (wasRaw){
     if (lot.key === 'elderberry'){
@@ -1658,7 +1814,7 @@ E.eatBars = function(s, n){
   const snap = snapshot(s); begin(s);
   const R = newR('Ration bars', '🍫');
   const used = n * s.P; add(s, R, 'bars', -used); s.stats.bars += used;
-  gainKcal(s, n * D.BAR_KCAL, false);
+  gainKcal(s, n * D.BAR_KCAL, false); did(s, 'eatrich');
   R.lines.push((s.P > 1 ? 'You each eat ' : 'You eat ') + n + ' bar' + (n > 1 ? 's' : '') + ' (' + n * D.BAR_KCAL + ' Calories). ' + (n < asked ? 'That\'s all you can manage right now. ' : '') + s.gear.bars + ' bars left.');
   return finish(s, R, snap);
 };
@@ -1679,7 +1835,7 @@ E.drink = function(s, which){
     infect(s, 1 - Math.pow(1 - s.water.risk, each));
     if (s.water.raw < 0.01){ s.water.raw = 0; s.water.risk = 0; }
   }
-  s.body.hyd = Math.min(100, s.body.hyd + each / HYD_L * 100);
+  s.body.hyd = Math.min(100, s.body.hyd + each / HYD_L * 100); did(s, 'drink:' + which);
   R.lines.push((s.P > 1 ? 'You each drink ' : 'You drink ') + each.toFixed(1) + ' liters of ' + (which === 'clean' ? 'clean' : 'untreated') + ' water.');
   return finish(s, R, snap);
 };
@@ -1769,7 +1925,7 @@ E.travel = function(s, k){
   const mins = travelMins(s, k), dark = isDark(s);
   pass(s, mins / 60, 'moderate', R);
   if (s.dead) return finish(s, R, snap);
-  s.loc = k;
+  s.loc = k; did(s, 'go:' + k);
   R.lines.push('A ' + mins + '-minute walk' + (dark ? ' in the dark' : '') + '.');
   if (icy(s) && s.cond.sprain <= 0 && chance(s, 0.05)){
     s.cond.sprain = 48; hurt(s, 4 * dmgM(s), 'wound');
@@ -1820,6 +1976,7 @@ function fireChance(s){
   p *= perf(s);
   if (!s.tools.woodstore){ if (rainNow(s, s.t)) p *= 0.7; else if (rainedEarlierToday(s)) p *= 0.85; }
   if (bowstring(s) === 'cord') p *= 0.9;
+  p *= skm();
   if (s.P > 1) p = 1 - (1 - p) * (1 - p * 0.5);
   return clamp(p, 0.05, 0.95);
 }
@@ -2104,7 +2261,7 @@ act({id: 'pick', loc: 'berry', name: 'Pick berries', icon: '🫐', h: 1, work: '
   sub: s => ripeLine(s),
   run(s, R){
     pass(s, 1, 'light', R); if (s.dead) return;
-    const ym = yieldM(s); let tl = 1, dagr = false, thorny = false;
+    const ym = yieldM(s) * (0.6 + 0.8 * SK); let tl = 1, dagr = false, thorny = false;
     const L = ripeList(s).sort((a, b) => b.c.ripe - a.c.ripe);
     for (const o of L){
       if (tl <= 0.02) break;
@@ -2203,7 +2360,7 @@ act({id: 'spear', loc: 'pond', name: 'Spear fish', icon: '🔱', h: 1.5, work: '
     pass(s, 1.5, 'moderate', R, {wading: true}); if (s.dead) return;
     const m = monthNow(s), h = hourOf(s.t);
     const warmMid = m >= 4 && m <= 8 && h > 11 && h < 17;
-    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * (s.P > 1 ? 1.5 : 1) * LV(s).catch * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1);
+    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * (s.P > 1 ? 1.5 : 1) * LV(s).catch * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1) * skm();
     s.skill.spear++;
     const got = [];
     for (let i = 0; i < 6; i++){
@@ -2226,7 +2383,7 @@ act({id: 'frogs', loc: 'pond', name: 'Gig bullfrogs', icon: '🐸', h: 1.5, work
   sub: () => 'Follow their deep calls along the bank in the dark.',
   run(s, R){
     pass(s, 1.5, 'light', R, {wading: true}); if (s.dead) return;
-    const p = 0.33 * perf(s) * Math.sqrt(dens(s, 'frog')) * aware(s, 'frog') * (s.P > 1 ? 1.5 : 1);
+    const p = 0.33 * perf(s) * Math.sqrt(dens(s, 'frog')) * aware(s, 'frog') * (s.P > 1 ? 1.5 : 1) * skm();
     let n = 0;
     for (let i = 0; i < 8; i++) if (chance(s, clamp(p, 0, 0.7)) && harvest(s, 'frog')) n++;
     if (n){ addFood(s, R, 'frog', n * rr(s, 0.08, 0.14)); R.lines.push('Following the jug-o-rum calls, you creep along the bank and gig ' + n + ' bullfrog' + (n > 1 ? 's' : '') + '.'); }
@@ -2386,7 +2543,7 @@ function huntResolve(s, R, k){
   }
   if (k === 'shoot' && s.gear.rounds < 1) return;
   if (k === 'arrow' && !(s.tools.bow && s.inv.arrows > 0)) return;
-  let hit = (k === 'arrow' ? 0.58 : 0.84) * Math.sqrt(perf(s)) * Math.sqrt(G.eco ? aware(s, G.eco) : 1);
+  let hit = (k === 'arrow' ? 0.58 : 0.84) * Math.sqrt(perf(s)) * Math.sqrt(G.eco ? aware(s, G.eco) : 1) * skm();
   if (p.sp === 'pigeon') hit = 0.95;
   if (k === 'shoot'){ add(s, R, 'rounds', -1); s.world.scare[p.loc] = s.t + 18; }
   else {
@@ -2465,7 +2622,7 @@ function encResolve(s, R, k){
   if (id === 'rattler' || id === 'cotton'){
     if (k === 'back'){ unlock(s, id, R); if (chance(s, 0.97)) R.lines.push('One slow step at a time. It stops ' + (id === 'rattler' ? 'rattling' : 'gaping') + ' and slides away.'); else snakeBite(s, R, id); return; }
     if (k === 'shoot' && s.gear.rounds > 0){ add(s, R, 'rounds', -1); if (chance(s, 0.93)) snakeMeat(s, R, id); else { unlock(s, id, R); R.lines.push('You miss, and it vanishes into the brush.'); } return; }
-    const p = (s.tools.club ? 0.88 : s.tools.spear ? 0.84 : 0.76) * pf;
+    const p = (s.tools.club ? 0.88 : s.tools.spear ? 0.84 : 0.76) * pf * (0.8 + 0.4 * SK);
     if (chance(s, p)) snakeMeat(s, R, id); else snakeBite(s, R, id);
     return;
   }
@@ -2697,7 +2854,8 @@ function complete(s, R, r){
   if (r.shelter){ s.shelter = r.shelter; ach(s, R, 'roof'); if (r.shelter >= 3) ach(s, R, 'hut'); }
   if (r.group === 'Camp'){ ach(s, R, 'camp1'); if (campUpgrades(s) >= 5) ach(s, R, 'camp5'); }
   if (r.id === 'bow') ach(s, R, 'bow');
-  if (r.special === 'pot'){ s.pot.stage = 'drying'; s.pot.dried = 0; R.lines.push('You coil and smooth a pot from river clay, then set it under the roof to dry. Three days, and don\'t rush it.'); return; }
+  did(s, 'craft:' + r.id);
+  if (r.special === 'pot'){ s.flags.potShaped = true; s.pot.stage = 'drying'; s.pot.dried = 0; R.lines.push('You coil and smooth a pot from river clay, then set it under the roof to dry. Three days, and don\'t rush it.'); return; }
   if (r.special === 'firepot'){
     const p = clamp(0.55 + 0.1 * s.pot.tries, 0, 0.85) * LV(s).pot;
     if (chance(s, p)){ s.tools.pot = true; s.pot.stage = 'none'; ach(s, R, 'pot'); R.lines.push('You rake it out of the coals and tap it. It rings like a bell. This pot can sit right in the fire and boil 6 liters an hour.'); }
@@ -2768,15 +2926,17 @@ E.actions = function(s){
       ok: ok === true, why: ok === true ? '' : ok, sub: a.sub ? a.sub(s) : ''};
   });
 };
-E.run = function(s, id){
-  if (id === 'sleep') return E.sleep(s);
+E.run = function(s, id, o){
+  if (id === 'sleep'){ const R = E.sleep(s); if (R && !R.err) did(s, 'sleep'); return R; }
   const a = AMAP[id];
   if (!a || !locMatch(a, s.loc) || (a.show && !a.show(s))) return null;
   const ok = checkAct(s, a);
   if (ok !== true) return errR(ok);
   const snap = snapshot(s); begin(s);
   const R = newR(typeof a.name === 'function' ? a.name(s) : a.name, a.icon);
-  a.run(s, R);
+  SK = skillOf(o);
+  try { a.run(s, R); } finally { SK = 0.5; }
+  did(s, id); if (R.gains.some(g => g.food)) did(s, id + '+');
   if (!s.dead && !s.pending) rollHazards(s, a, R);
   return finish(s, R, snap);
 };
@@ -2786,13 +2946,15 @@ E.pendingView = function(s){
   const e = ENC[s.pending.id];
   return {title: e.title, icon: e.icon, text: e.text, opts: encOpts(s, s.pending.id)};
 };
-E.choose = function(s, k){
+E.choose = function(s, k, o){
   if (!s.pending || s.dead) return null;
   const pv = E.pendingView(s);
-  if (!pv.opts.some(o => o.k === k)) return null;
+  if (!pv.opts.some(x => x.k === k)) return null;
   const snap = snapshot(s); begin(s);
   const R = newR(pv.title, pv.icon);
-  if (s.pending.type === 'hunt') huntResolve(s, R, k); else encResolve(s, R, k);
+  SK = skillOf(o);
+  try { if (s.pending.type === 'hunt') huntResolve(s, R, k); else encResolve(s, R, k); } finally { SK = 0.5; }
+  did(s, 'choose:' + k);
   return finish(s, R, snap);
 };
 
@@ -2901,7 +3063,7 @@ function nearestWood(s){ return s.loc === 'oak' ? ['oak', 'woodO'] : s.loc === '
    Urgent needs cut in line. Goals are gathered in priority order, and the first one whose next step is actually
    possible right now wins, so the card never points at a button the game would refuse. */
 function wildKcal(s){ return s.food.reduce((a, f) => a + (f.key === 'acornraw' ? 0 : f.kcal), 0); }
-function foodGoals(s, goal){
+function foodGoals(s, goal, any){
   const flood = s.world.flood > 0, h = hourOf(s.t), safeBoil = s.tools.bowl || s.tools.pot;
   // what you already caught comes first: raw meat and fish rot in a day
   const fresh = s.food.filter(f => !f.rack && f.st === 'raw' && D.FOODS[f.key].cook), soon = fresh.filter(f => f.exp - s.t < 20);
@@ -2926,13 +3088,13 @@ function foodGoals(s, goal){
   if (s.snare.set && s.t - s.snare.at > 20) goal('Check your snare line before a coyote does.', {go: s.snare.loc, act: 'snarecheck'});
   if (s.food.some(f => f.key === 'acornraw' && f.kg > 0.5) && safeBoil) goal('Those acorns are food once the bitterness is boiled out. Leach a batch at camp.', {recipe: 'leach'});
   // with a rack, food keeps, so it's worth holding a few days' worth; without one, more than a day's worth just rots
-  if (wildKcal(s) >= (s.tools.rack ? 7000 : 2200) * s.P) return;
+  if (!any && wildKcal(s) >= (s.tools.rack ? 7000 : 2200) * s.P) return;
   if (ripeTotal(s) >= 1) goal('Fruit is ripe at the Berry Thicket. Every pound you pick saves ration bars.', {go: 'berry', act: s.crops.mulberry.ripe > 3 && s.gear.tarp >= 10 ? 'shake' : 'pick'});
   if (s.crops.pecan.ripe > 2) goal('Pecans are down at the Creek Bottom: the richest wild food there is.', {go: 'creek', act: 'pecans'});
   // only worth gathering what you can leach: a bowl or pot, and a fire you can light, and not a pile already waiting
   const bitter = s.food.filter(f => f.key === 'acornraw').reduce((a, f) => a + f.kg, 0);
   if (s.crops.acorn.ripe > 8 && safeBoil && bitter < 3 * s.P && (s.fire.st === 'lit' || bowstring(s))) goal('Acorns are falling in the Oak Woods. Leached, they\'re a staple.', {go: 'oak', act: 'forage_oak'});
-  const armed = s.gear.rounds > 0 || (s.tools.bow && s.inv.arrows > 0), lean = wildKcal(s) < 2200 * s.P;
+  const armed = s.gear.rounds > 0 || (s.tools.bow && s.inv.arrows > 0), lean = any || wildKcal(s) < 2200 * s.P;
   if (armed && s.world.bison > 0) goal('A bison herd is on the Prairie. One animal is weeks of meat if you smoke it.', {go: 'prairie', act: 'hunt_prairie'});
   if (armed && (lean || twilight(s) || h < D.SUNRISE[monthNow(s)] + 3)) goal((twilight(s) ? 'Game is moving right now.' : 'Hunting brings in more food than anything else, and dawn and dusk are the best times.') + ' Hunt the Oak Woods, and smoke what you can\'t eat in a day.', {go: 'oak', act: 'hunt_oak'});
   if (!lean) return;
@@ -2955,6 +3117,12 @@ function waterGoal(s, goal){
   }
   goal('Fill your containers at the River Bank and carry the water back to boil. Then you never have to gamble on river water.', {go: 'river', act: s.tools.seep ? 'fill_seep' : 'fill_river'});
 }
+// The field book's best idea for food right now, ignoring how much you already have.
+function foodTip(s){
+  const G = []; foodGoals(s, (text, x) => G.push(lead('goal', text, x)), true);
+  return G.find(g => doable(s, g)) || null;
+}
+E.foodTip = s => s.dead || s.pending ? null : foodTip(s);
 function adviceGoals(s){
   const G = [], b = s.body, cap = capacity(s);
   const goal = (text, x) => { G.push(lead('goal', text, x)); };
@@ -3062,6 +3230,127 @@ E.advice = function(s){
   return pick;
 };
 E.hint = function(s){ const a = E.advice(s); return a ? a.text : ''; };
+
+/* ---------- quests ----------
+   Steps are checked against the game itself, so anything already done counts. Side quests count only what you do
+   after they open. */
+const QMAP = {}; D.QUESTS.forEach(q => { QMAP[q.id] = q; });
+function cond(s, c, base){
+  if (c.any) return c.any.some(x => cond(s, x, base));
+  const n = c.n == null ? 1 : c.n;
+  if (c.recipe) return recipeBuilt(s, c.recipe);
+  if (c.did) return (s.did[c.did] || 0) - ((base && base[c.did]) || 0) >= n;
+  if (c.inv) return (s.inv[c.inv] || 0) >= n;
+  if (c.stat) return (s.stats[c.stat] || 0) >= n;
+  if (c.tool) return typeof s.tools[c.tool] === 'number' ? s.tools[c.tool] >= n : !!s.tools[c.tool];
+  if (c.found) return !!s.found[c.found];
+  if (c.ach) return !!s.ach[c.ach];
+  if (c.flag) return s.flags[c.flag] != null && s.flags[c.flag] !== false;
+  if (c.visits) return typeof c.visits === 'number' ? Object.keys(s.visited).filter(k => s.visited[k]).length >= c.visits : !!s.visited[c.visits];
+  if (c.shelter) return s.shelter >= c.shelter;
+  if (c.food) return s.food.some(f => f.key === c.food);
+  return false;
+}
+function whenOK(s, w){
+  if (!w) return true;
+  if (w.crop) return s.crops[w.crop].ripe > (w.n || 0);
+  if (w.world) return s.world[w.world] > 0;
+  return cond(s, w);
+}
+const qBase = (s, q) => q.side && s.quest.open[q.id] ? s.quest.open[q.id].base : null;
+function checkQuests(s, R){
+  const day = dayIdx(s.t) + 1;
+  for (const q of D.QUESTS){
+    if (s.quest.done[q.id]) continue;
+    if (q.side && !s.quest.open[q.id]){
+      if (!whenOK(s, q.when)) continue;
+      s.quest.open[q.id] = {day, base: Object.assign({}, s.did)}; R.opened.push(q.id); continue;
+    }
+    if (q.steps.every(st => cond(s, st, qBase(s, q)))){ s.quest.done[q.id] = day; R.quests.push(q.id); if (s.quest.follow === q.id) delete s.quest.follow; }
+  }
+}
+// What a job needs before it can be done, as the step that gets it: so a quest never sends you somewhere to fail.
+const plan1 = (s, id, text) => { const p = E.plan(s, id, 1); return p && !p.done && !p.wait ? Object.assign({}, p, {how: text ? text + ' ' + p.text : p.text}) : null; };
+function foodToRack(s){
+  if (s.trap.set) return {how: 'You need fresh meat, fish or fruit to put on it. Check the fish trap.', go: 'river', act: 'trapcheck'};
+  if (ripeTotal(s) >= 1) return {how: 'You need fresh meat, fish or fruit to put on it. Fruit is ripe at the Berry Thicket.', go: 'berry', act: 'pick'};
+  if (canHunt(s) === true) return {how: 'You need fresh meat, fish or fruit to put on it. Hunt the Oak Woods, best at dawn or dusk.', go: 'oak', act: 'hunt_oak'};
+  if (s.tools.spear) return {how: 'You need fresh meat, fish or fruit to put on it. Spear fish at the Pond.', go: 'pond', act: 'spear'};
+  return null;
+}
+const NEEDS = {
+  boil(s){
+    if (!capacity(s)) return plan1(s, 'bag', 'You need something to carry water in.');
+    if (s.water.raw < 0.1) return {how: 'Fill your bag with river water first, then bring it back to boil.', go: 'river', act: s.tools.seep ? 'fill_seep' : 'fill_river'};
+    if (!s.tools.pot && s.inv.stones < 4) return {how: 'Boiling in the bowl takes four dry cooking stones from the Prairie.', go: 'prairie', act: 'stones'};
+    return fireReady(s);
+  },
+  cook: s => fireReady(s),
+  firestart: s => fireStep(s),
+  rack(s){
+    if (rackable(s).length) return null;
+    if (s.food.some(f => f.rack && f.rack.need === 'smoke')){ const f = fireReady(s); return f ? Object.assign({}, f, {how: 'The meat on the rack needs smoke. ' + (f.how || f.text || '')}) : {how: 'It\'s on the rack. Keep the fire fed until it\'s done: about 30 hours of smoke.', blocked: true}; }
+    if (s.food.some(f => f.rack)) return {how: 'The fruit is drying on the rack. It needs sunny hours.', blocked: true};
+    return foodToRack(s);
+  },
+  addwood(s){ const w = nearestWood(s); return s.inv.wood < 1 ? {how: 'You need firewood.', go: w[0], act: w[1]} : fireStep(s); },
+  trapset: s => s.tools.fishtrap ? null : plan1(s, 'trap'),
+  trapcheck: s => s.trap.set ? null : NEEDS.trapset(s) || {how: 'Set the trap first.', go: 'river', act: 'trapset'},
+  spear: s => s.tools.spear ? null : plan1(s, 'spear'),
+  frogs: s => s.tools.spear ? null : plan1(s, 'spear'),
+  snareset: s => s.tools.snares > 0 ? null : plan1(s, 'snares'),
+  snarecheck: s => s.snare.set ? null : NEEDS.snareset(s) || {how: 'Set your snares first.', go: 'prairie', act: 'snareset'},
+  hunt_oak: s => canHunt(s) === true ? null : plan1(s, 'bow', 'Out of rifle rounds.'),
+  stave: s => s.found.osage ? null : {how: 'Find the bois d\'arc first: explore downstream.', go: 'creek', act: 'explore_creek'}
+};
+function reach(s, go, act){
+  const a = AMAP[act]; if (!a) return null;
+  const here = s.loc; s.loc = go || here;
+  let ok; try { ok = !a.show || a.show(s) ? checkAct(s, a) : 'Not here right now.'; } finally { s.loc = here; }
+  if (ok === true) return null;
+  const fix = NEEDS[act] && NEEDS[act](s);
+  if (fix && fix.blocked) return fix;
+  if (fix && (fix.go !== (go || here) || fix.act !== act)){ const deeper = fix.act && fix.act !== act ? reach(s, fix.go, fix.act) : null; return deeper || fix; }
+  return {how: ok, blocked: true};
+}
+// how to do one step: the plan for a recipe, or the step's own hint and place, checked so it can really be done
+function stepGuide(s, st){
+  const rid = st.recipe || st.recipe2;
+  if (rid && RMAP[rid]){
+    const p = E.plan(s, rid);
+    if (p && !p.done) return {how: p.text, go: p.go || null, act: p.act || null, craft: p.craft || null, recipe: rid, wait: !!p.wait};
+  }
+  if (st.guide === 'visit'){ const k = D.LOC_ORDER.find(k => !s.visited[k] && !D.LOCS[k].hidden); if (k) return {how: 'You haven\'t been to the ' + D.LOCS[k].name.replace(/^The /, '') + ' yet.', go: k, act: null}; }
+  if (st.guide === 'food'){ const g = foodTip(s); if (g) return {how: g.how || g.text, go: g.go || null, act: g.act || null, craft: g.craft || null}; }
+  const at = st.at || [];
+  let go = at[0] || null, act = at[1] || null;
+  if (act === 'woodC'){ const w = nearestWood(s); go = w[0]; act = w[1]; }   // firewood from whichever woods are nearest
+  const out = {how: st.hint || '', go, act};
+  if (act){
+    const fix = reach(s, go, act);
+    if (fix && fix.blocked) Object.assign(out, {how: (fix.how || '') + (st.hint ? ' ' + st.hint : ''), wait: true});
+    else if (fix) Object.assign(out, {how: fix.how || fix.text || '', go: fix.go || null, act: fix.act || null, craft: fix.craft || null});
+  }
+  if (out.go && out.go !== s.loc && out.go !== 'camp' && isEvening(s)) Object.assign(out, {how: 'In the morning: ' + out.how, later: true});
+  return out;
+}
+function questView(s, q){
+  const base = qBase(s, q), ok = q.steps.map(st => cond(s, st, base)), i = ok.indexOf(false);
+  return {id: q.id, title: q.title, ch: q.ch || 0, chapter: q.ch ? D.CHAPTERS[q.ch] : 'Side quest', side: !!q.side, story: q.story, doneText: q.done,
+    finished: !!s.quest.done[q.id], steps: q.steps.map((st, j) => ({text: st.text, done: ok[j]})), progress: ok.filter(Boolean).length, total: ok.length,
+    step: i >= 0 ? Object.assign({text: q.steps[i].text}, stepGuide(s, q.steps[i])) : null};
+}
+// The quest you're following: one you picked, or else the next main quest not yet done.
+E.quests = function(s){
+  const main = D.QUESTS.filter(q => !q.side), next = main.find(q => !s.quest.done[q.id]) || null;
+  const follow = s.quest.follow && !s.quest.done[s.quest.follow] ? QMAP[s.quest.follow] : next;
+  return {current: follow ? questView(s, follow) : null, main: next ? next.id : null,
+    open: D.QUESTS.filter(q => q.side && s.quest.open[q.id] && !s.quest.done[q.id]).map(q => questView(s, q)),
+    all: D.QUESTS.filter(q => !q.side || s.quest.open[q.id]).map(q => questView(s, q)),
+    done: Object.keys(s.quest.done).length, total: D.QUESTS.length};
+};
+E.quest = (s, id) => QMAP[id] ? questView(s, QMAP[id]) : null;
+E.follow = function(s, id){ if (!QMAP[id] || s.quest.done[id] || (QMAP[id].side && !s.quest.open[id])) return false; if (s.quest.follow === id || !QMAP[id].side && id === (D.QUESTS.find(q => !q.side && !s.quest.done[q.id]) || {}).id) delete s.quest.follow; else s.quest.follow = id; return true; };
 
 /* The next concrete step toward a recipe: a sentence plus at most one thing to do.
    {craft} make it now · {go, act} walk somewhere and do a job · {wait} nothing to do yet · {done}.
@@ -3206,6 +3495,10 @@ E.load = function(str){
     if (s.pin != null && !Object.prototype.hasOwnProperty.call(RMAP, s.pin)) delete s.pin;
     if (s.map != null && !(object(s.map) && Number.isInteger(s.map.x) && Number.isInteger(s.map.y) && s.map.x >= 0 && s.map.x < 48 && s.map.y >= 0 && s.map.y < 36)) delete s.map;
     for (const id of ['workbench','woodstore','cache','hearth','lookout']) if (!(id in s.tools)) s.tools[id] = false;
+    if (!object(s.did) || Object.keys(s.did).some(k => !num(s.did[k]))) s.did = {};   // saves from before quests
+    if (!object(s.quest) || !object(s.quest.done) || !object(s.quest.open)) s.quest = {done: {}, open: {}};
+    if (Object.keys(s.quest.done).some(k => !QMAP[k] || !num(s.quest.done[k])) || Object.keys(s.quest.open).some(k => !QMAP[k] || !object(s.quest.open[k]))) s.quest = {done: {}, open: {}};
+    if (s.quest.follow != null && !QMAP[s.quest.follow]) delete s.quest.follow;
     if (s.opt.diff === 'real') s.opt.diff = 'hard';   // the old "Real" level is today's Hard
     if (!D.LEVELS[s.opt.diff]) s.opt.diff = 'medium';
     return s;
