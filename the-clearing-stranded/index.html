@@ -523,11 +523,28 @@ D.SUNRISE = [7.5,7.25,7.4,7.0,6.5,6.3,6.5,6.85,7.15,7.5,7.0,7.35];
 D.SUNSET = [17.75,18.25,19.6,20.0,20.35,20.65,20.65,20.2,19.55,18.9,17.5,17.4];
 
 D.STARTS = {
-  spring: {m:3, d:10, label:'Spring', sub:'April 10, like Dagr\'s game'},
-  summer: {m:5, d:25, label:'Summer', sub:'June 25: heat and blackberries'},
-  fall:   {m:9, d:1,  label:'Fall',   sub:'October 1: pecans and acorns'},
-  winter: {m:0, d:5,  label:'Winter', sub:'January 5: the hard way'}
+  spring: {m:3, d:10, label:'Spring', sub:'April 10, like Dagr\'s game. An easy start, but summer is coming'},
+  summer: {m:5, d:25, label:'Summer', sub:'June 25: hard. Heat, thirst, and blackberries'},
+  fall:   {m:9, d:1,  label:'Fall',   sub:'October 1: easy. Pecans and acorns, but winter is coming'},
+  winter: {m:0, d:5,  label:'Winter', sub:'January 5: the hardest. Northers, ice, and little to eat'}
 };
+
+// How hard the game is. Hard is the real numbers; Medium and Easy soften them. Every level keeps Dagr's 100 ration bars.
+// dmg: injuries and bites. infect: the odds untreated water or raw food makes you sick. sickLen: how long sickness and
+// venom last. yield: how much a job brings in. catch, snare, hunt: fish, snares and game. raid: night raids on food.
+// ivy: poison ivy. fire, coals: added to the odds of a bow-drill fire and of banked coals. pot: firing a pot.
+// haz: run-ins with dangerous animals. cold, heat: how hard cold and heat hit you.
+D.LEVELS = {
+  easy:   {name:'Easy', sub:'Learning the ropes: softer bites, fewer infections, better luck, gentler cold and heat',
+           dmg:0.6, infect:0.4, sickLen:0.7, yield:1.15, catch:1.2, snare:1.4, hunt:1.15, raid:0.6, ivy:0.6, fire:0.15, coals:0.07, pot:1.15, haz:0.7, cold:0.6, heat:0.7},
+  medium: {name:'Medium', sub:'Real odds with a little slack',
+           dmg:0.8, infect:0.7, sickLen:0.85, yield:1.07, catch:1.1, snare:1.2, hunt:1.07, raid:0.8, ivy:0.8, fire:0.07, coals:0.03, pot:1.07, haz:0.85, cold:0.85, heat:0.85},
+  hard:   {name:'Hard', sub:'As real as it gets',
+           dmg:1, infect:1, sickLen:1, yield:1, catch:1, snare:1, hunt:1, raid:1, ivy:1, fire:0, coals:0, pot:1, haz:1, cold:1, heat:1}
+};
+D.LEVEL_ORDER = ['easy', 'medium', 'hard'];
+// DFW average wind speed by month, mph: spring is the windiest time of year here
+D.WIND = [11,12,13,13,11,10,9,8,8,9,10,11];
 
 D.LOCS = {
   camp:    {name:'The Boulders', icon:'🪨', x:200, y:160,
@@ -884,6 +901,7 @@ const E = {};
 const RES_MAX = 30000;   // kcal of body reserve per person before starvation hits hard
 const HYD_L = 7.5;       // liters of body water a person can lose before it turns deadly
 E.RES_MAX = RES_MAX; E.HYD_L = HYD_L;
+const LV = s => D.LEVELS[s.opt.diff] || D.LEVELS.hard;
 
 /* ---------- seeded random numbers, so a saved game keeps its own dice ---------- */
 function rnd(s){ s.rng = (s.rng + 0x6D2B79F5) >>> 0; let t = s.rng; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
@@ -956,7 +974,32 @@ function genWx(s, di){
     rain = {mm, start, dur, kind};
     sky = kind;
   } else sky = chance(s, 0.5) ? 'clear' : (chance(s, 0.6) ? 'partly' : 'cloudy');
-  return {hi, lo, rain, sky, spill: 0};
+  // wind: a blue norther comes in on a hard north wind, and a thunderstorm gusts
+  let wind = D.WIND[m] + gauss(s) * 3.5;
+  if (front <= -9) wind += rr(s, 10, 18);
+  if (rain && rain.kind === 'storm') wind += 6;
+  wind = Math.max(2, Math.round(wind));
+  return {hi, lo, rain, sky, spill: 0, wind, norther: front <= -9};
+}
+const windToday = s => { const w = s.wx.today.wind; return w != null ? w : 10; };
+// how much of the wind reaches you: the woods break it, walls stop it, the roofed boulders and the lean-to block some
+function windOn(s, work, ctx){
+  let v = windToday(s);
+  if (s.loc === 'camp' && (work === 'sleep' || work === 'rest' || (ctx && ctx.camp))) v *= [1, 0.55, 0.3, 0][s.shelter];
+  if (s.loc === 'oak' || s.loc === 'cedar' || s.loc === 'creek' || s.loc === 'spring') v *= 0.6;
+  return v;
+}
+// what the cold feels like: the National Weather Service wind chill, for 50 °F and below with wind over 3 mph
+function feels(s, work, ctx){
+  const T = tempAt(s, s.t), v = windOn(s, work, ctx);
+  if (T > 50 || v < 3) return T;
+  const k = Math.pow(v, 0.16);
+  return Math.min(T, 35.74 + 0.6215 * T - 35.75 * k + 0.4275 * T * k);
+}
+// snow or ice on the ground: from when it starts falling until midday after
+function icy(s){
+  const w = s.wx.today, p = s.wx.prevRain, cold = r => r && (r.kind === 'snow' || r.kind === 'ice');
+  return (cold(w.rain) && hourOf(s.t) >= w.rain.start) || (cold(p) && hourOf(s.t) < 12);
 }
 function rainNow(s, t){
   const h = hourOf(t), w = s.wx.today;
@@ -1064,8 +1107,8 @@ function perf(s){
   return p;
 }
 E.perf = perf;
-function yieldM(s){ return perf(s) * (s.P > 1 ? 1.8 : 1) * (s.opt.diff === 'easy' ? 1.15 : 1); }
-function dmgM(s){ return s.opt.diff === 'easy' ? 0.6 : 1; }
+function yieldM(s){ return perf(s) * (s.P > 1 ? 1.8 : 1) * LV(s).yield; }
+function dmgM(s){ return LV(s).dmg; }
 function hurt(s, amt, cause){
   if (s.dead || amt <= 0) return;
   s.body.hp -= amt;
@@ -1089,7 +1132,8 @@ function insulation(s, work, ctx){
   if (atCamp){ if (s.fire.st === 'lit') v += 0.25; else if (s.fire.st === 'banked') v += 0.05; }
   return Math.min(0.95, v);
 }
-function coldStress(s, work, ctx){ return Math.max(0, 50 - tempAt(s, s.t)) * (1 - insulation(s, work, ctx)) * (1 + 0.8 * s.cond.wet); }
+// Wet clothes lose most of their warmth, so being wet in the cold more than doubles the stress.
+function coldStress(s, work, ctx){ return Math.max(0, 50 - feels(s, work, ctx)) * (1 - insulation(s, work, ctx)) * (1 + 1.4 * s.cond.wet) * LV(s).cold; }
 function sleepQ(s){
   const atCamp = s.loc === 'camp';
   let q = 0.42;
@@ -1097,7 +1141,8 @@ function sleepQ(s){
   const rain = rainNow(s, s.t);
   if (rain && !(atCamp && s.shelter >= 1)) q -= 0.25;
   const T = tempAt(s, s.t), ins = insulation(s, 'sleep');
-  if (T < 55) q -= Math.max(0, (55 - T) / 60) * (1 - ins);
+  const Tf = feels(s, 'sleep', {camp: atCamp});
+  if (Tf < 55) q -= Math.max(0, (55 - Tf) / 60) * (1 - ins);
   if (T > 85) q -= 0.1;
   if (s.cond.rash > 0) q -= 0.18;
   if (s.cond.sick > 0) q -= 0.15;
@@ -1131,14 +1176,14 @@ function stepBody(s, dt, work, ctx){
   }
   // water lost per person per hour
   let wl = {sleep: 0.045, rest: 0.09, light: 0.11, moderate: 0.15, heavy: 0.22}[work] || 0.11;
-  if (T > 85) wl *= T > 100 ? 1.9 : T > 95 ? 1.6 : 1.3;
+  if (T > 85) wl *= 1 + ((T > 100 ? 1.9 : T > 95 ? 1.6 : 1.3) - 1) * LV(s).heat;
   if (c.sick > 0) wl += 0.09;
   if (c.protein > 0) wl += 0.04;
   b.hyd = clamp(b.hyd - wl / HYD_L * 100 * dt, 0, 100);
   // calories burned per person per hour (Dagr's 15 bars a day = about 2,250 kcal)
   let kc = 70.8 + ({sleep: -10, rest: 5, light: 25, moderate: 60, heavy: 110}[work] || 25);
   const cs = coldStress(s, work, ctx);
-  if (cs > 0) kc += Math.min(60, cs * 2);
+  if (cs > 0) kc += Math.min(160, cs * 3.2);   // shivering: the body burns fuel to stay warm
   if (c.sick > 0) kc += 10;
   b.res = Math.max(0, b.res - kc * dt);
   // energy
@@ -1147,7 +1192,7 @@ function stepBody(s, dt, work, ctx){
   else if (work === 'rest') de = 5;
   else de = -({light: 3, moderate: 5, heavy: 8}[work] || 3);
   if (de > 0){ if (c.sick > 0) de *= 0.6; if (c.venom > 0) de *= 0.6; if (c.protein > 0) de *= 0.8; if (b.res <= 0) de *= 0.6; }
-  else { if (c.wet > 0.5 && T < 60) de *= 1.15; if (T > 95) de *= 1.25; }
+  else { if (c.wet > 0.5 && T < 60) de *= 1.15; if (cs > 4) de *= 1.1; if (T > 95) de *= 1 + 0.25 * LV(s).heat; }
   b.en = clamp(b.en + de * dt, 0, 100);
   // damage
   const dm = dmgM(s);
@@ -1156,7 +1201,7 @@ function stepBody(s, dt, work, ctx){
   if (b.res <= 0) hurt(s, 0.3 * dt, 'starvation');
   else if (b.res < RES_MAX * 0.1) hurt(s, 0.08 * dt, 'starvation');
   if (cs > 0) hurt(s, cs / 40 * 0.9 * dt * dm, 'hypothermia');
-  if (T > 95 && (work === 'moderate' || work === 'heavy') && b.hyd < 40) hurt(s, 0.8 * dt * dm, 'heat');
+  if (T > 95 && (work === 'moderate' || work === 'heavy') && b.hyd < 40) hurt(s, 0.8 * dt * dm * LV(s).heat, 'heat');
   if (c.sick > 0) hurt(s, 0.08 * dt, 'illness');
   if (c.venom > 0) hurt(s, (c.venomT < 12 ? 0.35 : 0.05) * dt * dm, 'venom');
   if (s.dead) return;
@@ -1167,7 +1212,7 @@ function stepBody(s, dt, work, ctx){
   if (c.inc > 0){
     c.inc -= dt;
     if (c.inc <= 0){
-      c.inc = 0; c.sick = rr(s, 72, 144) * (s.opt.diff === 'easy' ? 0.7 : 1);
+      c.inc = 0; c.sick = rr(s, 72, 144) * LV(s).sickLen;
       msg(s, 'Stomach cramps, fever, and diarrhea: a gut infection, almost certainly from untreated water. Drink extra, rest, and ride it out.');
       unlock(s, 'giardia', null);
     }
@@ -1320,13 +1365,13 @@ function stepNight(s, dt){
   const pn = p => 1 - Math.pow(1 - clamp(p, 0, 0.99), k);
   const m = monthNow(s);
   if (s.trap.set && s.world.flood <= 0 && s.trap.catch.length < 8){
-    let p = (s.trap.bait ? 0.75 : 0.5) * dens(s, 'riverfish') * Math.sqrt(aware(s, 'riverfish')) * (s.opt.diff === 'easy' ? 1.2 : 1) * (s.P > 1 ? 1.6 : 1);
+    let p = (s.trap.bait ? 0.75 : 0.5) * dens(s, 'riverfish') * Math.sqrt(aware(s, 'riverfish')) * LV(s).catch * (s.P > 1 ? 1.6 : 1);
     if ([11, 0, 1].indexOf(m) >= 0) p *= 0.45;
     if (chance(s, pn(p))) trapCatch(s);
   }
   if (s.snare.set && s.tools.snares > 0 && s.snare.catches.length < s.tools.snares){
     const sp = s.snare.loc === 'prairie' ? 'rabbit' : (chance(s, 0.5) ? 'rabbit' : 'squirrel');
-    const each = 0.09 * dens(s, sp) * aware(s, sp) * (s.opt.diff === 'easy' ? 1.4 : 1);
+    const each = 0.09 * dens(s, sp) * aware(s, sp) * LV(s).snare;
     const p = 1 - Math.pow(1 - clamp(each, 0, 0.9), s.tools.snares - s.snare.catches.length);
     if (chance(s, pn(p)) && harvest(s, sp)){
       s.snare.catches.push({sp, t: s.t});
@@ -1359,7 +1404,7 @@ function raidCheck(s, frac){
   let p = smelly ? 0.4 : fruit ? 0.25 : 0.12;
   if (s.fire.st === 'lit') p *= 0.5; else if (s.fire.st === 'banked') p *= 0.8;
   if (s.shelter >= 3) p *= 0.5;
-  if (s.opt.diff === 'easy') p *= 0.6;
+  p *= LV(s).raid;
   const wolves = s.world.carcass > 0 && s.fire.st !== 'lit' && smelly;
   const r = rnd(s);
   const who = wolves && r < 0.5 ? 'wolves' : r < 0.45 ? 'raccoon' : r < 0.7 ? 'opossum' : (m >= 4 && m <= 9 && r > 0.92) ? 'bear' : 'coyote';
@@ -1420,6 +1465,7 @@ function newDay(s){
   st.woodC += 0.8; st.woodO += 2; st.woodK += 2; st.yucca += 0.4; st.poles += 0.12;
   if (old.rain && old.rain.kind === 'storm'){ st.woodC += 3; st.woodO += 6; st.woodK += 6; }
   if (old.rain && old.rain.kind === 'ice'){ st.woodO += 12; st.woodK += 12; msg(s, 'The ice storm snapped branches all over the woods. Plenty of firewood now.'); }
+  if (s.wx.today.norther) msg(s, 'A blue norther blows in overnight. The wind swings to the north and the cold cuts through your clothes. Stay dry, keep the fire fed, and keep out of the wind.');
   st.woodC = Math.min(35, st.woodC); st.woodO = Math.min(70, st.woodO); st.woodK = Math.min(70, st.woodK);
   st.yucca = Math.min(50, st.yucca); st.poles = Math.min(45, st.poles);
   const y = s.day;
@@ -1464,7 +1510,7 @@ E.newGame = function(opt){
   const seed = (opt.seed != null ? opt.seed : Math.floor(Math.random() * 4294967295)) >>> 0;
   const s = {
     v: 1, seed, rng: seed,
-    opt: {party: duo ? 'duo' : 'solo', rations: opt.rations === 'shared' ? 'shared' : 'each', diff: opt.diff === 'easy' ? 'easy' : 'real', start},
+    opt: {party: duo ? 'duo' : 'solo', rations: opt.rations === 'shared' ? 'shared' : 'each', diff: D.LEVELS[opt.diff] ? opt.diff : opt.diff === 'real' ? 'hard' : 'medium', start},
     P: duo ? 2 : 1,
     doy0: CUM[st.m] + st.d - 1,
     t: 0, t0: 0, loc: 'camp',
@@ -1562,7 +1608,7 @@ function gainKcal(s, each, lean){
 }
 function infect(s, p){
   if (s.cond.sick > 0 || s.cond.inc > 0) return false;
-  if (s.opt.diff === 'easy') p *= 0.4;
+  p *= LV(s).infect;
   if (chance(s, p)){ s.cond.inc = rr(s, 24, 60); return true; }
   return false;
 }
@@ -1699,6 +1745,7 @@ function travelMins(s, k){
   let m = Math.max(10, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 0.28 / 5) * 5);
   if (s.cond.sprain > 0) m *= 1.6;
   if (isDark(s)) m *= 1.5;
+  if (icy(s)) m *= 1.35;
   return Math.round(m);
 }
 E.travelList = function(s){
@@ -1724,7 +1771,10 @@ E.travel = function(s, k){
   if (s.dead) return finish(s, R, snap);
   s.loc = k;
   R.lines.push('A ' + mins + '-minute walk' + (dark ? ' in the dark' : '') + '.');
-  if (dark && s.cond.sprain <= 0 && chance(s, 0.06)){
+  if (icy(s) && s.cond.sprain <= 0 && chance(s, 0.05)){
+    s.cond.sprain = 48; hurt(s, 4 * dmgM(s), 'wound');
+    R.lines.push('Your feet go out from under you on the ice. A twisted ankle: walking will be slow for a couple of days.');
+  } else if (dark && s.cond.sprain <= 0 && chance(s, 0.06)){
     s.cond.sprain = 48; hurt(s, 4 * dmgM(s), 'wound');
     R.lines.push('In the dark you step in a hole and roll your ankle. Walking will be slow for a couple of days.');
   }
@@ -1758,14 +1808,14 @@ function gatherWood(s, R, key, lo, hi, text){
   s.stock[key] -= n; add(s, R, 'wood', n); R.lines.push(text);
 }
 function ivyCheck(s, R, p){
-  if (s.cond.rash <= 0 && chance(s, p * (s.opt.diff === 'easy' ? 0.6 : 1))){
+  if (s.cond.rash <= 0 && chance(s, p * LV(s).ivy)){
     s.cond.rash = rr(s, 96, 168); unlock(s, 'ivy', R);
     R.lines.push('Later your forearms start to itch and blister. Some of those vines were poison ivy. It will take about a week to clear up.');
   }
 }
 function bowstring(s){ return s.inv.fiber > 0 ? 'fiber' : s.inv.cord > 0 ? 'cord' : s.gear.laces > 0 ? 'laces' : null; }
 function fireChance(s){
-  let p = s.opt.diff === 'easy' ? 0.5 : 0.35;
+  let p = 0.35 + LV(s).fire;
   p += Math.min(0.45, 0.12 * s.skill.fireOK) + Math.min(0.2, 0.05 * s.skill.fireFail);
   p *= perf(s);
   if (!s.tools.woodstore){ if (rainNow(s, s.t)) p *= 0.7; else if (rainedEarlierToday(s)) p *= 0.85; }
@@ -1867,7 +1917,7 @@ act({id: 'uncover', loc: 'camp', name: 'Uncover the banked coals', icon: '🔥',
     const hrs = s.t - s.fire.at;
     let p = hrs <= 14 ? 0.88 : hrs <= 20 ? 0.45 : 0.05;
     if (s.fire.wet) p *= 0.6;
-    if (s.opt.diff === 'easy') p = Math.min(0.97, p + 0.07);
+    p = Math.min(0.97, p + LV(s).coals);
     if (chance(s, p)){
       s.fire = {st: 'lit', fuel: 1.5, at: s.t, wet: false};
       if (s.inv.bark > 0) add(s, R, 'bark', -1); else { add(s, R, 'wood', -1); s.fire.fuel = woodHours(s); }
@@ -2153,7 +2203,7 @@ act({id: 'spear', loc: 'pond', name: 'Spear fish', icon: '🔱', h: 1.5, work: '
     pass(s, 1.5, 'moderate', R, {wading: true}); if (s.dead) return;
     const m = monthNow(s), h = hourOf(s.t);
     const warmMid = m >= 4 && m <= 8 && h > 11 && h < 17;
-    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * (s.P > 1 ? 1.5 : 1) * (s.opt.diff === 'easy' ? 1.2 : 1) * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1);
+    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * (s.P > 1 ? 1.5 : 1) * LV(s).catch * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1);
     s.skill.spear++;
     const got = [];
     for (let i = 0; i < 6; i++){
@@ -2275,7 +2325,7 @@ function huntRoll(s, loc, bigOnly){
   const tf = twilight(s) ? 1.6 : (h > 11 && h < 15 ? 0.6 : 1);
   const scare = (s.world.scare[loc] || 0) > s.t ? 0.35 : 1;
   const wet = rainNow(s, s.t) ? 0.75 : 1;
-  const base = tf * scare * wet * Math.sqrt(perf(s)) * (s.P > 1 ? 1.35 : 1) * (s.opt.diff === 'easy' ? 1.15 : 1);
+  const base = tf * scare * wet * Math.sqrt(perf(s)) * (s.P > 1 ? 1.35 : 1) * LV(s).hunt;
   const list = D.HUNT[loc].slice();
   if (s.world.pigeons > 0 && loc !== 'prairie') list.unshift(['pigeon', 0.7]);
   for (const [sp, p0] of list){
@@ -2405,7 +2455,7 @@ function snakeBite(s, R, id){
   if (chance(s, 0.22)){ hurt(s, rr(s, 2, 4) * dmgM(s), 'venom'); R.lines.push('It strikes your leg! Two fang marks, but no burning. A dry bite with no venom. Lucky.'); return; }
   hurt(s, rr(s, 20, 34) * dmgM(s), 'venom');
   if (s.dead) return;
-  s.cond.venom = rr(s, 72, 120) * (s.opt.diff === 'easy' ? 0.7 : 1); s.cond.venomT = 0;
+  s.cond.venom = rr(s, 72, 120) * LV(s).sickLen; s.cond.venomT = 0;
   R.lines.push('It strikes! The bite burns like fire and the swelling spreads fast. There\'s no antivenom here: keep still, keep the bite about level with your heart, don\'t cut or suck it, drink water, and wait it out. The first day is the dangerous part.');
 }
 function encResolve(s, R, k){
@@ -2498,7 +2548,7 @@ function rollHazards(s, a, R){
   if (s.dead || s.pending || a.haz === false) return;
   const h = actHours(s, a); if (!h) return;
   const m = monthNow(s), tw = twilight(s), dark = isDark(s), hr = hourOf(s.t);
-  const easy = s.opt.diff === 'easy' ? 0.7 : 1;
+  const easy = LV(s).haz;
   for (const z of shuffle(s, HAZ)){
     if (z.locs.indexOf(s.loc) < 0) continue;
     if (z.months && z.months.indexOf(m) < 0) continue;
@@ -2649,7 +2699,7 @@ function complete(s, R, r){
   if (r.id === 'bow') ach(s, R, 'bow');
   if (r.special === 'pot'){ s.pot.stage = 'drying'; s.pot.dried = 0; R.lines.push('You coil and smooth a pot from river clay, then set it under the roof to dry. Three days, and don\'t rush it.'); return; }
   if (r.special === 'firepot'){
-    const p = clamp(0.55 + 0.1 * s.pot.tries, 0, 0.85) * (s.opt.diff === 'easy' ? 1.15 : 1);
+    const p = clamp(0.55 + 0.1 * s.pot.tries, 0, 0.85) * LV(s).pot;
     if (chance(s, p)){ s.tools.pot = true; s.pot.stage = 'none'; ach(s, R, 'pot'); R.lines.push('You rake it out of the coals and tap it. It rings like a bell. This pot can sit right in the fire and boil 6 liters an hour.'); }
     else { s.pot.stage = 'none'; s.pot.tries++; R.lines.push('CRACK. A pocket of steam split the pot apart. Warm it slower next time. You\'ll need to shape a new one.'); }
     return;
@@ -2764,7 +2814,8 @@ function chips(s){
   if (c.rash > 0) out.push(['Poison ivy rash', 'warn']);
   if (c.sprain > 0) out.push(['Sprained ankle', 'warn']);
   if (c.wet > 0.3) out.push(['Wet', 'warn']);
-  if (coldStress(s, 'rest', {camp: s.loc === 'camp'}) > 4) out.push(['Cold', 'warn']);
+  const cold = coldStress(s, 'rest', {camp: s.loc === 'camp'});
+  if (cold > 14) out.push(['Freezing', 'bad']); else if (cold > 4) out.push(['Cold', 'warn']);
   if (tempAt(s, s.t) > 95) out.push(['Heat', 'warn']);
   return out.map(x => ({label: x[0], tone: x[1]}));
 }
@@ -2772,7 +2823,7 @@ E.hud = function(s){
   const d = today(s), h = hourOf(s.t), rain = rainNow(s, s.t), dark = isDark(s);
   const sky = rain ? rain.kind : s.wx.today.sky, moon = moonPhase(s);
   return {day: dayIdx(s.t) + 1, date: D.MONTHS[d.m] + ' ' + d.d, month: d.m, dom: d.d, season: D.SEASON_OF[d.m], time: clock(h), hour: h,
-    temp: Math.round(tempAt(s, s.t)), sky, skyIcon: skyIcon(sky, dark, moon), skyWord: skyWord(sky), raining: !!rain, dark, evening: isEvening(s),
+    temp: Math.round(tempAt(s, s.t)), feels: Math.round(feels(s, 'light', {})), wind: windToday(s), norther: !!s.wx.today.norther, sky, skyIcon: skyIcon(sky, dark, moon), skyWord: skyWord(sky), raining: !!rain, dark, evening: isEvening(s),
     sunrise: D.SUNRISE[d.m], sunset: D.SUNSET[d.m], moon,
     hp: s.body.hp, hyd: s.body.hyd, food: foodPct(s), en: s.body.en, chips: chips(s), loc: s.loc,
     fire: s.fire.st, shelter: s.shelter, spring: s.found.spring, party: s.P, dead: s.dead};
@@ -2793,7 +2844,7 @@ E.campInfo = function(s){
   if (s.pot.stage === 'dry') L.push(['🏺', 'Clay pot is dry and ready to fire.']);
   for (const id in s.proj){ const r = RMAP[id]; L.push([r.icon, r.name + ': ' + Math.round(s.proj[id].done / s.proj[id].total * 100) + '% done.']); }
   const n = s.wx.next;
-  L.push([skyIcon(n.rain ? n.rain.kind : n.sky, false), 'The sky says tomorrow: ' + skyWord(n.rain ? n.rain.kind : n.sky).toLowerCase() + ', ' + n.hi + '° by day, ' + n.lo + '° at night.']);
+  L.push([skyIcon(n.rain ? n.rain.kind : n.sky, false), 'The sky says tomorrow: ' + skyWord(n.rain ? n.rain.kind : n.sky).toLowerCase() + ', ' + n.hi + '° by day, ' + n.lo + '° at night' + (n.norther ? ', and a norther coming: bitter wind out of the north.' : '.')]);
   return L;
 };
 E.locInfo = function(s){
@@ -3155,6 +3206,8 @@ E.load = function(str){
     if (s.pin != null && !Object.prototype.hasOwnProperty.call(RMAP, s.pin)) delete s.pin;
     if (s.map != null && !(object(s.map) && Number.isInteger(s.map.x) && Number.isInteger(s.map.y) && s.map.x >= 0 && s.map.x < 48 && s.map.y >= 0 && s.map.y < 36)) delete s.map;
     for (const id of ['workbench','woodstore','cache','hearth','lookout']) if (!(id in s.tools)) s.tools[id] = false;
+    if (s.opt.diff === 'real') s.opt.diff = 'hard';   // the old "Real" level is today's Hard
+    if (!D.LEVELS[s.opt.diff]) s.opt.diff = 'medium';
     return s;
   } catch (e) { return null; }
 };
@@ -5365,8 +5418,9 @@ let S = null, tab = 'here', jtab = 'log', sel = null, seenGuide = 0, seenAch = 0
 let view = store.get(KEY.view) === 'scene' ? 'scene' : 'map';
 if (window.World) World.gb(store.get('clearing.gb.v1') === '1');
 let craftGroup = 'All', planTrail = [], planOpen = '';
-let opt = {start: 'spring', party: 'solo', rations: 'each', diff: 'real'};
+let opt = {start: 'spring', party: 'solo', rations: 'each', diff: 'medium'};
 try { const o = JSON.parse(store.get(KEY.opt) || 'null'); if (o) opt = Object.assign(opt, o); } catch (e) {}
+if (opt.diff === 'real') opt.diff = 'hard'; if (!D.LEVELS[opt.diff]) opt.diff = 'medium';
 const savedTheme = store.get(KEY.theme);
 if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.dataset.theme = savedTheme;
 
@@ -5577,7 +5631,7 @@ function titleScreen(){
 <div class="optset"><p>When do you arrive?</p>${choice('start', Object.keys(D.STARTS).map(k => [k, D.STARTS[k].label, D.STARTS[k].sub]))}</div>
 <div class="optset"><p>Who's out there?</p>${choice('party', [['solo', 'Just you', 'Every job is yours'], ['duo', 'You and a partner', 'Two sets of hands, two mouths to feed']])}</div>
 ${opt.party === 'duo' ? `<div class="optset"><p>Ration bars</p>${choice('rations', [['each', '100 each', 'As in Dagr\'s game'], ['shared', '100 to share', 'Harder: half the food']])}</div>` : ''}
-<div class="optset"><p>How real?</p>${choice('diff', [['real', 'Real', 'Real odds and real consequences'], ['easy', 'Gentler', 'Fewer infections, softer bites, better luck']])}</div>
+<div class="optset"><p>How hard?</p>${choice('diff', D.LEVEL_ORDER.map(k => [k, D.LEVELS[k].name, D.LEVELS[k].sub]))}</div>
 <div class="startbtns">
 ${savedS && !savedS.dead ? `<button type="button" class="btn hot" id="resume">Keep playing: day ${E.hud(savedS).day} at ${esc(D.LOCS[savedS.loc].name)}</button>` : ''}
 <button type="button" class="btn${savedS && !savedS.dead ? '' : ' hot'}" id="newgame">Start a new game</button>
@@ -5626,7 +5680,7 @@ function render(){
   // a rainy day isn't always raining: show clouds between showers, and say whether more is coming
   let icon = h.skyIcon, word = h.skyWord;
   if (!h.raining && ['rain', 'storm', 'snow', 'ice'].indexOf(h.sky) >= 0){ const r = S.wx.today.rain; icon = '☁️'; word = r && h.hour < r.start ? h.skyWord + ' on the way' : 'Clouds breaking up'; }
-  const wx = $('#wx'); wx.textContent = icon + ' ' + h.temp + '°F, ' + h.date; wx.title = word; wx.setAttribute('aria-label', h.date + ', ' + h.temp + ' degrees, ' + word.toLowerCase());
+  const wx = $('#wx'); wx.textContent = icon + ' ' + h.temp + '°F' + (h.feels < h.temp - 2 ? ' (feels ' + h.feels + '°)' : '') + ', ' + h.date; wx.title = word; wx.setAttribute('aria-label', h.date + ', ' + h.temp + ' degrees, ' + word.toLowerCase());
   renderDaylight(h);
   renderVitals(h);
   $('#chips').innerHTML = h.chips.map(c => `<span class="chip ${c.tone}">${esc(c.label)}</span>`).join('');
