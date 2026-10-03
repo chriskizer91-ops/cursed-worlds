@@ -1,7 +1,7 @@
 // Plays many games with no browser, the way a player who always follows the Next step card would,
 // and checks after every move that nothing has gone wrong: no broken numbers, no dead ends, no crashes.
 //
-//   node tools/autoplay.mjs                 # 48 games, every start, solo and duo, real and gentler
+//   node tools/autoplay.mjs                 # 48 games, every start, solo and duo, every difficulty
 //   node tools/autoplay.mjs --games 200 --days 400
 //
 // It ends with "all good" when nothing went wrong.

@@ -1,0 +1,28 @@
+# CLAUDE.md
+
+## What this is
+
+Games Chris builds from what his son Dagr describes. Each game gets its own folder. The first is
+`the-clearing-stranded/` (Dagr calls it Stranded); its own `README.md` says how it works and how to check it.
+
+## Rules
+
+- This is the only repository to write to. These are read-only references; reuse their art, 3D models,
+  tools and techniques, but never commit to them: `20-min`, `New-game`, `follow-me-down-witch-way`,
+  `building-with-assets-`, `envoi-on-the-longest-night`, `what_the_map_forgot`.
+- When copying art or code from one of them, name the source repo and path in the commit message.
+- What Dagr wants for a game always outranks anything in another repo. Never bring in another game's
+  lore, tone rules or mechanics over his.
+- Keep each game's first version untouched in its `versions/` folder.
+- Every change ends with something Chris can open on his phone: a playable link or screenshots.
+- Chris isn't a programmer. Write anything he reads in plain words.
+- When new art is needed, write the image prompts as markdown files in the game's `docs/art-requests/`
+  for Chris to generate.
+
+## Stranded
+
+- It is meant to be hard and to teach real survival. Spring and fall are the easiest seasons, summer is
+  harder, winter is hardest. Easy, Medium and Hard scale the whole game; the seasons differ inside each.
+- No quest or action can be won by pressing one button over and over. Quests must say where to go and what to do.
+- The robot players (`tools/autoplay.mjs`) and the phone test (`tools/phone-check.mjs`) must both end
+  with "all good" before a push.
