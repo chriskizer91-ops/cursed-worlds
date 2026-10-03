@@ -702,7 +702,7 @@ D.RECIPES = [
   {id:'roof', name:'Roof the boulder triangle', icon:'🏕️', group:'Shelter', hours:4, work:'heavy', planks:true,
    need:{poles:8, cord:3}, shelter:2, desc:'Move the tarp up across all three boulders. Stone walls, a real roof, and room for the fire at the open end.'},
   {id:'walls', name:'Wattle-and-daub walls', icon:'🧱', group:'Shelter', hours:10, session:2.5, work:'heavy',
-   need:{poles:12, clay:6, grass:6}, shelter:3, desc:'Weave cedar withes across the gaps and pack them with clay and grass. Warm in winter and keeps animals out.'},
+   need:{poles:12, clay:6, grass:6}, shelter:3, desc:'Weave cedar withes across the gaps and pack them with clay and grass. Warm in winter, and it keeps most animals out.'},
   {id:'bedding', name:'Make a grass bed', icon:'🛏️', group:'Shelter', hours:1, work:'light',
    need:{grass:4}, flag:'bedding', desc:'Insulation from the ground, where you lose the most heat at night.'},
   {id:'blanket', name:'Sew a hide blanket', icon:'🧣', group:'Shelter', hours:2, work:'light',
@@ -773,7 +773,7 @@ D.SOURCES = {
   clay:    {loc:'river',   act:'clay',     text:'Dig clay'},
   cane:    {loc:'river',   act:'cane',     text:'Cut river cane'},
   grubs:   {loc:'cedar',   act:'grubs',    text:'Dig for grubs'},
-  hides:   {loc:'oak',     act:'hunt_oak', text:'Hunt for hides', note:'Deer, hogs, and other big game give hides. No hunt is a sure thing.'},
+  hides:   {loc:'oak',     act:'hunt_oak', text:'Hunt for hides', note:'Deer, raccoons, and other big game give hides. No hunt is a sure thing.'},
   feathers:{loc:'oak',     act:'hunt_oak', text:'Hunt for birds', note:'Turkeys give feathers, when you can find them.'},
   stave:   {loc:'creek',   act:'stave',    text:'Cut a bois d\'arc stave', note:'Explore downstream first to find bois d\'arc.'}
 };
@@ -1605,13 +1605,15 @@ E.eatBars = function(s, n){
   n = n || 1;
   const need = n * s.P;
   if (s.gear.bars < need) return errR(s.gear.bars ? 'Not enough bars left for that.' : 'The ration bars are gone.');
+  const asked = n;
   if (RES_MAX - s.body.res < 60) return errR('You\'re full.');
   if (4500 - s.day.kcal < 60) return errR('You can\'t eat another bite today.');
+  n = Math.max(1, Math.min(n, Math.floor(Math.min(4500 - s.day.kcal, RES_MAX - s.body.res + 150) / D.BAR_KCAL)));
   const snap = snapshot(s); begin(s);
   const R = newR('Ration bars', '🍫');
-  add(s, R, 'bars', -need); s.stats.bars += need;
+  const used = n * s.P; add(s, R, 'bars', -used); s.stats.bars += used;
   gainKcal(s, n * D.BAR_KCAL, false);
-  R.lines.push((s.P > 1 ? 'You each eat ' : 'You eat ') + n + ' bar' + (n > 1 ? 's' : '') + ' (' + n * D.BAR_KCAL + ' Calories). ' + s.gear.bars + ' bars left.');
+  R.lines.push((s.P > 1 ? 'You each eat ' : 'You eat ') + n + ' bar' + (n > 1 ? 's' : '') + ' (' + n * D.BAR_KCAL + ' Calories). ' + (n < asked ? 'That\'s all you can manage right now. ' : '') + s.gear.bars + ' bars left.');
   return finish(s, R, snap);
 };
 
@@ -1723,7 +1725,7 @@ E.travel = function(s, k){
   s.loc = k;
   R.lines.push('A ' + mins + '-minute walk' + (dark ? ' in the dark' : '') + '.');
   if (dark && s.cond.sprain <= 0 && chance(s, 0.06)){
-    s.cond.sprain = 48; hurt(s, 4, 'wound');
+    s.cond.sprain = 48; hurt(s, 4 * dmgM(s), 'wound');
     R.lines.push('In the dark you step in a hole and roll your ankle. Walking will be slow for a couple of days.');
   }
   if (!s.visited[k]){
@@ -1975,7 +1977,7 @@ function collectSnares(s, R){
     const G = D.GAME[c.sp]; addFood(s, R, G.food, rr(s, G.kg[0], G.kg[1])); got.push(c.sp);
   }
   s.snare.catches = [];
-  if (s.snare.broke){ add(s, R, 'snares', -s.snare.broke); s.snare.broke = 0; R.lines.push('One snare was snapped and ruined.'); }
+  if (s.snare.broke){ const nb = s.snare.broke; add(s, R, 'snares', -nb); s.snare.broke = 0; R.lines.push(nb > 1 ? nb + ' snares were snapped and ruined.' : 'One snare was snapped and ruined.'); }
   if (got.length){ s.stats.game += got.length; ach(s, R, 'hunt'); R.lines.push('Caught: ' + got.map(k => D.GAME[k].name).join(', ') + '.'); }
   if (lost.length) R.lines.push('Something got to ' + (lost.length > 1 ? lost.length + ' of your catches' : 'a catch') + ' before you did: just fur and bones.');
   if (!got.length && !lost.length) R.lines.push('Nothing yet. One loop is sprung and empty, so you reset it.');
@@ -2087,17 +2089,17 @@ act({id: 'drink_seep', loc: 'river', name: 'Drink from your seep well', icon: '�
   show: s => s.tools.seep, can: thirsty, sub: () => 'Filtered through sand. Much safer, not perfect.', run(s, R){ drinkSource(s, R, 0.008); }});
 act({id: 'fill_seep', loc: 'river', name: 'Fill containers at the seep well', icon: '🎒', h: 0.25, work: 'light', dark: 'ok',
   show: s => s.tools.seep, can: canFill, sub: () => 'Sand-filtered water. Still worth boiling.', run(s, R){ fillSource(s, R, 0.008); }});
-act({id: 'trapset', loc: 'river', name: 'Set the fish trap', icon: '🧺', h: 0.5, work: 'light',
+act({id: 'trapset', loc: 'river', name: 'Set the fish trap', icon: '🧺', h: 0.5, work: 'light', wading: true,
   show: s => s.tools.fishtrap && !s.trap.set,
   can: s => s.world.flood > 0 ? 'The river is too high and fast right now.' : true,
   sub: s => s.inv.grubs >= 2 ? 'You have grubs for bait. Baited traps catch more, especially catfish.' : 'No bait. Grubs from the Cedar Stand make better catches.',
   run(s, R){
     pass(s, 0.5, 'light', R, {wading: true}); if (s.dead) return;
     s.trap = {set: true, bait: false, catch: [], at: s.t};
-    if (s.inv.grubs >= 2){ add(s, R, 'grubs', -2); s.trap.bait = true; }
+    if (s.inv.grubs >= 2){ add(s, R, 'grubs', -2); s.trap.bait = true; s.trap.baited = true; }
     R.lines.push('You wedge the trap into the current behind a snag and weight it with rocks.' + (s.trap.bait ? ' Grubs inside for bait.' : ''));
   }});
-act({id: 'trapcheck', loc: 'river', name: 'Check the fish trap', icon: '🧺', h: 0.5, work: 'light',
+act({id: 'trapcheck', loc: 'river', name: 'Check the fish trap', icon: '🧺', h: 0.5, work: 'light', wading: true,
   show: s => s.trap.set,
   sub: s => 'Last checked ' + ago(s, s.trap.at) + '. Fish swim in at night.',
   run(s, R){
@@ -2107,9 +2109,10 @@ act({id: 'trapcheck', loc: 'river', name: 'Check the fish trap', icon: '🧺', h
       for (const f of c) addFood(s, R, f.key, f.kg);
       s.stats.fish += c.length; ach(s, R, 'fish');
       R.lines.push('You haul up the trap, heavy and thrashing: ' + c.length + ' fish!');
-    } else R.lines.push('Empty. ' + (s.trap.bait ? 'The bait is still inside.' : 'The bait is gone.'));
+    } else R.lines.push('Empty.' + (s.trap.bait ? ' The bait is still inside.' : s.trap.baited ? ' The bait is gone.' : ''));
     s.trap.catch = []; s.trap.at = s.t;
-    if (!s.trap.bait && s.inv.grubs >= 2){ add(s, R, 'grubs', -2); s.trap.bait = true; R.lines.push('You rebait it with grubs.'); }
+    s.trap.baited = s.trap.bait;
+    if (!s.trap.bait && s.inv.grubs >= 2){ add(s, R, 'grubs', -2); s.trap.bait = s.trap.baited = true; R.lines.push('You rebait it with grubs.'); }
   }});
 function cattails(s, R, mult){
   pass(s, 1.5, 'moderate', R, {wading: true}); if (s.dead) return;
@@ -2129,7 +2132,7 @@ act({id: 'crawfish', loc: 'river', name: 'Catch crawfish and mussels', icon: '�
     addFood(s, R, 'crawfish', rr(s, 0.05, 0.15) * ym); addFood(s, R, 'mussel', rr(s, 0.15, 0.4) * ym);
     R.lines.push('You dig crawfish out of their mud chimneys and feel for mussels with your toes.');
   }});
-act({id: 'clay', loc: 'river', name: 'Dig clay', icon: '🟤', h: 1, work: 'heavy',
+act({id: 'clay', loc: 'river', name: 'Dig clay', icon: '🟤', h: 1, work: 'heavy', wading: true,
   sub: () => 'For a clay pot and for daubing walls.',
   run(s, R){ pass(s, 1, 'heavy', R, {wading: true}); if (s.dead) return; add(s, R, 'clay', Math.max(1, Math.round(rr(s, 2, 4) * yieldM(s)))); R.lines.push('You dig slick gray clay out of the cut bank and knead the grit out of it.'); }});
 act({id: 'cane', loc: 'river', name: 'Cut river cane', icon: '🎋', h: 1, work: 'moderate',
@@ -2190,7 +2193,7 @@ act({id: 'turtle', loc: 'pond', name: 'Feel for turtles', icon: '🐢', h: 1, wo
     if (r < 0.22){
       addFood(s, R, 'turtle', rr(s, 1.2, 2.4)); unlock(s, 'snapper', R);
       R.lines.push('Your foot bumps a hard shell in the mud. A snapping turtle! You grab it by the back of the shell and haul it out.');
-      if (chance(s, 0.12)){ hurt(s, rr(s, 6, 10), 'wound'); R.lines.push('It got your hand before you got it. That hurts.'); }
+      if (chance(s, 0.12)){ hurt(s, rr(s, 6, 10) * dmgM(s), 'wound'); R.lines.push('It got your hand before you got it. That hurts.'); }
     } else if (r < 0.5){ addFood(s, R, 'turtle', rr(s, 0.3, 0.5)); R.lines.push('You catch a slider sunning on a log.'); }
     else R.lines.push('Nothing but muck and sticks.');
   }});
@@ -2338,10 +2341,14 @@ function huntResolve(s, R, k){
   if (k === 'shoot'){ add(s, R, 'rounds', -1); s.world.scare[p.loc] = s.t + 18; }
   else {
     s.world.scare[p.loc] = Math.max(s.world.scare[p.loc] || 0, s.t + 3);
-    if (chance(s, 0.35)){ add(s, R, 'arrows', -1); R.lines.push('The arrow is lost in the brush.'); }
   }
-  if (!chance(s, clamp(hit, 0.05, 0.97))){
-    R.lines.push(k === 'shoot' ? 'The shot cracks across the land. A miss, and it\'s gone.' : 'The arrow hisses past. It bolts.');
+  const hitIt = chance(s, clamp(hit, 0.05, 0.97));
+  if (k === 'arrow'){
+    if (!hitIt && chance(s, 0.45)){ add(s, R, 'arrows', -1); R.lines.push('The arrow hisses past and is lost in the brush.'); }
+    else if (hitIt && chance(s, 0.2)){ add(s, R, 'arrows', -1); R.lines.push('The arrow snaps in the carcass.'); }
+  }
+  if (!hitIt){
+    R.lines.push(k === 'shoot' ? 'The shot cracks across the land. A miss, and it\'s gone.' : 'A miss. It bolts.');
     if (p.sp === 'bison' && chance(s, 0.2)){ hurt(s, rr(s, 15, 30) * dmgM(s), 'mauled'); R.lines.push('A bull swings toward you and charges! It clips you as you dive behind a tree.'); }
     return;
   }
@@ -2395,7 +2402,7 @@ function snakeMeat(s, R, id){
 }
 function snakeBite(s, R, id){
   unlock(s, id, R);
-  if (chance(s, 0.22)){ hurt(s, rr(s, 2, 4), 'venom'); R.lines.push('It strikes your leg! Two fang marks, but no burning. A dry bite with no venom. Lucky.'); return; }
+  if (chance(s, 0.22)){ hurt(s, rr(s, 2, 4) * dmgM(s), 'venom'); R.lines.push('It strikes your leg! Two fang marks, but no burning. A dry bite with no venom. Lucky.'); return; }
   hurt(s, rr(s, 20, 34) * dmgM(s), 'venom');
   if (s.dead) return;
   s.cond.venom = rr(s, 72, 120) * (s.opt.diff === 'easy' ? 0.7 : 1); s.cond.venomT = 0;
@@ -2484,7 +2491,7 @@ function triggerHaz(s, R, id){
     R.lines.push('As you reach into the leaf litter, a copperhead strikes your hand. It swells up and hurts badly, but copperhead bites are rarely deadly.');
     return;
   }
-  if (id === 'wasps'){ unlock(s, 'wasp', R); hurt(s, rr(s, 3, 5), 'wound'); R.lines.push('You bump a paper wasp nest hanging under a branch. Three stings before you get clear.'); return; }
+  if (id === 'wasps'){ unlock(s, 'wasp', R); hurt(s, rr(s, 3, 5) * dmgM(s), 'wound'); R.lines.push('You bump a paper wasp nest hanging under a branch. Three stings before you get clear.'); return; }
   s.pending = {type: 'enc', id};
 }
 function rollHazards(s, a, R){
@@ -2611,7 +2618,7 @@ const DONE = {
   spear: 'You split the tip of a straight pole into four prongs, wedge them apart, and sharpen each one.',
   leanto: 'You lash poles against the tallest boulder and stretch the tarp over them, weighting the edges with rocks. A dry place to sleep.',
   roof: 'The tarp now spans all three boulders like a tent over a stone room. The fire goes at the open end, where the rock soaks up its heat.',
-  walls: 'The gaps are woven shut with cedar withes and packed with clay and grass. Snug, dark, and animal-proof.',
+  walls: 'The gaps are woven shut with cedar withes and packed with clay and grass. Snug and dark, and much harder for animals to get into.',
   bedding: 'A thick mattress of dry grass and cedar boughs. It smells amazing.',
   blanket: 'Three hides laced together with yucca cord. Heavy, stiff, and wonderfully warm.',
   bag: 'You fold a square of tarp into a bag and cinch the top with cord. It holds 5 liters.',
@@ -2632,7 +2639,11 @@ const DONE = {
 function complete(s, R, r){
   if (r.give) for (const k in r.give) add(s, R, k, r.give[k]);
   if (r.flag) s.tools[r.flag] = true;
-  if (r.count){ const before = s.tools[r.count]; s.tools[r.count] = Math.min(r.max || 99, before + (r.add || 1)); if (r.count === 'snares') R.gains.push({k: 'snares', n: s.tools.snares - before}); }
+  if (r.count){
+    const before = s.tools[r.count], want = r.add || 1; s.tools[r.count] = Math.min(r.max || 99, before + want);
+    const made = s.tools[r.count] - before;
+    if (r.count === 'snares'){ R.gains.push({k: 'snares', n: made}); if (made < want){ add(s, R, 'fiber', want - made); R.lines.push('You only need ' + made + ' more, so you keep the spare cord.'); } }
+  }
   if (r.shelter){ s.shelter = r.shelter; ach(s, R, 'roof'); if (r.shelter >= 3) ach(s, R, 'hut'); }
   if (r.group === 'Camp'){ ach(s, R, 'camp1'); if (campUpgrades(s) >= 5) ach(s, R, 'camp5'); }
   if (r.id === 'bow') ach(s, R, 'bow');
@@ -2845,12 +2856,12 @@ function foodGoals(s, goal){
   const fresh = s.food.filter(f => !f.rack && f.st === 'raw' && D.FOODS[f.key].cook), soon = fresh.filter(f => f.exp - s.t < 20);
   const meatKcal = fresh.filter(f => D.FOODS[f.key].meat).reduce((a, f) => a + f.kcal, 0);
   if (s.tools.rack && meatKcal >= 1500 * s.P){
-    const f = s.fire.st === 'lit' ? null : fireStep(s);
+    const f = fireReady(s);
     if (f) goal('You have more meat than you can eat before it spoils. Get the fire going, then smoke it on the drying rack.', f);
     else goal('You have more meat than you can eat before it spoils. Slice it onto the drying rack and keep the fire going: smoked, it keeps for weeks.', {go: 'camp', act: 'rack'});
   }
   if (soon.length){
-    const f = s.fire.st === 'lit' ? null : fireStep(s);
+    const f = fireReady(s);
     if (f) goal('Your catch will spoil soon, and it needs cooking. Get the fire going.', f);
     else goal('Your catch will spoil soon. Cook it at camp: cooked, it keeps about two days.', {go: 'camp', act: 'cook'});
   }
@@ -2886,15 +2897,16 @@ function waterGoal(s, goal){
   if (s.found.spring && (!boil || s.loc === 'spring' || s.loc === 'oak')){ goal('Fill your containers at the Hidden Spring. Spring water is safe as it comes.', {go: 'spring', act: 'fill_spring'}); return; }
   if (!boil) return;
   if (s.water.raw >= 1){
-    if (s.fire.st === 'lit') goal('Boil your untreated water at camp, so it\'s safe when you need it.', {go: 'camp', act: 'boil'});
-    else { const f = fireStep(s); if (f) goal('You have untreated water to boil. Get the fire going first.', f); }
+    const f = fireReady(s);
+    if (!f) goal('Boil your untreated water at camp, so it\'s safe when you need it.', {go: 'camp', act: 'boil'});
+    else goal('You have untreated water to boil. Get the fire going first.', f);
     return;
   }
   goal('Fill your containers at the River Bank and carry the water back to boil. Then you never have to gamble on river water.', {go: 'river', act: s.tools.seep ? 'fill_seep' : 'fill_river'});
 }
 function adviceGoals(s){
   const G = [], b = s.body, cap = capacity(s);
-  const goal = (text, x) => { G.push(Object.assign({tone: 'goal', text}, x || {})); };
+  const goal = (text, x) => { G.push(lead('goal', text, x)); };
   if (isEvening(s) && s.loc === 'camp'){
     if (s.fire.st === 'lit' && s.fire.fuel < 8 && s.inv.wood >= 2) goal('Stock the fire so it lasts until dawn.', {go: 'camp', act: 'stock'});
     else if (s.fire.st === 'lit' && s.fire.fuel < 4 && s.inv.wood === 1) goal('Put your last armload on the fire before you sleep.', {go: 'camp', act: 'addwood'});
@@ -2933,12 +2945,25 @@ function adviceGoals(s){
   if (s.stats.fires > 0 && s.inv.wood < 4){ const w = nearestWood(s); goal('Keep a few armloads of firewood at camp, so the fire never has to go out.', {go: w[0], act: w[1]}); }
   if (s.shelter >= 1 && (!s.found.spring || !s.found.trail)) goal('Nobody has ever mapped these woods. Explore deeper in the Oak Woods and see what\'s out there.', {go: 'oak', act: 'explore_oak'});
   if (s.shelter >= 1 && !s.found.osage) goal('The Creek Bottom runs on for miles. Explore downstream.', {go: 'creek', act: 'explore_creek'});
+  if (isEvening(s) && s.loc === 'camp' && !isDark(s)) goal('The light is going, and nothing is worth a long walk now. Rest at camp until dark.', {act: 'rest'});
   return G;
+}
+// A piece of advice: what to do and why (text), and when a step brings its own words, how (how).
+function lead(tone, text, x){ x = x || {}; return Object.assign({}, x, {tone, text}, x.text && x.text !== text ? {how: x.text} : {}); }
+// Will the fire still be burning when you get to camp? null if so, or else the step that gets one going.
+function fireReady(s){
+  if (s.fire.st === 'lit'){
+    if (s.fire.fuel >= (s.loc === 'camp' ? 0.75 : 0.75 + travelMins(s, 'camp') / 60)) return null;
+    if (s.loc === 'camp' && s.inv.wood >= 1) return {text: 'The fire is burning low. Add wood first.', go: 'camp', act: 'addwood'};
+    if (s.loc !== 'camp') return null;
+  }
+  return fireStep(s);
 }
 // Can the very next step of this advice be done? (Walking somewhere counts, as long as the job there isn't refused.)
 function doable(s, A){
   const st = A.recipe ? E.plan(s, A.recipe) : A;
   if (!st || st.wait || st.done) return false;
+  if (st.go && st.go !== s.loc && st.go !== 'camp' && isEvening(s)) return false;   // no setting out at dusk: you'd only be sent straight back
   if (st.craft) return true;
   if (st.act){ const a = AMAP[st.act]; return !!a && (!a.show || a.show(s) || s.loc !== (st.go || s.loc)) && checkAct(s, a) === true; }
   return !!(st.go || st.drink || st.tab);
@@ -2946,11 +2971,11 @@ function doable(s, A){
 E.advice = function(s){
   if (s.dead || s.pending) return null;
   const b = s.body, sick = s.cond.sick > 0;
-  const urgent = (text, x) => Object.assign({tone: 'urgent', text}, x || {});
+  const urgent = (text, x) => lead('urgent', text, x);
   if (b.hyd < (sick ? 65 : 45)){
     const lead = sick && b.hyd >= 45 ? 'The infection is pulling water out of you. ' : 'You\'re thirsty. ';
     if (s.water.clean > 0.2) return urgent(lead + 'Drink your clean water.', {drink: 'clean'});
-    if (s.loc === 'camp' && s.water.raw >= 0.5 && s.fire.st === 'lit' && boilRate(s) > 0 && b.hyd >= 25) return urgent(lead + 'Boil the water you carried, then drink it.', {go: 'camp', act: 'boil'});
+    if (s.loc === 'camp' && s.water.raw >= 0.5 && s.fire.st === 'lit' && s.fire.fuel >= 1 && boilRate(s) > 0 && b.hyd >= 25) return urgent(lead + 'Boil the water you carried, then drink it.', {go: 'camp', act: 'boil'});
     if (b.hyd < 45){
       if (s.found.spring && s.loc !== 'river' && s.loc !== 'pond') return urgent('You\'re thirsty. The spring water is safe to drink.', {go: 'spring', act: 'drink_spring'});
       if (s.loc === 'pond') return urgent('You\'re thirsty. Untreated water is a gamble, but thirst kills faster.', {go: 'pond', act: 'drink_pond'});
@@ -2965,9 +2990,9 @@ E.advice = function(s){
     const cooked = edible.some(f => !(D.FOODS[f.key].cook && f.st === 'raw'));
     if (s.gear.bars >= s.P || cooked) return urgent('You\'re hungry. Eat something from your pack.', {tab: 'pack'});
     if (edible.length){
-      const f = fireStep(s);
-      if (!f) return urgent('You\'re hungry. Cook what you\'re carrying before you eat it.', {go: 'camp', act: 'cook'});
-      if (doable(s, f)) return urgent('You\'re hungry, and all you have is raw. Get the fire going so you can cook it.', f);
+      const f = fireReady(s);
+      if (!f && s.fire.st === 'lit') return urgent('You\'re hungry. Cook what you\'re carrying before you eat it.', {go: 'camp', act: 'cook'});
+      if (f && doable(s, f)) return urgent('You\'re hungry, and all you have is raw. Get the fire going so you can cook it.', f);
     }
   }
   const goals = adviceGoals(s);
@@ -5714,7 +5739,7 @@ function stepButtons(step, hot){
 }
 function nextCard(){
   const g = guidance(); if (!g) return '';
-  const p = E.progression(S), how = g.step && g.step.text && g.step.text !== g.text ? g.step.text : '';
+  const p = E.progression(S), how = g.step ? g.step.how || (g.step.text && g.step.text !== g.text ? g.step.text : '') : '';
   const stage = p.complete ? '' : `<span class="prog">${esc(p.stage)}, ${p.checklist.filter(x => x.done).length} of ${p.checklist.length}</span>`;
   return `<div class="next${g.tone === 'urgent' ? ' urgent' : ''}"><div class="next-head"><span>${g.head}</span>${g.tone === 'urgent' ? '' : stage}</div>
 <p class="next-goal">${esc(g.text)}</p>${how ? `<p class="next-how">${esc(how)}</p>` : ''}${g.note ? `<p class="next-how">${esc(g.note)}</p>` : ''}
