@@ -143,11 +143,11 @@ h1,h2,h3,p{margin:0}
 .wpad{display:none;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:12px 12px 12px;background:var(--paper-2);border-top:1.5px solid var(--ink);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .wpad button{font:inherit}
 .dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:3px}
-.dpad button{background:var(--ink);color:var(--paper);border-radius:7px;font-size:17px;line-height:1;touch-action:none;padding:0}
+.dpad button{background:var(--ink);color:var(--paper);border-radius:7px;font-size:17px;line-height:1;touch-action:none;padding:0;text-align:center}
 .dpad button.on{background:var(--ink-2)}
 .dpad .dc{background:var(--ink);border-radius:4px;opacity:.85}
 .ab{display:flex;gap:12px;align-items:flex-start}
-.ab button{width:58px;height:58px;border-radius:50%;background:var(--blaze);color:var(--blaze-ink);font-weight:800;font-size:19px;touch-action:manipulation;box-shadow:0 3px 0 var(--blaze-text)}
+.ab button{width:58px;height:58px;border-radius:50%;text-align:center;background:var(--blaze);color:var(--blaze-ink);font-weight:800;font-size:19px;touch-action:manipulation;box-shadow:0 3px 0 var(--blaze-text)}
 .ab button.b{width:48px;height:48px;background:var(--ink-2);color:var(--paper);margin-top:26px;box-shadow:0 3px 0 var(--ink)}
 .ab button:active{transform:translateY(2px);box-shadow:none}
 .wmid{font-size:13px;line-height:1.35;color:var(--ink-3);text-align:center;min-width:0}
@@ -3920,7 +3920,8 @@ function paint(F, Z, calm){
   /* ----- everything standing on the land, painted back to front into one layer ----- */
   const mb = Px.buf(W, H, u), g = Px.painter(mb, 0, 40);
   PAL.pool = c.water; PAL.grassT = mix(c.front, c.stalk, 0.5);
-  if (month === 11 || month <= 1) PAL.cedar = leafRamp(mix(c.leaf, '#6e5d3c', 0.3), mix(c.light, '#a58f5a', 0.3));   // cedars bronze in the cold PAL.bag = '#a99a67'; PAL.sod = '#879661'; PAL.bowl = '#8a6f4c'; PAL.cane = '#c4b27a'; PAL.berryHi = '#9a7aac'; PAL.twig = mix(c.trunk, '#3d342a', 0.55); PAL.osageFall = leafRamp('#b9a33e', '#e2cf6a'); PAL.berryRed = '#b0383a';
+  if (month === 11 || month <= 1) PAL.cedar = leafRamp(mix(c.leaf, '#6e5d3c', 0.3), mix(c.light, '#a58f5a', 0.3));   // cedars bronze in the cold
+  PAL.bag = '#a99a67'; PAL.sod = '#879661'; PAL.bowl = '#8a6f4c'; PAL.cane = '#c4b27a'; PAL.berryHi = '#9a7aac'; PAL.twig = mix(c.trunk, '#3d342a', 0.55); PAL.osageFall = leafRamp('#b9a33e', '#e2cf6a'); PAL.berryRed = '#b0383a';
   // a post oak: flared roots, a trunk that forks into limbs, and a crown of leaf masses; bare in winter, a green haze in March
   function oak(x, y, z, o){
     o = o || {}; const leafK = o.leaf || 'leaf', bare = o.bare != null ? o.bare : c.bare;
