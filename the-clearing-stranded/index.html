@@ -1039,6 +1039,11 @@ function addFood(s, R, key, kg, st){
   if (F.g) unlock(s, F.g, R);
   return lot;
 }
+// after part of a lot is eaten, raided, or used: crumbs go, anything left keeps a weight you can see
+function trimLot(s, lot){
+  if (lot.kcal < 5 || lot.kg <= 0){ const i = s.food.indexOf(lot); if (i >= 0) s.food.splice(i, 1); return; }
+  if (lot.kg < 0.01) lot.kg = 0.01;
+}
 function kcalOf(s, key){ return s.food.filter(f => f.key === key).reduce((a, f) => a + f.kcal, 0); }
 
 /* ---------- body ---------- */
@@ -1373,7 +1378,7 @@ function raidCheck(s, frac){
     const kc = Math.round(f.kcal * fr);
     lost.push(lotName(f).toLowerCase() + ' (' + kc + ' Cal)');
     f.kg = r2(f.kg * (1 - fr)); f.kcal -= kc;
-    if (f.kcal < 5) s.food.splice(s.food.indexOf(f), 1);
+    trimLot(s, f);
   }
   const txt = {raccoon: 'A raccoon raided your food in the night', opossum: 'An opossum got into your food in the night',
     coyote: 'Coyotes crept into camp in the night', bear: 'A black bear raided camp in the night',
@@ -1575,7 +1580,7 @@ E.eat = function(s, id){
   const name = lotName(lot), wasRaw = F.cook && lot.st === 'raw';
   const fr = take / lot.kcal;
   lot.kg = r2(lot.kg * (1 - fr)); lot.kcal = Math.round(lot.kcal - take);
-  if (lot.kcal < 5) s.food.splice(s.food.indexOf(lot), 1);
+  trimLot(s, lot);
   const each = take / s.P;
   gainKcal(s, each, !!F.lean);
   R.lines.push((s.P > 1 ? 'You each eat' : 'You eat') + ' about ' + Math.round(each) + ' Calories of ' + name.toLowerCase() + '.');
@@ -2641,7 +2646,7 @@ function complete(s, R, r){
       const take = Math.min(f.kg, cap - kg); if (take <= 0) break;
       const fr = take / f.kg; kg += take;
       f.kcal = Math.round(f.kcal * (1 - fr)); f.kg = r2(f.kg - take);
-      if (f.kg < 0.01) s.food.splice(s.food.indexOf(f), 1);
+      trimLot(s, f);
     }
     let w = 2; const useRaw = Math.min(s.water.raw, w);
     s.water.raw = r2(s.water.raw - useRaw); w -= useRaw; s.water.clean = r2(Math.max(0, s.water.clean - w));
@@ -2832,6 +2837,20 @@ function nearestWood(s){ return s.loc === 'oak' ? ['oak', 'woodO'] : s.loc === '
 function wildKcal(s){ return s.food.reduce((a, f) => a + (f.key === 'acornraw' ? 0 : f.kcal), 0); }
 function foodGoals(s, goal){
   const flood = s.world.flood > 0, h = hourOf(s.t), safeBoil = s.tools.bowl || s.tools.pot;
+  // what you already caught comes first: raw meat and fish rot in a day
+  const fresh = s.food.filter(f => !f.rack && f.st === 'raw' && D.FOODS[f.key].cook), soon = fresh.filter(f => f.exp - s.t < 20);
+  const meatKcal = fresh.filter(f => D.FOODS[f.key].meat).reduce((a, f) => a + f.kcal, 0);
+  if (s.tools.rack && meatKcal >= 1500 * s.P){
+    const f = s.fire.st === 'lit' ? null : fireStep(s);
+    if (f) goal('You have more meat than you can eat before it spoils. Get the fire going, then smoke it on the drying rack.', f);
+    else goal('You have more meat than you can eat before it spoils. Slice it onto the drying rack and keep the fire going: smoked, it keeps for weeks.', {go: 'camp', act: 'rack'});
+  }
+  if (soon.length){
+    const f = s.fire.st === 'lit' ? null : fireStep(s);
+    if (f) goal('Your catch will spoil soon, and it needs cooking. Get the fire going.', f);
+    else goal('Your catch will spoil soon. Cook it at camp: cooked, it keeps about two days.', {go: 'camp', act: 'cook'});
+  }
+  if (s.food.some(f => f.rack && f.rack.need === 'smoke') && s.fire.st !== 'lit'){ const f = fireStep(s); if (f) goal('The meat on the rack needs smoke. Get the fire going again.', f); }
   if (s.tools.fishtrap && !s.trap.set && !flood){
     if (s.inv.grubs < 2 && s.loc === 'cedar') goal('Grubs make the fish trap catch far more. Dig some while you\'re here.', {go: 'cedar', act: 'grubs'});
     goal('Your fish trap only works in the water. Set it at the River Bank' + (s.inv.grubs >= 2 ? ', baited with grubs.' : '.'), {go: 'river', act: 'trapset'});
@@ -2844,7 +2863,9 @@ function foodGoals(s, goal){
   if (wildKcal(s) >= (s.tools.rack ? 7000 : 2200) * s.P) return;
   if (ripeTotal(s) >= 1) goal('Fruit is ripe at the Berry Thicket. Every pound you pick saves ration bars.', {go: 'berry', act: s.crops.mulberry.ripe > 3 && s.gear.tarp >= 10 ? 'shake' : 'pick'});
   if (s.crops.pecan.ripe > 2) goal('Pecans are down at the Creek Bottom: the richest wild food there is.', {go: 'creek', act: 'pecans'});
-  if (s.crops.acorn.ripe > 8 && safeBoil) goal('Acorns are falling in the Oak Woods. Leached, they\'re a staple.', {go: 'oak', act: 'forage_oak'});
+  // only worth gathering what you can leach: a bowl or pot, and a fire you can light, and not a pile already waiting
+  const bitter = s.food.filter(f => f.key === 'acornraw').reduce((a, f) => a + f.kg, 0);
+  if (s.crops.acorn.ripe > 8 && safeBoil && bitter < 3 * s.P && (s.fire.st === 'lit' || bowstring(s))) goal('Acorns are falling in the Oak Woods. Leached, they\'re a staple.', {go: 'oak', act: 'forage_oak'});
   const armed = s.gear.rounds > 0 || (s.tools.bow && s.inv.arrows > 0), lean = wildKcal(s) < 2200 * s.P;
   if (armed && s.world.bison > 0) goal('A bison herd is on the Prairie. One animal is weeks of meat if you smoke it.', {go: 'prairie', act: 'hunt_prairie'});
   if (armed && (lean || twilight(s) || h < D.SUNRISE[monthNow(s)] + 3)) goal((twilight(s) ? 'Game is moving right now.' : 'Hunting brings in more food than anything else, and dawn and dusk are the best times.') + ' Hunt the Oak Woods, and smoke what you can\'t eat in a day.', {go: 'oak', act: 'hunt_oak'});
@@ -2853,6 +2874,19 @@ function foodGoals(s, goal){
   else goal('Wild food stretches the ration bars. Try spearing fish at the Pond.', {go: 'pond', act: 'spear'});
   if (!flood) goal('Wild food stretches the ration bars. Crawfish and mussels are easy pickings at the River Bank.', {go: 'river', act: 'crawfish'});
   goal('Wild food stretches the ration bars. See what the Prairie has in season.', {go: 'prairie', act: 'forage_prairie'});
+}
+// Keep a supply of safe water, so thirst never sends you to drink from the river.
+function waterGoal(s, goal){
+  const cap = capacity(s), want = Math.min(cap, 2 * s.P), boil = boilRate(s) > 0;
+  if (!cap || s.water.clean >= want - 0.5) return;
+  if (s.found.spring && (!boil || s.loc === 'spring' || s.loc === 'oak')){ goal('Fill your containers at the Hidden Spring. Spring water is safe as it comes.', {go: 'spring', act: 'fill_spring'}); return; }
+  if (!boil) return;
+  if (s.water.raw >= 1){
+    if (s.fire.st === 'lit') goal('Boil your untreated water at camp, so it\'s safe when you need it.', {go: 'camp', act: 'boil'});
+    else { const f = fireStep(s); if (f) goal('You have untreated water to boil. Get the fire going first.', f); }
+    return;
+  }
+  goal('Fill your containers at the River Bank and carry the water back to boil. Then you never have to gamble on river water.', {go: 'river', act: s.tools.seep ? 'fill_seep' : 'fill_river'});
 }
 function adviceGoals(s){
   const G = [], b = s.body, cap = capacity(s);
@@ -2866,6 +2900,7 @@ function adviceGoals(s){
   else if (s.fire.st === 'out' && !s.stats.fires){
     if (s.inv.bark < 1) goal('A fire needs tinder. Strip cedar bark at the Cedar Stand.', {go: 'cedar', act: 'bark'});
     else if (s.inv.wood < 1){ const w = nearestWood(s); goal('A fire needs fuel. Gather an armload or two of firewood.', {go: w[0], act: w[1]}); }
+    else if (!bowstring(s)){ const st = stringStep(s); goal(st.text, st); }
     else if (rainNow(s, s.t) && s.shelter < 1) goal('Everything is soaked. A lean-to gives you a dry place to work the bow drill.', {recipe: 'leanto'});
     else goal('You have a bow drill, bark, and firewood. Start a fire at camp.', {go: 'camp', act: 'firestart'});
   }
@@ -2874,6 +2909,7 @@ function adviceGoals(s){
   const otherWater = s.tools.pot || s.tools.rain || s.found.spring;
   if (!s.tools.bowl && !otherWater) goal('Untreated water is a gamble. Burn out a wooden bowl so you can boil it safe.', {recipe: 'bowl'});
   if (s.tools.bowl && s.inv.stones < 4 && !otherWater) goal('Boiling in a wooden bowl takes four hot stones. Collect dry ones on the Prairie.', {go: 'prairie', act: 'stones'});
+  waterGoal(s, goal);
   if (!s.tools.bedding) goal('A grass bed keeps the cold ground from stealing your heat at night.', {recipe: 'bedding'});
   if (!s.tools.fishtrap) goal('A funnel fish trap catches food while you sleep.', {recipe: 'trap'});
   if (!s.tools.rack) goal('A drying rack smokes meat and dries fruit so it keeps for weeks. Build it before you bring home a deer.', {recipe: 'rack'});
@@ -2910,6 +2946,7 @@ E.advice = function(s){
   if (b.hyd < (sick ? 65 : 45)){
     const lead = sick && b.hyd >= 45 ? 'The infection is pulling water out of you. ' : 'You\'re thirsty. ';
     if (s.water.clean > 0.2) return urgent(lead + 'Drink your clean water.', {drink: 'clean'});
+    if (s.loc === 'camp' && s.water.raw >= 0.5 && s.fire.st === 'lit' && boilRate(s) > 0 && b.hyd >= 25) return urgent(lead + 'Boil the water you carried, then drink it.', {go: 'camp', act: 'boil'});
     if (b.hyd < 45){
       if (s.found.spring && s.loc !== 'river' && s.loc !== 'pond') return urgent('You\'re thirsty. The spring water is safe to drink.', {go: 'spring', act: 'drink_spring'});
       if (s.loc === 'pond') return urgent('You\'re thirsty. Untreated water is a gamble, but thirst kills faster.', {go: 'pond', act: 'drink_pond'});
@@ -2923,7 +2960,11 @@ E.advice = function(s){
     const edible = s.food.filter(f => !f.rack && f.key !== 'acornraw');
     const cooked = edible.some(f => !(D.FOODS[f.key].cook && f.st === 'raw'));
     if (s.gear.bars >= s.P || cooked) return urgent('You\'re hungry. Eat something from your pack.', {tab: 'pack'});
-    if (edible.length){ const f = fireStep(s); return f ? urgent('You\'re hungry, and all you have is raw. Get the fire going so you can cook it.', f) : urgent('You\'re hungry. Cook what you\'re carrying before you eat it.', {go: 'camp', act: 'cook'}); }
+    if (edible.length){
+      const f = fireStep(s);
+      if (!f) return urgent('You\'re hungry. Cook what you\'re carrying before you eat it.', {go: 'camp', act: 'cook'});
+      if (doable(s, f)) return urgent('You\'re hungry, and all you have is raw. Get the fire going so you can cook it.', f);
+    }
   }
   const goals = adviceGoals(s);
   let pick = goals.find(g => doable(s, g)) || null;
@@ -2954,7 +2995,19 @@ function fireStep(s){
   if (!s.tools.bowdrill) return null;
   if (s.inv.bark < 1) return {text: 'A fire needs tinder. Strip cedar bark at the Cedar Stand.', go: 'cedar', act: 'bark'};
   if (s.inv.wood < 1){ const w = nearestWood(s); return {text: 'A fire needs fuel. Gather firewood.', go: w[0], act: w[1]}; }
+  if (!bowstring(s)) return stringStep(s);
+  if (s.cond.venom > 0) return {text: 'The snakebite swelling makes the bow drill too hard for now. Rest, and let it go down.', act: isEvening(s) ? 'sleep' : 'rest'};
+  if (s.body.en < 6) return {text: 'You\'re too worn out to work a bow drill. Rest first.', act: isEvening(s) ? 'sleep' : 'rest'};
+  if (rainNow(s, s.t) && s.shelter < 1){ const p = E.plan(s, 'leanto', 1); return p && !p.wait ? Object.assign({}, p, {via: p.via || 'leanto'}) : {text: 'Everything is soaked. Wait for the rain to stop, or build a lean-to to work under.'}; }
   return {text: 'This needs a burning fire. Start one at camp.', go: 'camp', act: 'firestart'};
+}
+// The bow drill's string: yucca cord lasts, vine cord will do in a pinch.
+function stringStep(s){
+  const id = s.inv.yucca >= 3 || (s.inv.vines < 3 && s.stock.yucca >= 1) ? 'fiber' : 'cord';
+  const p = E.plan(s, id, 1);
+  const lead = 'The bow drill needs a string, and your bootlaces are gone. Twist some cord: yucca cord lasts, vine cord will do.';
+  if (!p || p.wait) return {text: lead};
+  return Object.assign({}, p, {text: p.craft ? lead : lead + ' ' + p.text, via: p.via || id});
 }
 function sourceOf(s, k){
   if (k === 'wood'){ const w = nearestWood(s); return {loc: w[0], act: w[1], text: AMAP[w[1]].name}; }
