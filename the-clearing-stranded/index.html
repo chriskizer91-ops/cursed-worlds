@@ -470,6 +470,17 @@ textarea{width:100%;min-height:120px;margin-top:10px;font:13px/1.35 ui-monospace
 .help b{font-family:var(--font-ui);font-size:16px}
 .why{font-size:14.5px;color:var(--warn);margin-top:8px}
 
+/* ---------- skill moments ---------- */
+.skill{position:fixed;inset:0;z-index:40;background:rgba(10,16,20,.62);display:flex;align-items:center;justify-content:center;padding:12px;animation:fade .15s ease}
+.sk-box{width:min(560px,100%);background:var(--sheet);border:2px solid var(--ink);border-top:4px solid var(--blaze);padding:12px 14px 10px;box-shadow:var(--shadow)}
+.sk-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sk-head b{font-family:var(--font-text);font-weight:500;font-size:23px}
+.sk-time{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.sk-how{font-size:15px;color:var(--ink-2);margin:4px 0 8px;line-height:1.35}
+.sk-cv{display:block;width:100%;aspect-ratio:4/3;max-height:58vh;touch-action:none;background:#222;outline:none;cursor:pointer}
+.sk-cv:focus-visible{box-shadow:0 0 0 3px var(--blaze)}
+.sk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;min-height:34px}
+.sk-say{font-weight:700;font-size:16px}
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:3px;font-size:15.5px;max-width:min(92vw,520px);box-shadow:0 6px 20px rgba(0,0,0,.25);animation:fade .15s ease}
 .toast.top{top:calc(14px + env(safe-area-inset-top));bottom:auto}
 
@@ -4935,7 +4946,7 @@ const PLACES = {
     exits: [['oak', 60, 0], ['cedar', 0, 28], ['berry', 0, 72], ['prairie', 100, 46], ['river', 48, 100]],
     things: [['bigboulder', 43, 38, 0, 'boulders'], ['bigboulder', 58, 38, 1, 'boulders'], ['bigboulder', 50, 24, 2, 'boulders'], ['oak', 12, 30, 0, 'hangoak'], ['oak', 88, 82, 0], ['oak', 30, 14, 1], ['oak', 74, 16, 0]],
     keep: [[38, 40, 64, 76], [24, 40, 38, 62], [62, 34, 76, 60]],
-    scatter: [['oak', 8, 'f'], ['rock', 4, 'g'], ['yucca', 2, 'G'], ['fern', 3, 'f']],
+    scatter: [['oak', 10, 'f'], ['oak', 4, 'g'], ['rock', 6, 'g'], ['yucca', 3, 'G'], ['fern', 3, 'f'], ['pear', 2, 'G']],
     sites: {ring: [50, 54], wood: [58, 56], rack: [30, 50], rain: [32, 40], bench: [56, 70], cache: [70, 40], look: [72, 52], crate: [40, 54], pot: [54, 57], work: [42, 66]},
     spots: {
       boulders: {name: 'The boulders', acts: ['sleep', 'rest'], makes: ['leanto', 'roof', 'walls', 'bedding', 'blanket', 'pot'], say: 'Three ten-foot boulders in a triangle: three stone walls waiting for a roof.'},
@@ -4952,7 +4963,7 @@ const PLACES = {
     exits: [['camp', 100, 58], ['oak', 78, 0]],
     things: [['cedar', 46, 34, 1, 'cedar'], ['cedar', 22, 30, 2, 'cedar'], ['cedar', 30, 48, 3, 'cedar'], ['cedar', 62, 24, 4, 'cedar'], ['cedar', 70, 50, 5, 'cedar'], ['cedar', 84, 30, 6, 'cedar'], ['cedar', 12, 60, 7, 'cedar'], ['cedar', 56, 82, 8, 'cedar'],
       ['deadfall', 32, 66, 0, 'deadfall'], ['tangle', 66, 74, 0, 'tangle'], ['log', 80, 42, 0, 'rotlog'], ['rock', 84, 46, 1], ['rock', 76, 46, 0]],
-    scatter: [['oak', 5, 'f'], ['rock', 3, 'g'], ['fern', 4, 'f']],
+    scatter: [['oak', 7, 'f'], ['cedar', 6, 'g'], ['rock', 4, 'g'], ['fern', 4, 'f']],
     spots: {
       cedar: {name: 'Eastern red cedar', acts: ['poles', 'bark'], say: 'An eastern red cedar: stringy bark, and dry dead branches low down.'},
       deadfall: {name: 'Cedar deadwood', acts: ['woodC'], say: 'A tangle of dry, fallen cedar: firewood that burns hot and fast.'},
@@ -4976,14 +4987,14 @@ const PLACES = {
     },
     beasts: {deer: [10, 10, 80, 60], squirrel: [10, 20, 80, 70], turkey: [40, 50, 80, 90]}},
 
-  prairie: {ground: 'G', hub: [30, 56],
-    paint: [['g', 'ell', 22, 56, 9, 9], ['g', 'ell', 30, 56, 14, 8], ['L', 'ell', 78, 12, 14, 6], ['g', 'ell', 76, 20, 18, 9]],
+  prairie: {ground: 'g', hub: [30, 56],
+    paint: [['G', 'ell', 60, 50, 34, 30], ['G', 'ell', 20, 22, 20, 16], ['G', 'ell', 30, 88, 26, 14], ['G', 'ell', 92, 80, 14, 20], ['g', 'ell', 30, 56, 12, 8], ['L', 'ell', 78, 10, 14, 6], ['g', 'ell', 76, 20, 18, 8]],
     exits: [['camp', 0, 55]],
     things: [['stones', 72, 20, 0, 'ridge'], ['stones', 80, 22, 1, 'ridge'], ['stones', 86, 18, 0, 'ridge'],
       ['yucca', 30, 28, 0, 'yucca'], ['yucca', 34, 30, 0, 'yucca'], ['yucca', 42, 72, 0, 'yucca'], ['yucca', 46, 74, 0, 'yucca'],
       ['pear', 62, 74, 0, 'pear'], ['pear', 66, 76, 0, 'pear'], ['pear', 86, 56, 0, 'pear'], ['oak', 56, 40, 1, 'hackberry'], ['sapling', 40, 52, 1, 'runs']],
     marks: {far: [96, 44], dry: [22, 54]},
-    scatter: [['yucca', 3, 'G'], ['pear', 2, 'G'], ['rock', 3, 'G']],
+    scatter: [['yucca', 4, 'G'], ['pear', 3, 'g'], ['rock', 5, 'g'], ['oak', 2, 'g']],
     spots: {
       ridge: {name: 'Limestone ridge', acts: ['stones'], say: 'Dry, fist-sized limestone on the ridge top. Good cooking stones.'},
       yucca: {name: 'Yucca', acts: ['yucca'], say: 'Arkansas yucca: stiff leaves with needle tips, full of strong fiber.'},
@@ -4996,12 +5007,11 @@ const PLACES = {
     beasts: {bison: [40, 10, 96, 70], turkey: [20, 60, 70, 92], rabbit: [10, 40, 60, 90], deer: [60, 60, 96, 92]}},
 
   berry: {ground: 'g', hub: [70, 60],
-    paint: [['F', 'band', 'left', 8], ['F', 'band', 'top', 10], ['f', 'ell', 10, 20, 16, 16]],
+    paint: [['F', 'band', 'left', 8], ['F', 'band', 'top', 10], ['f', 'ell', 10, 20, 16, 16], ['b', 'ell', 37, 48, 14, 19]],
     exits: [['camp', 100, 60]],
-    things: [['bramble', 28, 36, 0, 'thicket'], ['bramble', 34, 34, 1, 'thicket'], ['bramble', 40, 36, 0, 'thicket'], ['bramble', 46, 38, 1, 'thicket'], ['bramble', 26, 46, 1, 'thicket'], ['bramble', 32, 48, 0, 'thicket'],
-      ['bramble', 38, 46, 1, 'thicket'], ['bramble', 46, 50, 0, 'thicket'], ['bramble', 28, 58, 0, 'thicket'], ['bramble', 36, 60, 1, 'thicket'], ['bramble', 44, 62, 0, 'thicket'],
-      ['mulberry', 72, 36, 0, 'mulberry'], ['plum', 18, 80, 0, 'plums'], ['plum', 24, 84, 1, 'plums']],
-    scatter: [['oak', 4, 'f'], ['rock', 2, 'g'], ['fern', 2, 'f']],
+    things: [['mulberry', 72, 36, 0, 'mulberry'], ['plum', 18, 80, 0, 'plums'], ['plum', 24, 84, 1, 'plums'], ['plum', 13, 86, 0, 'plums'], ['bramble', 52, 40, 0, 'thicket'], ['bramble', 22, 60, 1, 'thicket']],
+    areas: {thicket: ['b', 37, 48, 14, 19]},
+    scatter: [['oak', 6, 'f'], ['oak', 2, 'g'], ['rock', 3, 'g'], ['fern', 3, 'f']],
     spots: {
       thicket: {name: 'Blackberry thicket', acts: ['pick'], say: 'Dagr\'s blackberry thicket: arching, thorny canes, dewberries trailing at the edges.'},
       mulberry: {name: 'Red mulberry', acts: ['shake', 'pick'], say: 'One huge red mulberry tree.'},
@@ -5016,7 +5026,7 @@ const PLACES = {
       ['snag', 72, 80, 0, 'snag'], ['clay', 82, 62, 0, 'claybank'], ['cane', 92, 48, 0, 'canebrake'], ['cane', 96, 54, 1, 'canebrake'],
       ['pecan', 24, 30, 1], ['oak', 70, 24, 0], ['pecan', 88, 26, 1]],
     marks: {edge: [48, 66], sandbar: [60, 74]},
-    scatter: [['reeds', 6, 'wet'], ['rock', 2, 'g']],
+    scatter: [['reeds', 8, 'wet'], ['rock', 3, 'g'], ['oak', 3, 'g'], ['fern', 3, 'g']],
     spots: {
       cattails: {name: 'Cattails', acts: ['cattail_river'], say: 'Cattails in the shallows: starchy roots all year.'},
       mudflat: {name: 'Mud flat', acts: ['crawfish'], say: 'Crawfish chimneys: little towers of mud pellets.'},
@@ -5033,7 +5043,7 @@ const PLACES = {
     exits: [['river', 100, 70]],
     things: [['reeds', 24, 44, 0, 'cattailsP'], ['reeds', 26, 50, 0, 'cattailsP'], ['reeds', 70, 32, 0, 'cattailsP'], ['reeds', 74, 36, 0, 'cattailsP'], ['oak', 88, 24, 0]],
     marks: {shallows: [50, 74], pondedge: [64, 76]},
-    scatter: [['reeds', 8, 'wet'], ['oak', 4, 'g'], ['fern', 3, 'g']],
+    scatter: [['reeds', 10, 'wet'], ['oak', 6, 'g'], ['fern', 4, 'g'], ['rock', 2, 'g']],
     spots: {
       pondedge: {name: 'Gravelly edge', at: [64, 76], acts: ['drink_pond', 'fill_pond'], say: 'Still, warm water. Something big rolls under the surface.'},
       shallows: {name: 'Shallows', at: [50, 74], acts: ['spear', 'frogs', 'turtle'], say: 'Knee-deep shallows over mud. Fish shadows slide by.'},
@@ -5046,7 +5056,7 @@ const PLACES = {
     exits: [['river', 0, 78]],
     things: [['pecan', 24, 30, 0, 'pecans'], ['pecan', 40, 46, 0, 'pecans'], ['pecan', 20, 66, 2, 'grapes'], ['deadfall', 48, 78, 1, 'hardwood'], ['osage', 86, 30, 0, 'osage'], ['pecan', 50, 20, 1, 'stand'], ['pecan', 84, 70, 1]],
     marks: {down: [88, 96]},
-    scatter: [['oak', 8, 'f'], ['fern', 5, 'f'], ['log', 2, 'f']],
+    scatter: [['oak', 10, 'f'], ['pecan', 4, 'f'], ['fern', 6, 'f'], ['log', 2, 'f']],
     spots: {
       pecans: {name: 'Pecan tree', acts: ['pecans'], say: 'A tall pecan. In the fall the ground under it is covered in nuts.'},
       grapes: {name: 'Grapevines and persimmon', acts: ['forage_creek'], say: 'Mustang grapevines hang from the limbs, and a persimmon stands beside them.'},
@@ -5058,7 +5068,7 @@ const PLACES = {
     beasts: {deer: [4, 10, 50, 60], squirrel: [4, 4, 50, 60], turkey: [10, 50, 50, 90]}},
 
   spring: {ground: 'g', hub: [40, 76],
-    paint: [['h', 'band', 'left', 14], ['h', 'band', 'right', 14], ['h', 'band', 'top', 8], ['L', 'rect', 30, 8, 80, 30], ['m', 'ell', 55, 50, 13, 11], ['k', 'ell', 55, 50, 10, 8]],
+    paint: [['h', 'band', 'left', 14], ['h', 'band', 'right', 14], ['h', 'band', 'top', 8], ['L', 'ell', 55, 14, 30, 16], ['L', 'ell', 38, 20, 12, 10], ['m', 'ell', 55, 50, 13, 11], ['k', 'ell', 55, 50, 10, 8]],
     exits: [['oak', 30, 100]],
     things: [['fern', 40, 34, 0], ['fern', 68, 36, 0], ['fern', 34, 56, 0], ['fern', 74, 58, 0]],
     marks: {pool: [55, 62]},
@@ -5066,7 +5076,7 @@ const PLACES = {
     spots: {pool: {name: 'The spring', at: [55, 62], acts: ['drink_spring', 'fill_spring'], say: 'Cold, clear water seeping from the foot of the ledge.'}},
     beasts: {}}
 };
-const WSOLID = 'FwockLh';   // ground nobody walks on. H, the brush over the path to the spring, is solid until you find it.
+const WSOLID = 'FwockLhb';   // b: a bramble thicket   // ground nobody walks on. H, the brush over the path to the spring, is solid until you find it.
 const tX = p => Math.max(0, Math.min(WW - 1, Math.round(p / 100 * (WW - 1)))), tY = p => Math.max(0, Math.min(WH - 1, Math.round(p / 100 * (WH - 1))));
 // how big each kind of thing is on the ground, in squares
 const FOOT = {bigboulder: [4, 3], oak: [1, 1], pecan: [1, 1], mulberry: [2, 1], osage: [1, 1], cedar: [1, 1], plum: [1, 1], bramble: [2, 1], deadfall: [2, 1], tangle: [3, 1], log: [2, 1], snag: [2, 1], clay: [2, 1], cane: [1, 1], stones: [2, 1], chimney: [1, 1], sapling: [1, 1]};
@@ -5109,6 +5119,8 @@ function pgen(k){
     if (!S.site){ for (const d of [[0, 0], [1, 0], [0, 1], [1, 1]]){ const xx = x + d[0], yy = y + d[1]; if (!inb(xx, yy)) continue; S.tiles.push([xx, yy]); spotAt[yy * WW + xx] = id; RES[yy * WW + xx] = 1; } }
     else { S.tiles.push([x, y]); spotAt[y * WW + x] = id; RES[y * WW + x] = 1; }
   }
+  for (const id in L.areas || {}){ const a = L.areas[id], S = spots[id] = spots[id] || Object.assign({id, tiles: []}, L.spots[id]);
+    ell(a[1] / 100 * WW, a[2] / 100 * WH, a[3] / 100 * WW + 1, a[4] / 100 * WH + 1, (x, y) => { if (at(x, y) === a[0] && !spotAt[y * WW + x]){ S.tiles.push([x, y]); spotAt[y * WW + x] = id; } }); }
   if (L.sites) for (const kk in L.sites){ const q = L.sites[kk], x = tX(q[0]), y = tY(q[1]); RES[y * WW + x] = 1; }
   if (L.keep) for (const r of L.keep) for (let y = tY(r[1]); y <= tY(r[3]); y++) for (let x = tX(r[0]); x <= tX(r[2]); x++) RES[y * WW + x] = 1;
   // trails: the cheapest way from each exit to the middle of the place, over ground that wanders a little
@@ -5216,7 +5228,7 @@ function wdist(src, w, h, cap){ // chamfer distance to the nearest pixel where s
 }
 function wbake(Wd, A, o){
   const c = A.c, Wp = WW * WT, Hp = WH * WT, N = Wp * Hp, M = Wd.M, snow = o.snow;
-  const CODE = {g: 0, G: 1, f: 2, t: 3, s: 3, m: 4, w: 5, o: 6, c: 7, k: 8, L: 9, F: 10, h: 11, H: 11};
+  const CODE = {g: 0, G: 1, f: 2, t: 3, s: 3, m: 4, w: 5, o: 6, c: 7, k: 8, L: 9, F: 10, h: 11, H: 11, b: 12};
   const ch = (x, y) => { let q = M[clamp(y, 0, WH - 1)][clamp(x, 0, WW - 1)]; if (q === 'H' && o.found) q = 't'; return q; };
   const K = new Uint8Array(N);
   // solid ground keeps to its own tiles; walkable ground takes on the ragged edges of its neighbors
@@ -5236,7 +5248,7 @@ function wbake(Wd, A, o){
   const RG = soft(mix(c.front, c.ground, 0.35)), RT = lr(mix(c.stalk, c.front, 0.35), mix(c.stalk, c.seed, 0.3)), RF = soft(mix(c.front, '#4a3d2c', 0.32));
   const RS = Px.ramp(mix(c.sand, '#a88a5c', 0.5)), RM = Px.ramp('#8a6f50'), SN = Px.ramp('#e3eaee'), LIT = Px.ramp(A.F.month >= 9 && A.F.month <= 10 ? mix(c.oak, '#a0622a', 0.3) : '#8a6a44');
   const RW = [Px.ramp(mix(c.water, o.flood ? '#8d7853' : '#6b6a48', o.flood ? 0.6 : 0.3)), Px.ramp(mix(c.water, '#2f5a5c', 0.35)), Px.ramp(mix(c.water, '#8fb8c0', 0.35)), Px.ramp(mix(c.water, '#3d7a86', 0.3))];
-  const RL = Px.ramp('#9c8468'), CAN = lr(c.oak, c.oakLight), CB = Px.ramp(mix(c.trunk, '#8e8272', 0.35)), TUF = Px.ramp(c.oak), BR = lr(mix(c.leaf, '#2c4428', 0.35), c.leaf);
+  const CANE = Px.ramp(mix(c.trunk, '#7d6650', 0.5)), RL = Px.ramp('#9c8468'), CAN = lr(c.oak, c.oakLight), CB = Px.ramp(mix(c.trunk, '#8e8272', 0.35)), TUF = Px.ramp(c.oak), BR = lr(mix(c.leaf, '#2c4428', 0.35), c.leaf);
   const seedy = A.F.month >= 6 && A.F.month <= 9, SEED = rgb(mix(c.seed, '#e4cf94', 0.3));
   const img = new Img(Wp, Hp), d = img.d, glints = [];
   const put = (i, col) => { const j = i * 4; d[j] = col[0]; d[j + 1] = col[1]; d[j + 2] = col[2]; d[j + 3] = 255; };
@@ -5277,11 +5289,12 @@ function wbake(Wd, A, o){
         if (wetc && NZ.hsh(px, py >> 1, 37) > 0.8) col = rgb(MATS.moss); }
       else { const n = NZ.fbm(px / 7, py / 7 + 41, 2) + b * 0.1, cr = NZ.fbm(px / 6, py / 2.5 + 41, 2); col = Math.abs(cr - 0.5) < 0.025 ? RL[1] : NZ.hsh(px, py, 43) > 0.985 ? RG[3] : RL[n > 0.58 ? 3 : 2]; if (snow) col = SN[3]; }
     } else { // the forest wall and the brush: crowns of trees and bushes, lit from the upper left
-      const brush = k === 11, C = brush ? 6 : 11, q = NZ.cell(px, py * 1.12, C, brush ? 43 : 41), dx = (px + 0.5 - q.fx) / C, dy = (py * 1.12 - q.fy) / C;
+      const brush = k >= 11, C = brush ? 6 : 11, q = NZ.cell(px, py * 1.12, C, brush ? 43 : 41), dx = (px + 0.5 - q.fx) / C, dy = (py * 1.12 - q.fy) / C;
       const v = -dx * 0.6 - dy * 0.75 + (q.id - 0.5) * 0.35 + b * 0.25 + (NZ.hsh(px, py, 47) > 0.85 ? -0.25 : 0);
       L = v > 0.55 ? 4 : v > 0.18 ? 3 : v > -0.2 ? 2 : v > -0.55 ? 1 : 0; const gap = q.d2 - q.d1 < (brush ? 0.9 : 1.3);
       if (gap) L = 0;
-      if (brush) col = !gap && NZ.hsh(px, py, 49) > 0.985 ? BR[4] : BR[L];
+      if (k === 12) col = gap ? (NZ.hsh(px, py, 53) > 0.6 ? CANE[1] : BR[0]) : NZ.hsh(px, py, 55) > 0.93 ? CANE[2] : BR[Math.min(4, L + (q.id > 0.6 ? 1 : 0))];
+      else if (brush) col = !gap && NZ.hsh(px, py, 49) > 0.985 ? BR[4] : BR[L];
       else if (c.bare){ const tw = NZ.hsh(px, py, 45); col = gap ? CB[0] : tw < 0.35 ? CB[1] : (L >= 3 && tw > 0.82 && c.tufts) ? TUF[2] : CB[Math.min(3, L)]; }
       else col = CAN[L];
       if (snow && L >= 3 && NZ.hsh(px, py, 51) > 0.35) col = SN[4];
@@ -5534,7 +5547,7 @@ function wbuilds(s, F){
   const add = (k, a, p, key, tiles) => { L.push(Object.assign({k, a, key}, p)); if (tiles) block(k, tiles); };
   const site = k => [siteXY(k)], site2 = k => { const q = siteXY(k); return [q, [q[0] + 1, q[1]]]; };
   if (s.loc === 'camp'){
-    add('shelter', {level: F.shelter, bed: has('bedding'), blanket: has('blanket')}, {bx: 23.5 * WT, by: 11 * WT}, 'shelter' + F.shelter + (has('bedding') ? 'b' : '') + (has('blanket') ? 'k' : ''), F.shelter >= 2 ? [[22, 9], [23, 9], [24, 9], [22, 10], [23, 10], [24, 10]] : null);
+    add('shelter', {level: F.shelter, bed: has('bedding'), blanket: has('blanket')}, {bx: 23.5 * WT, by: 13.4 * WT}, 'shelter' + F.shelter + (has('bedding') ? 'b' : '') + (has('blanket') ? 'k' : ''), F.shelter >= 2 ? [[22, 9], [23, 9], [24, 9], [22, 10], [23, 10], [24, 10]] : null);
     add('ring', F.fire, at('ring'), 'ring' + F.fire, site('ring'));
     if (has('woodstore')) add('store', 0, at('wood', 2), 'store', site2('wood'));
     else if (F.wood > 0) add('wood', F.wood > 1 ? 3 : 2, at('wood'), 'wood' + F.wood, site('wood'));
@@ -5883,6 +5896,7 @@ function wdraw(now){
   if (art){ c.imageSmoothingEnabled = true; const sx = art.naturalWidth / MW, sy = art.naturalHeight / MH; c.drawImage(art, Math.max(0, cx) * sx, Math.max(0, cy) * sy, Math.min(W, MW) * sx, Math.min(H, MH) * sy, Math.max(0, -cx), Math.max(0, -cy), Math.min(W, MW), Math.min(H, MH)); }
   else { c.imageSmoothingEnabled = false; c.drawImage(WV.base.cv, Math.max(0, cx), Math.max(0, cy), Math.min(W, MW), Math.min(H, MH), Math.max(0, -cx), Math.max(0, -cy), Math.min(W, MW), Math.min(H, MH)); wwater(c, cx, cy, W, H, t); }
   c.imageSmoothingEnabled = false;
+  if (WV.F.berries && WV.map.spots.thicket && WV.map.spots.thicket.tiles.length > 4) wberries(c, cx, cy);
   // everything that stands up, back to front: the painting already has the land's own trees and rocks in it
   const L = [], inView = (x, y, sp) => !(x - sp.ax > cx + W || y - sp.ay > cy + H || x - sp.ax + sp.w < cx || y - sp.ay + sp.h < cy);
   if (!art) for (const o of WV.map.O){ const T = WOBJ[o.t]; if (!T) continue; const bx = (o.x + o.w / 2) * WT, by = (o.y + 1) * WT - 2; if (bx < cx - 70 || bx > cx + W + 70 || by < cy - 8 || by > cy + H + 70) continue;
@@ -5908,6 +5922,12 @@ function wdraw(now){
   wsmoke(c, cx, cy, t); wweather(c, W, H, t); wgrade(c, W, H); wlights(c, cx, cy, W, H, t); wmarker(c, cx, cy, W, H, t);
   if (WV.fade > 0){ c.fillStyle = `rgba(10,12,16,${WV.fade.toFixed(3)})`; c.fillRect(0, 0, W, H); }
   if (root.__gb){ c.setTransform(1, 0, 0, 1, 0, 0); gbify(c, Z.devW, Z.devH); }
+}
+// ripe blackberries and dewberries scattered over the thicket: dark ones, with a few red ones still to come
+function wberries(c, cx, cy){
+  for (const q of WV.map.spots.thicket.tiles){ for (let j = 0; j < 3; j++){
+    const x = q[0] * WT + 2 + Math.floor(NZ.hsh(q[0], q[1], j + 101) * 12), y = q[1] * WT + 2 + Math.floor(NZ.hsh(q[1], q[0], j + 103) * 12), red = NZ.hsh(q[0] + j, q[1], 107) < 0.25;
+    c.fillStyle = red ? '#a3343a' : '#2e2038'; c.fillRect(x - cx, y - cy, 2, 2); c.fillStyle = red ? '#d1626a' : '#7a5c90'; c.fillRect(x - cx, y - cy, 1, 1); } }
 }
 function wwater(c, cx, cy, W, H, t){
   if (WV.calm) return; const G = WV.base.glints, K = WV.base.K, Wp = WV.base.Wp;
@@ -5993,6 +6013,240 @@ function wsetgb(on){ root.__gb = !!on; WV.Z = null; VIEWS.forEach(v => { if (v.S
 root.Scene = {show, light, dayRibbon};
 })(typeof window !== 'undefined' ? window : globalThis);
 
+</script>
+<script>
+/* ===== SKILL MOMENTS =====
+   The skill jobs, done with your hands: a few seconds each, by touch, mouse, or keys. How well it goes becomes a skill
+   score from 0 to 1 (0.5 is an ordinary try, the odds the game always had) that the engine turns into better or worse
+   odds. Skipping counts as an ordinary try, so nobody gets stuck. Exposes window.Skill. */
+(function (root) {
+'use strict';
+const D = root.DATA;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), lerp = (a, b, t) => a + (b - a) * t;
+const KIND = {firestart: 'drill', spear: 'spear', frogs: 'frog', pick: 'berries'};
+const TITLE = {
+  drill: ['Start a fire', 'Drag back and forth across the board, steady and fast, until it smokes. Then tap to blow when the coal glows brightest.'],
+  spear: ['Spear fish', 'Stand still. Tap to strike when a fish slides under the point. Three strikes.'],
+  frog: ['Gig bullfrogs', 'Tap to strike when a frog\'s eyes are under the point. Three strikes.'],
+  aim: ['Take the shot', 'Press and hold to steady your aim, and let go when the sight is on the animal. Don\'t hold your breath too long.'],
+  berries: ['Pick berries', 'Tap the ripe, dark berries. Leave the red ones: they aren\'t ready.'],
+  strike: ['Kill the snake', 'Watch the head. Strike the moment it pulls back to coil.']
+};
+// performance 0..1 becomes the engine's skill score: a fumble 0.1, a fair try about 0.55, perfect 0.95
+const toSkill = p => 0.1 + 0.85 * clamp(p, 0, 1);
+let run = null;
+
+function play(kind, S, done){
+  if (run) return;
+  const ov = document.createElement('div'); ov.className = 'skill'; ov.id = 'skill'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+  const t = TITLE[kind];
+  ov.innerHTML = `<div class="sk-box"><div class="sk-head"><b>${t[0]}</b><span class="sk-time"></span></div><p class="sk-how">${t[1]}</p><canvas class="sk-cv" tabindex="0" aria-label="${t[0]}: ${t[1]}"></canvas><div class="sk-foot"><span class="sk-say" aria-live="polite"></span><button type="button" class="link sk-skip">Skip (an ordinary try)</button></div></div>`;
+  document.body.appendChild(ov); document.body.classList.add('noscroll');
+  const cv = ov.querySelector('canvas'), ctx = cv.getContext('2d'), say = ov.querySelector('.sk-say'), timeEl = ov.querySelector('.sk-time');
+  const r = cv.getBoundingClientRect(), dpr = Math.min(3, root.devicePixelRatio || 1);
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+  const W = 360, H = Math.round(360 * r.height / r.width), k = cv.width / W;   // draw in a 360-wide space
+  const G = GAMES[kind](S, W, H), t0 = performance.now();
+  let raf = 0, finished = false, ptr = null;
+  run = {kind, g: G};
+  const finish = p => {
+    if (finished) return; finished = true;
+    const sc = p == null ? null : toSkill(p);
+    say.textContent = p == null ? '' : p >= 0.8 ? 'Well done.' : p >= 0.5 ? 'Not bad.' : p >= 0.25 ? 'A rough try.' : 'Fumbled it.';
+    setTimeout(() => { cancelAnimationFrame(raf); cleanup(); done(sc == null ? undefined : sc); }, p == null ? 0 : 800);
+  };
+  const frame = now => {
+    const tt = (now - t0) / 1000; G.t = tt;
+    ctx.setTransform(k, 0, 0, k, 0, 0); ctx.clearRect(0, 0, W, H);
+    const res = G.step(tt, ptr); G.draw(ctx, tt);
+    if (G.left != null) timeEl.textContent = Math.max(0, Math.ceil(G.left(tt))) + ' s';
+    if (res != null){ finish(res); return; }
+    raf = requestAnimationFrame(frame);
+  };
+  const pos = e => { const b = cv.getBoundingClientRect(); return {x: (e.clientX - b.left) / b.width * W, y: (e.clientY - b.top) / b.height * H}; };
+  const onDown = e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} ptr = Object.assign(pos(e), {down: true, at: G.t}); if (G.press) G.press(ptr.x, ptr.y); };
+  const onMove = e => { if (!ptr) ptr = Object.assign(pos(e), {down: false}); else Object.assign(ptr, pos(e)); if (G.move) G.move(ptr.x, ptr.y, !!ptr.down); };
+  const onUp = e => { if (ptr && ptr.down){ ptr.down = false; if (G.release) G.release(); } };
+  const keys = e => {
+    if (e.key === 'Escape'){ e.preventDefault(); finish(null); return; }
+    if (e.repeat && (e.key === ' ' || e.key === 'Enter')){ e.preventDefault(); return; }
+    if (e.type === 'keydown' && (e.key === ' ' || e.key === 'Enter')){ e.preventDefault(); if (G.key) G.key('a', true); }
+    if (e.type === 'keyup' && (e.key === ' ' || e.key === 'Enter')){ e.preventDefault(); if (G.key) G.key('a', false); }
+    if (e.type === 'keydown' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')){ e.preventDefault(); if (G.key) G.key(e.key === 'ArrowLeft' ? 'l' : 'r', true); }
+  };
+  cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', onUp);
+  document.addEventListener('keydown', keys, true); document.addEventListener('keyup', keys, true);
+  ov.querySelector('.sk-skip').addEventListener('click', () => finish(null));
+  function cleanup(){ document.removeEventListener('keydown', keys, true); document.removeEventListener('keyup', keys, true); ov.remove(); document.body.classList.remove('noscroll'); run = null; }
+  cv.focus({preventScroll: true});
+  raf = requestAnimationFrame(frame);
+}
+
+/* ---------- the games: each has step(t) returning a performance 0..1 when done, and draw(ctx, t) ---------- */
+const GAMES = {
+  // the bow drill: steady strokes heat the spindle; then blow the coal when it glows
+  drill(S, W, H){
+    const g = {heat: 0, x: W / 2, lastX: W / 2, dir: 0, turnX: W / 2, lastTurn: 0, strokes: 0, phase: 'saw', blows: [], sawEnd: 0, smoke: [], wobble: 0};
+    const ideal = (dt, dx) => (dt > 0.18 && dt < 0.75 ? 1 : dt < 1.1 ? 0.45 : 0.15) * clamp(dx / (W * 0.32), 0.3, 1);
+    g.move = (x, y, down) => {
+      if (g.phase !== 'saw') return; g.x = clamp(x, 40, W - 40);
+      const d = Math.sign(g.x - g.lastX); if (Math.abs(g.x - g.lastX) < 1.5) return;
+      if (d && d !== g.dir){ if (g.dir){ const dt = g.t - g.lastTurn, dx = Math.abs(g.x - g.turnX); g.heat = clamp(g.heat + 9.5 * ideal(dt, dx), 0, 100); g.strokes++; if (dt < 0.12) g.wobble = 1; if (g.heat >= 100){ g.phase = 'blow'; g.sawEnd = g.t; } } g.dir = d; g.turnX = g.x; g.lastTurn = g.t; }
+      g.lastX = g.x;
+    };
+    let keyDir = 0;
+    g.key = (k, on) => { if (g.phase === 'blow' && k === 'a' && on) g.tap(); if (g.phase === 'saw' && on && (k === 'l' || k === 'r')){ keyDir = k === 'l' ? -1 : 1; g.move(keyDir < 0 ? 60 : W - 60, 0, true); } };
+    g.tap = () => { if (g.phase !== 'blow' || g.blows.length >= 3) return; g.blows.push(g.glow); for (let i = 0; i < 6; i++) g.smoke.push({x: W / 2, y: H * 0.62, vx: (Math.random() - 0.5) * 40, vy: -30 - Math.random() * 30, a: 0.8}); };
+    g.press = () => { if (g.phase === 'blow') g.tap(); };
+    g.left = t => g.phase === 'saw' ? 8 - t : 4.5 - (t - g.sawEnd);
+    g.step = t => {
+      const dt = 1 / 60;
+      if (g.phase === 'saw'){
+        g.heat = Math.max(0, g.heat - 7 * dt); g.wobble = Math.max(0, g.wobble - dt * 2);
+        if (g.heat > 30 && Math.random() < g.heat / 400) g.smoke.push({x: W / 2 + (Math.random() - 0.5) * 8, y: H * 0.6, vx: (Math.random() - 0.5) * 10, vy: -20 - Math.random() * 20, a: 0.25 + g.heat / 250});
+        if (t > 8) return 0.35 * g.heat / 100;
+      } else {
+        g.glow = 0.5 + 0.5 * Math.sin((t - g.sawEnd) * 2 * Math.PI * 0.9);
+        if (g.blows.length >= 3 || t - g.sawEnd > 4.5){ const b = g.blows.concat([0, 0, 0]).slice(0, 3); return 0.45 + 0.55 * (b.reduce((a, x) => a + x, 0) / 3); }
+      }
+      for (const p of g.smoke){ p.x += p.vx * dt; p.y += p.vy * dt; p.a -= dt * 0.5; } g.smoke = g.smoke.filter(p => p.a > 0);
+      return null;
+    };
+    g.draw = (c, t) => {
+      c.fillStyle = '#2b2620'; c.fillRect(0, 0, W, H);
+      c.fillStyle = '#4a3b2a'; c.fillRect(0, H * 0.7, W, H * 0.3);
+      c.fillStyle = '#9b7a4e'; c.fillRect(W * 0.18, H * 0.64, W * 0.64, 14); c.fillStyle = '#6e5435'; c.fillRect(W * 0.18, H * 0.64 + 10, W * 0.64, 4);
+      const sx = W / 2 + (g.wobble ? Math.sin(t * 60) * 3 * g.wobble : 0);
+      c.fillStyle = '#c9a26a'; c.fillRect(sx - 4, H * 0.3, 8, H * 0.34);
+      c.fillStyle = '#7a5a3a'; c.fillRect(sx - 16, H * 0.26, 32, 10);
+      const bx = g.phase === 'saw' ? g.x : W / 2, bowY = H * 0.46;
+      c.strokeStyle = '#8a6a44'; c.lineWidth = 6; c.beginPath(); c.moveTo(bx - 110, bowY + 10); c.quadraticCurveTo(bx, bowY - 24, bx + 110, bowY + 10); c.stroke();
+      c.strokeStyle = '#d8cfb4'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(bx - 108, bowY + 9); c.lineTo(sx - 4, bowY); c.lineTo(sx + 4, bowY + 3); c.lineTo(bx + 108, bowY + 9); c.stroke();
+      if (g.phase === 'blow'){ const gl = g.glow; const gr = c.createRadialGradient(W / 2, H * 0.66, 2, W / 2, H * 0.66, 30 + gl * 24); gr.addColorStop(0, `rgba(255,${180 + gl * 60},90,${0.5 + gl * 0.5})`); gr.addColorStop(1, 'rgba(255,120,40,0)'); c.fillStyle = gr; c.fillRect(0, 0, W, H);
+        c.fillStyle = '#f2e6c8'; c.font = '600 16px system-ui, sans-serif'; c.textAlign = 'center'; c.fillText('Blow! ' + (3 - g.blows.length) + ' left', W / 2, H * 0.14); }
+      for (const p of g.smoke){ c.fillStyle = `rgba(220,215,200,${clamp(p.a, 0, 1)})`; c.beginPath(); c.arc(p.x, p.y, 6, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(20, 16, W - 40, 10); c.fillStyle = g.heat > 70 ? '#ff8a3d' : '#d8a050'; c.fillRect(20, 16, (W - 40) * g.heat / 100, 10);
+      c.fillStyle = '#e8dcc0'; c.font = '13px system-ui, sans-serif'; c.textAlign = 'left'; c.fillText(g.phase === 'saw' ? 'Heat' : 'A coal!', 20, 42);
+    };
+    return g;
+  },
+  // fish shadows glide through the shallows; strike when one is under the point
+  spear(S, W, H, frogs){
+    const N = frogs ? 4 : 5, fish = [];
+    for (let i = 0; i < N; i++) fish.push({x: Math.random() * W, y: H * (0.25 + Math.random() * 0.55), sp: (frogs ? 0 : 30 + Math.random() * 40) * (Math.random() < 0.5 ? -1 : 1), ph: Math.random() * 6, len: frogs ? 10 : 22 + Math.random() * 16, gone: false, up: frogs ? Math.random() * 4 : 0});
+    const g = {strikes: 0, hits: 0, splash: [], cool: 0};
+    const P = {x: W / 2, y: H * 0.52, r: 16};
+    g.strike = () => { if (g.cool > 0 || g.strikes >= 3) return; g.strikes++; g.cool = 0.6; g.splash.push({x: P.x, y: P.y, t: g.t});
+      const f = fish.find(f => !f.gone && (!frogs || Math.sin(g.t * 1.3 + f.up) > -0.2) && Math.hypot(f.x - P.x, f.y - P.y) < P.r + (frogs ? 6 : f.len * 0.35)); if (f){ f.gone = true; g.hits++; } };
+    g.press = () => g.strike(); g.key = (k, on) => { if (k === 'a' && on) g.strike(); };
+    g.left = t => 9 - t;
+    g.step = t => {
+      const dt = 1 / 60; g.cool = Math.max(0, g.cool - dt);
+      for (const f of fish){ if (f.gone) continue;
+        if (frogs){ f.x += Math.sin(t * 0.7 + f.ph) * 0.4; f.y += Math.cos(t * 0.5 + f.ph) * 0.3; if (Math.random() < 0.004){ f.x = 40 + Math.random() * (W - 80); f.y = H * (0.3 + Math.random() * 0.4); } }
+        else { f.x += f.sp * dt; f.y += Math.sin(t * 1.5 + f.ph) * 0.4; if (f.x < -30) f.x = W + 30; if (f.x > W + 30) f.x = -30; if (Math.random() < 0.005) f.sp = -f.sp; } }
+      if (g.strikes >= 3 && g.cool <= 0.1) return [0.15, 0.5, 0.8, 1][g.hits];
+      if (t > 9) return [0.15, 0.5, 0.8, 1][g.hits] * 0.9;
+      return null;
+    };
+    g.draw = (c, t) => {
+      const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#3d5a52'); gr.addColorStop(1, '#5d6e4a'); c.fillStyle = gr; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 40; i++){ c.fillStyle = 'rgba(140,130,100,.25)'; c.beginPath(); c.arc((i * 97) % W, (i * 53) % H, 3 + (i % 3), 0, Math.PI * 2); c.fill(); }
+      for (const f of fish){ if (f.gone) continue;
+        if (frogs){ const up = Math.sin(t * 1.3 + f.up) > -0.2; if (!up) continue; c.fillStyle = '#c8d070'; for (const d of [-4, 4]){ c.beginPath(); c.arc(f.x + d, f.y, 3, 0, Math.PI * 2); c.fill(); } c.fillStyle = '#20221a'; for (const d of [-4, 4]){ c.beginPath(); c.arc(f.x + d, f.y, 1.4, 0, Math.PI * 2); c.fill(); } }
+        else { c.fillStyle = 'rgba(20,30,28,.55)'; c.beginPath(); c.ellipse(f.x, f.y, f.len / 2, f.len / 6, 0, 0, Math.PI * 2); c.fill(); c.beginPath(); const tx = f.x - Math.sign(f.sp) * f.len / 2; c.moveTo(tx, f.y); c.lineTo(tx - Math.sign(f.sp) * 8, f.y - 5); c.lineTo(tx - Math.sign(f.sp) * 8, f.y + 5); c.fill(); } }
+      for (let i = 0; i < 6; i++){ c.strokeStyle = 'rgba(230,240,235,.18)'; c.lineWidth = 1; const y = ((t * 12 + i * 47) % (H + 20)) - 10; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(W * 0.3, y - 6, W * 0.6, y + 6, W, y); c.stroke(); }
+      for (const s of g.splash){ const a = 1 - (t - s.t) / 0.6; if (a <= 0) continue; c.strokeStyle = `rgba(240,245,240,${a})`; c.lineWidth = 2; c.beginPath(); c.arc(s.x, s.y, 10 + (1 - a) * 30, 0, Math.PI * 2); c.stroke(); }
+      c.strokeStyle = '#ffb07a'; c.lineWidth = 2; c.beginPath(); c.arc(P.x, P.y, P.r, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(P.x, P.y - P.r - 6); c.lineTo(P.x, P.y + P.r + 6); c.moveTo(P.x - P.r - 6, P.y); c.lineTo(P.x + P.r + 6, P.y); c.stroke();
+      c.fillStyle = '#f2ece0'; c.font = '13px system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('Strikes: ' + (3 - g.strikes) + ' left   Caught: ' + g.hits, 14, 22);
+    };
+    return g;
+  },
+  frog(S, W, H){ return GAMES.spear(S, W, H, true); },
+  // the sight drifts; holding steadies it for a breath; letting go fires
+  aim(S, W, H){
+    const g = {held: false, heldAt: 0, x: W / 2 + 60, y: H / 2 - 40, vx: 0, vy: 0, fired: false};
+    const T = {x: W / 2, y: H * 0.56, r: 26};
+    const fire = () => { if (g.fired) return; g.fired = true; g.res = clamp(1 - Math.hypot(g.x - T.x, g.y - T.y) / (T.r * 2.2), 0, 1); g.shotAt = g.t; };
+    g.press = () => { g.held = true; g.heldAt = g.t; };
+    g.release = () => { if (g.held){ g.held = false; fire(); } };
+    g.key = (k, on) => { if (k !== 'a') return; if (on && !g.held) g.press(); else if (!on) g.release(); };
+    g.left = t => 7 - t;
+    g.step = t => {
+      if (g.fired) return t - g.shotAt > 0.5 ? 0.15 + 0.85 * g.res : null;
+      const breath = g.held ? (t - g.heldAt < 2.6 ? lerp(1, 0.25, Math.min(1, (t - g.heldAt) / 0.9)) : 1.8) : 1;
+      const n1 = Math.sin(t * 1.7) + Math.sin(t * 2.9 + 1) * 0.6, n2 = Math.cos(t * 1.3 + 2) + Math.sin(t * 3.7) * 0.5;
+      g.x += ((T.x + n1 * 70 * breath) - g.x) * 0.06; g.y += ((T.y + n2 * 45 * breath) - g.y) * 0.06;
+      if (t > 7){ fire(); }
+      return null;
+    };
+    g.draw = (c, t) => {
+      const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#9fb7b0'); gr.addColorStop(0.55, '#7d8f5e'); gr.addColorStop(1, '#5c6a40'); c.fillStyle = gr; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 7; i++){ c.fillStyle = 'rgba(40,60,40,.5)'; c.beginPath(); c.ellipse((i * 71 + 20) % W, H * 0.42, 34, 40, 0, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#7d6446'; c.beginPath(); c.ellipse(T.x, T.y, 30, 14, 0, 0, Math.PI * 2); c.fill(); c.beginPath(); c.ellipse(T.x - 28, T.y - 16, 9, 7, -0.5, 0, Math.PI * 2); c.fill();
+      c.fillRect(T.x - 22, T.y + 8, 4, 20); c.fillRect(T.x + 16, T.y + 8, 4, 20); c.fillStyle = '#ece6d4'; c.beginPath(); c.ellipse(T.x + 4, T.y + 6, 18, 5, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = g.held ? '#ffb07a' : '#f6f0e0'; c.lineWidth = 2; c.beginPath(); c.arc(g.x, g.y, 18, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(g.x - 28, g.y); c.lineTo(g.x - 6, g.y); c.moveTo(g.x + 6, g.y); c.lineTo(g.x + 28, g.y); c.moveTo(g.x, g.y - 28); c.lineTo(g.x, g.y - 6); c.moveTo(g.x, g.y + 6); c.lineTo(g.x, g.y + 28); c.stroke();
+      if (g.fired){ c.fillStyle = `rgba(255,250,220,${Math.max(0, 0.7 - (t - g.shotAt))})`; c.fillRect(0, 0, W, H); }
+      c.fillStyle = '#1d2621'; c.font = '13px system-ui, sans-serif'; c.textAlign = 'left'; c.fillText(g.held ? (t - g.heldAt > 2.6 ? 'Out of breath!' : 'Steady...') : 'Hold to steady, let go to shoot', 14, 22);
+    };
+    return g;
+  },
+  // ripe berries are dark; red ones aren't ready
+  berries(S, W, H){
+    const B = [];
+    for (let i = 0; i < 22; i++){ const ripe = i < 9; B.push({x: 30 + Math.random() * (W - 60), y: 40 + Math.random() * (H - 80), ripe, gone: false, r: 7 + Math.random() * 2}); }
+    const g = {got: 0, bad: 0, flash: 0};
+    g.press = (x, y) => { const b = B.filter(b => !b.gone).sort((a, c) => Math.hypot(a.x - x, a.y - y) - Math.hypot(c.x - x, c.y - y))[0]; if (!b || Math.hypot(b.x - x, b.y - y) > b.r + 10) return; b.gone = true; if (b.ripe) g.got++; else { g.bad++; g.flash = 0.4; } };
+    let sel = 0;
+    g.key = (k, on) => { if (!on) return; const L = B.filter(b => !b.gone); if (!L.length) return; if (k === 'l' || k === 'r'){ sel = (sel + (k === 'r' ? 1 : -1) + L.length) % L.length; g.sel = L[sel]; } if (k === 'a' && g.sel && !g.sel.gone) g.press(g.sel.x, g.sel.y); };
+    g.left = t => 7 - t;
+    g.step = t => { g.flash = Math.max(0, g.flash - 1 / 60); const ripeLeft = B.some(b => b.ripe && !b.gone); if (!ripeLeft || t > 7) return clamp((g.got - g.bad * 0.6) / 9, 0, 1); return null; };
+    g.draw = (c, t) => {
+      c.fillStyle = '#35502e'; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 26; i++){ c.fillStyle = i % 2 ? '#4f7a3e' : '#426a35'; c.beginPath(); c.ellipse((i * 83) % W, (i * 47) % H, 26, 16, i, 0, Math.PI * 2); c.fill(); }
+      c.strokeStyle = '#7d6650'; c.lineWidth = 3; for (let i = 0; i < 6; i++){ c.beginPath(); c.moveTo(i * 70, H); c.quadraticCurveTo(i * 70 + 40, H * 0.2, i * 70 + 90, H * 0.6); c.stroke(); }
+      for (const b of B){ if (b.gone) continue; c.fillStyle = b.ripe ? '#2e2038' : (b.x % 2 > 1 ? '#b0383a' : '#c95a4a'); c.beginPath(); c.arc(b.x, b.y, b.r, 0, Math.PI * 2); c.fill(); c.fillStyle = b.ripe ? 'rgba(170,140,200,.6)' : 'rgba(255,200,190,.5)'; c.beginPath(); c.arc(b.x - 2, b.y - 2, 2.4, 0, Math.PI * 2); c.fill();
+        if (g.sel === b){ c.strokeStyle = '#ffb07a'; c.lineWidth = 2; c.beginPath(); c.arc(b.x, b.y, b.r + 4, 0, Math.PI * 2); c.stroke(); } }
+      if (g.flash){ c.fillStyle = `rgba(200,40,40,${g.flash})`; c.fillRect(0, 0, W, H); }
+      c.fillStyle = '#f2ece0'; c.font = '13px system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('Ripe picked: ' + g.got + (g.bad ? '   Unripe: ' + g.bad : ''), 14, 22);
+    };
+    return g;
+  },
+  // the snake sways; strike when the head pulls back
+  strike(S, W, H){
+    const g = {done: false, at: 0};
+    const per = 1.5, win = 0.18;
+    const phase = t => ((t + 0.6) % per) / per;   // 0..1, the pull-back at 0.5
+    g.hit = () => { if (g.done) return; g.done = true; g.at = g.t; const d = Math.abs(phase(g.t) - 0.5); g.res = d < win / per ? 1 - d / (win / per) * 0.4 : clamp(0.55 - d * 1.6, 0, 0.5); };
+    g.press = () => g.hit(); g.key = (k, on) => { if (k === 'a' && on) g.hit(); };
+    g.left = t => 5 - t;
+    g.step = t => { if (g.done) return t - g.at > 0.4 ? g.res : null; if (t > 5) return 0.2; return null; };
+    g.draw = (c, t) => {
+      c.fillStyle = '#8a7a5a'; c.fillRect(0, 0, W, H);
+      for (let i = 0; i < 30; i++){ c.fillStyle = 'rgba(90,70,50,.3)'; c.fillRect((i * 61) % W, (i * 37) % H, 14, 3); }
+      const cx = W / 2, cy = H * 0.62, p = phase(t), back = Math.exp(-((p - 0.5) ** 2) / 0.006);
+      c.strokeStyle = '#6d5a3a'; c.lineWidth = 14; for (let i = 0; i < 3; i++){ c.beginPath(); c.ellipse(cx, cy + 8, 50 - i * 14, 18 - i * 4, 0, 0, Math.PI * 2); c.stroke(); }
+      c.strokeStyle = '#3b3020'; c.lineWidth = 2; for (let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2; c.beginPath(); c.arc(cx + Math.cos(a) * 44, cy + 8 + Math.sin(a) * 15, 3, 0, Math.PI * 2); c.stroke(); }
+      const hx = cx + Math.sin(t * 2.2) * 30 * (1 - back), hy = cy - 40 - back * 26;
+      c.strokeStyle = '#6d5a3a'; c.lineWidth = 11; c.beginPath(); c.moveTo(cx, cy - 6); c.quadraticCurveTo(cx + (hx - cx) * 0.5, cy - 30, hx, hy); c.stroke();
+      c.fillStyle = '#5a4a30'; c.beginPath(); c.ellipse(hx, hy, 12, 9, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e8d070'; c.beginPath(); c.arc(hx - 5, hy - 2, 1.8, 0, Math.PI * 2); c.arc(hx + 5, hy - 2, 1.8, 0, Math.PI * 2); c.fill();
+      if (back > 0.4){ c.strokeStyle = `rgba(255,176,122,${back})`; c.lineWidth = 3; c.beginPath(); c.arc(hx, hy, 22, 0, Math.PI * 2); c.stroke(); }
+      if (g.done){ c.fillStyle = `rgba(255,250,220,${Math.max(0, 0.6 - (t - g.at) * 1.5)})`; c.fillRect(0, 0, W, H); }
+      c.fillStyle = '#1d2621'; c.font = '13px system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('Strike when it pulls back', 14, 22);
+    };
+    return g;
+  }
+};
+
+root.Skill = {
+  play,
+  for: id => KIND[id] || null,
+  // a shot at game or a dangerous animal, or killing a snake up close
+  forChoice: (k, S) => k === 'shoot' || k === 'arrow' ? 'aim' : k === 'kill' ? 'strike' : null,
+  active: () => !!run,
+  _now: () => run && run.g
+};
+})(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
 /* ===== 5. SCREEN ===== */
