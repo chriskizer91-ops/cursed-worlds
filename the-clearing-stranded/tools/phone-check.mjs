@@ -37,14 +37,20 @@ for (const t of ['pack', 'craft', 'journal']){ await page.click(`[data-tab="${t}
 await page.click('[data-tab="here"]');
 // follow the Next step card a few times, the way a player would
 for (let i = 0; i < 12; i++){
+  // answer whatever sheet is open first: an encounter, a result, a plan
+  for (let k = 0; k < 4 && await page.$('#scrim'); k++){
+    const opt = await page.$('.sheet .opt');
+    if (opt){ await opt.click(); await page.waitForTimeout(150); continue; }
+    const close = await page.$('.sheet [data-close]');
+    if (close){ await close.click(); await page.waitForTimeout(150); continue; }
+    errors.push('A sheet with no way to close it: ' + (await page.$eval('.sheet', el => el.innerText.slice(0, 160))));
+    break;
+  }
+  if (await page.$('#scrim')) break;
   const b = await page.$('.next-actions .btn.hot:not([disabled])');
   if (!b) break;
   await b.click();
   await page.waitForTimeout(150);
-  const close = await page.$('.sheet .foot [data-close]');
-  if (close) await close.click();
-  const opt = await page.$('.sheet .opt');
-  if (opt) await opt.click();
 }
 await shot('05-after-playing');
 const ms = Date.now() - t0;
