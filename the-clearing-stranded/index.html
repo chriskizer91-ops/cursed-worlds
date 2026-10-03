@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#e7eced" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1518" media="(prefers-color-scheme: dark)">
 <meta name="description" content="Survive in a North Texas clearing in a world where people never existed. Real plants, real animals, real weather.">
-<title>The Clearing</title>
+<title>Stranded</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;display=swap" media="print" id="webfonts">
@@ -121,14 +121,17 @@ h1,h2,h3,p{margin:0}
 :root[data-theme="dark"] .landscape.day{filter:brightness(.86)}
 /* The walk: the clearing from above, walked tile by tile. Also drawn in the scene script. Under it, like a handheld's
    controls, a D-pad and A and B buttons on touch screens, or a line about the keys on a computer. */
-.world{position:relative;width:100%;aspect-ratio:380/290;outline:none;overflow:hidden;background:#1d2621;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.world{position:relative;width:100%;aspect-ratio:380/330;outline:none;overflow:hidden;background:#1d2621;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .world canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 .world:focus-visible{box-shadow:inset 0 0 0 3px var(--blaze)}
 .world button{font:inherit}
-.wtag{position:absolute;left:8px;top:8px;background:var(--ink);color:var(--paper);font-weight:700;font-size:14px;line-height:1;padding:7px 10px;border:2px solid var(--paper);box-shadow:0 0 0 2px var(--ink);opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s;pointer-events:none}
+.wtag{position:absolute;left:8px;top:44px;background:var(--ink);color:var(--paper);font-weight:700;font-size:14px;line-height:1;padding:7px 10px;border:2px solid var(--paper);box-shadow:0 0 0 2px var(--ink);opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s;pointer-events:none}
 .wtag.on{opacity:1;transform:none}
 .wsay{position:absolute;left:8px;right:8px;bottom:8px;background:var(--sheet);color:var(--ink);font-size:15px;line-height:1.35;padding:8px 11px;border:2px solid var(--ink);box-shadow:0 0 0 2px var(--sheet);opacity:0;transition:opacity .2s;pointer-events:none}
 .wsay.on{opacity:1}
+.wquest{position:absolute;left:8px;right:70px;top:8px;background:color-mix(in srgb,var(--sheet) 88%,transparent);color:var(--ink);border:2px solid var(--ink);border-left:5px solid var(--blaze);font-size:13.5px;line-height:1.25;padding:5px 8px;max-height:3.3em;overflow:hidden;opacity:0;transition:opacity .25s;pointer-events:none}
+.wquest.on{opacity:1}
+.wm-l button.hint .nm{color:var(--blaze-text);font-weight:700}
 .wfield{position:absolute;right:8px;top:8px;background:var(--sheet);color:var(--ink);border:2px solid var(--ink);font-weight:600;font-size:13px;line-height:1;padding:6px 9px}
 .wmenu{position:absolute;left:8px;right:8px;bottom:8px;max-height:calc(100% - 16px);overflow:auto;background:var(--sheet);color:var(--ink);border:2px solid var(--ink);box-shadow:0 0 0 2px var(--sheet),0 8px 22px rgba(0,0,0,.35);padding:2px 0}
 .wmenu[hidden]{display:none}
@@ -154,6 +157,8 @@ h1,h2,h3,p{margin:0}
 .wmid b{display:block;font-size:15px;color:var(--ink);margin-bottom:3px}
 .whint{font-size:13px;color:var(--ink-3);margin:0}
 @media (pointer:coarse),(hover:none){.wpad{display:grid}.wpad .whint{display:none}}
+/* On a phone held upright the world is the main screen: as tall as fits above the pad. */
+@media (orientation:portrait) and (max-width:899px){.world{aspect-ratio:auto;height:clamp(300px,calc(100vh - 360px),620px);height:clamp(300px,calc(100dvh - 360px),620px)}}
 @media (hover:hover) and (pointer:fine){.wpad{display:block;padding:8px 12px}.wpad .dpad,.wpad .ab,.wpad .wmid{display:none}}
 @media (max-width:360px){.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}.ab button{width:52px;height:52px}.ab button.b{width:44px;height:44px}}
 /* The narrowest phones: the place name gets its own row above the pad instead of squeezing under B. */
@@ -252,6 +257,27 @@ h1,h2,h3,p{margin:0}
 .next-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .next-actions .btn{padding:9px 14px;font-size:16px;white-space:normal}
 .next-actions .why{font-size:14.5px;color:var(--warn);align-self:center}
+.qtitle{font-family:var(--font-text);font-size:21px;line-height:1.2;margin-top:2px}
+.qsteps{list-style:none;margin:6px 0 0;padding:0}
+.qsteps li{display:grid;grid-template-columns:22px 1fr;font-size:15.5px;padding:2px 0;color:var(--ink-2)}
+.qsteps li.done{color:var(--ink-3);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--ink-3) 60%,transparent)}
+.qsteps li.now{color:var(--ink);font-weight:700}
+.qsteps .tick{font-weight:700;color:var(--ink-3)} .qsteps li.done .tick{color:var(--good);text-decoration:none}
+.next-how.where{color:var(--blaze-text);font-weight:600}
+.next-how.tip{color:var(--ink-2);border-top:1px solid var(--rule);padding-top:6px}
+.qlog h3{display:flex;align-items:baseline;gap:8px;font-family:var(--font-text);font-weight:500;font-size:20px;margin-top:18px;padding-bottom:5px;border-bottom:1px solid var(--ink)}
+.qlog h3 span{margin-left:auto;font-family:var(--font-ui);font-size:14.5px;font-weight:600;color:var(--ink-2)}
+.quest{padding:9px 0;border-bottom:1px solid var(--rule)}
+.quest .qh{display:grid;grid-template-columns:22px 1fr auto;align-items:baseline;font-size:16px}
+.quest .qh .tick{font-weight:700;color:var(--ink-3)} .quest.done .qh .tick{color:var(--good)} .quest.now .qh .tick{color:var(--blaze)}
+.quest.done b{color:var(--ink-2);font-weight:600}
+.quest .qp{font-size:14px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.qstory{font-family:var(--font-text);font-size:15.5px;line-height:1.42;color:var(--ink-2);margin:4px 0 0 22px;max-width:62ch}
+.quest .qsteps{margin-left:22px}
+.quest .link{margin-left:22px}
+.qdone{margin-top:14px;border-top:1.5px solid var(--blaze);padding-top:10px}
+.qdone p{font-family:var(--font-text);font-size:16.5px;line-height:1.45;margin-top:4px;max-width:62ch}
+.qdone .qd-h{font-family:var(--font-ui);font-size:15.5px;color:var(--blaze-text);margin-top:8px}
 
 .camp{margin-top:20px;border-top:1px solid var(--rule);padding-top:8px}
 .camp p{display:flex;gap:10px;font-size:15.5px;padding:3px 0}
@@ -4896,114 +4922,236 @@ function dayRibbon(h){
    place is the same as choosing "Walk to" it: the engine charges the time, water, and energy, and
    whatever happens on the way happens.
    ===================================================================================================== */
-const WT = 16, WW = 48, WH = 36;
+const WT = 16, WW = 48, WH = 32;
 const WDIR = {up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0]};
-// each place: m, its heart (for deciding where you are), and s, where you stand when you get there
-const WPLACE = {
-  camp: {m: [26, 20], s: [25, 21]}, cedar: {m: [14, 13], s: [15, 14]}, oak: {m: [28, 7], s: [28, 8]},
-  prairie: {m: [37, 17], s: [36, 18]}, berry: {m: [15, 22], s: [16, 22]}, river: {m: [26, 31], s: [26, 31]},
-  pond: {m: [13, 28], s: [14, 28]}, creek: {m: [39, 29], s: [38, 29]}, spring: {m: [40, 7], s: [40, 7]}
-};
-const WTRAILS = [['camp', 'cedar'], ['camp', 'oak'], ['camp', 'prairie'], ['camp', 'berry'], ['camp', 'river'], ['river', 'pond'], ['river', 'creek'], ['cedar', 'oak'], ['oak', 'spring']];
-// where the things you build at camp stand, so trails and trees leave room for them
-const WCAMP = {ring: [27, 21], wood: [30, 21], rack: [20, 20], rain: [22, 21], bench: [29, 23], cache: [32, 17], look: [33, 20], crate: [23, 21], pot: [28, 22], seep: [23, 31], trap: [28, 32]};
-const WSOLID = 'FwockLh';   // ground nobody walks on. H, the brush over the path to the spring, is solid until you find it.
+/* The nine places, laid out as in docs/design.md: positions are percent across and percent down, the same numbers the
+   paintings are asked to follow. Ground: g grass, G tallgrass, f leaf litter, t trail, s sand, m mud, w river, o pond,
+   c creek, k spring pool, L ledge, F woods too thick to walk, h brush, H brush with a hidden trail.
+   things: [kind, x%, y%, variant, spot]. A spot is something you can use: its jobs (acts), the projects built there
+   (makes), and what you see when you bump into it (say). exits: [place, x%, y%] where a trail leaves the map. */
+const PLACES = {
+  camp: {ground: 'g', hub: [50, 64],
+    paint: [['F', 'band', 'top', 14], ['F', 'ell', 0, 0, 20, 34], ['F', 'ell', 100, 0, 22, 26], ['F', 'ell', 0, 100, 12, 18], ['G', 'rect', 86, 18, 100, 62], ['G', 'ell', 94, 92, 14, 14], ['f', 'ell', 12, 30, 9, 9]],
+    exits: [['oak', 60, 0], ['cedar', 0, 28], ['berry', 0, 72], ['prairie', 100, 46], ['river', 48, 100]],
+    things: [['bigboulder', 43, 38, 0, 'boulders'], ['bigboulder', 58, 38, 1, 'boulders'], ['bigboulder', 50, 24, 2, 'boulders'], ['oak', 12, 30, 0, 'hangoak'], ['oak', 88, 82, 0], ['oak', 30, 14, 1], ['oak', 74, 16, 0]],
+    keep: [[38, 40, 64, 76], [24, 40, 38, 62], [62, 34, 76, 60]],
+    scatter: [['oak', 8, 'f'], ['rock', 4, 'g'], ['yucca', 2, 'G'], ['fern', 3, 'f']],
+    sites: {ring: [50, 54], wood: [58, 56], rack: [30, 50], rain: [32, 40], bench: [56, 70], cache: [70, 40], look: [72, 52], crate: [40, 54], pot: [54, 57], work: [42, 66]},
+    spots: {
+      boulders: {name: 'The boulders', acts: ['sleep', 'rest'], makes: ['leanto', 'roof', 'walls', 'bedding', 'blanket', 'pot'], say: 'Three ten-foot boulders in a triangle: three stone walls waiting for a roof.'},
+      ring: {name: 'Fire ring', site: 'ring', acts: ['firestart', 'addwood', 'stock', 'bank', 'uncover', 'cook', 'boil'], makes: ['bowl', 'firepot', 'leach', 'hearth'], say: 'A ring of stones on bare dirt.'},
+      crate: {name: 'Your crates', site: 'crate', acts: ['crate'], say: 'Your crates: the only critter-proof box you have.'},
+      rack: {name: 'Drying rack', site: 'rack', acts: ['rack'], say: 'Your drying rack.'},
+      work: {name: 'Work ground', site: 'work', open: true, makes: ['rack', 'rain', 'trap', 'arrows', 'workbench', 'woodstore', 'cache', 'lookout'], say: 'Flat open ground: room to build.'},
+      hangoak: {name: 'Big post oak', makes: ['hang'], say: 'A big post oak with a high, level limb, far from the trunk: the place for a food hang.'}
+    },
+    beasts: {rabbit: [32, 20, 46, 30]}},
 
-function wgen(){
-  const R = rng(9923), M = [];
-  for (let y = 0; y < WH; y++) M.push(new Array(WW).fill('g'));
+  cedar: {ground: 'g', hub: [56, 56],
+    paint: [['F', 'band', 'top', 12], ['F', 'band', 'left', 8], ['f', 'ell', 20, 30, 22, 24], ['f', 'ell', 70, 20, 18, 14]],
+    exits: [['camp', 100, 58], ['oak', 78, 0]],
+    things: [['cedar', 46, 34, 1, 'cedar'], ['cedar', 22, 30, 2, 'cedar'], ['cedar', 30, 48, 3, 'cedar'], ['cedar', 62, 24, 4, 'cedar'], ['cedar', 70, 50, 5, 'cedar'], ['cedar', 84, 30, 6, 'cedar'], ['cedar', 12, 60, 7, 'cedar'], ['cedar', 56, 82, 8, 'cedar'],
+      ['deadfall', 32, 66, 0, 'deadfall'], ['tangle', 66, 74, 0, 'tangle'], ['log', 80, 42, 0, 'rotlog'], ['rock', 84, 46, 1], ['rock', 76, 46, 0]],
+    scatter: [['oak', 5, 'f'], ['rock', 3, 'g'], ['fern', 4, 'f']],
+    spots: {
+      cedar: {name: 'Eastern red cedar', acts: ['poles', 'bark'], say: 'An eastern red cedar: stringy bark, and dry dead branches low down.'},
+      deadfall: {name: 'Cedar deadwood', acts: ['woodC'], say: 'A tangle of dry, fallen cedar: firewood that burns hot and fast.'},
+      tangle: {name: 'Vine tangle', acts: ['vines'], say: 'A dead tree smothered in greenbrier and grapevine. Watch for leaves of three.'},
+      rotlog: {name: 'Rotten log', acts: ['grubs'], say: 'A log gone soft with rot. Grubs live in logs like this.'}
+    },
+    beasts: {rabbit: [40, 50, 90, 90], squirrel: [10, 20, 60, 50]}},
+
+  oak: {ground: 'f', hub: [46, 58],
+    paint: [['F', 'band', 'left', 6], ['F', 'band', 'right', 6], ['F', 'ell', 50, 0, 18, 8], ['g', 'ell', 46, 80, 20, 16], ['g', 'ell', 74, 66, 12, 10], ['h', 'rect', 84, 0, 100, 24]],
+    exits: [['camp', 45, 100], ['cedar', 0, 60], ['spring', 92, 0, 'hidden']],
+    things: [['deadfall', 30, 64, 1, 'deadwood'], ['oak', 62, 56, 0, 'acorns'], ['oak', 56, 64, 1, 'acorns'], ['sapling', 70, 36, 0, 'deertrail'], ['log', 24, 40, 0]],
+    trails: [[[100, 30], [56, 40]], [[30, 0], [40, 40]]],
+    marks: {deep: [30, 4]},
+    scatter: [['oak', 26, 'f'], ['oak', 3, 'g'], ['fern', 5, 'f'], ['rock', 3, 'f'], ['log', 2, 'f']],
+    spots: {
+      deadwood: {name: 'Fallen oak limbs', acts: ['woodO'], say: 'Heavy oak limbs, dry and gray. They burn long and hot.'},
+      acorns: {name: 'Post oaks', acts: ['forage_oak'], say: 'Post oaks with greenbrier climbing them. Acorns drop here in the fall.'},
+      deertrail: {name: 'Deer trail', acts: ['hunt_oak', 'snareset', 'snarecheck', 'snarepull'], say: 'A sapling rubbed raw by antlers, and a trail worn deep in the leaves.'},
+      deep: {name: 'The deeper woods', at: [30, 4], acts: ['explore_oak'], say: 'A dark path north, deeper into the Cross Timbers.'}
+    },
+    beasts: {deer: [10, 10, 80, 60], squirrel: [10, 20, 80, 70], turkey: [40, 50, 80, 90]}},
+
+  prairie: {ground: 'G', hub: [30, 56],
+    paint: [['g', 'ell', 22, 56, 9, 9], ['g', 'ell', 30, 56, 14, 8], ['L', 'ell', 78, 12, 14, 6], ['g', 'ell', 76, 20, 18, 9]],
+    exits: [['camp', 0, 55]],
+    things: [['stones', 72, 20, 0, 'ridge'], ['stones', 80, 22, 1, 'ridge'], ['stones', 86, 18, 0, 'ridge'],
+      ['yucca', 30, 28, 0, 'yucca'], ['yucca', 34, 30, 0, 'yucca'], ['yucca', 42, 72, 0, 'yucca'], ['yucca', 46, 74, 0, 'yucca'],
+      ['pear', 62, 74, 0, 'pear'], ['pear', 66, 76, 0, 'pear'], ['pear', 86, 56, 0, 'pear'], ['oak', 56, 40, 1, 'hackberry'], ['sapling', 40, 52, 1, 'runs']],
+    marks: {far: [96, 44], dry: [22, 54]},
+    scatter: [['yucca', 3, 'G'], ['pear', 2, 'G'], ['rock', 3, 'G']],
+    spots: {
+      ridge: {name: 'Limestone ridge', acts: ['stones'], say: 'Dry, fist-sized limestone on the ridge top. Good cooking stones.'},
+      yucca: {name: 'Yucca', acts: ['yucca'], say: 'Arkansas yucca: stiff leaves with needle tips, full of strong fiber.'},
+      pear: {name: 'Prickly pear', acts: ['forage_prairie'], say: 'Prickly pear: pads all year, purple fruit in late summer. Mind the spines.'},
+      hackberry: {name: 'Lone hackberry', acts: ['hunt_prairie'], say: 'A lone hackberry on a rise. You can see a long way from here.'},
+      runs: {name: 'Rabbit runs', acts: ['snareset', 'snarecheck', 'snarepull', 'forage_prairie'], say: 'Little runs worn through the grass.'},
+      dry: {name: 'Dry grass', at: [22, 54], acts: ['grass', 'forage_prairie'], say: 'Last year\'s bluestem, cured to straw.'},
+      far: {name: 'The far prairie', at: [96, 44], acts: ['explore_prairie'], say: 'Grass running on and on to the east.'}
+    },
+    beasts: {bison: [40, 10, 96, 70], turkey: [20, 60, 70, 92], rabbit: [10, 40, 60, 90], deer: [60, 60, 96, 92]}},
+
+  berry: {ground: 'g', hub: [70, 60],
+    paint: [['F', 'band', 'left', 8], ['F', 'band', 'top', 10], ['f', 'ell', 10, 20, 16, 16]],
+    exits: [['camp', 100, 60]],
+    things: [['bramble', 28, 36, 0, 'thicket'], ['bramble', 34, 34, 1, 'thicket'], ['bramble', 40, 36, 0, 'thicket'], ['bramble', 46, 38, 1, 'thicket'], ['bramble', 26, 46, 1, 'thicket'], ['bramble', 32, 48, 0, 'thicket'],
+      ['bramble', 38, 46, 1, 'thicket'], ['bramble', 46, 50, 0, 'thicket'], ['bramble', 28, 58, 0, 'thicket'], ['bramble', 36, 60, 1, 'thicket'], ['bramble', 44, 62, 0, 'thicket'],
+      ['mulberry', 72, 36, 0, 'mulberry'], ['plum', 18, 80, 0, 'plums'], ['plum', 24, 84, 1, 'plums']],
+    scatter: [['oak', 4, 'f'], ['rock', 2, 'g'], ['fern', 2, 'f']],
+    spots: {
+      thicket: {name: 'Blackberry thicket', acts: ['pick'], say: 'Dagr\'s blackberry thicket: arching, thorny canes, dewberries trailing at the edges.'},
+      mulberry: {name: 'Red mulberry', acts: ['shake', 'pick'], say: 'One huge red mulberry tree.'},
+      plums: {name: 'Chickasaw plums', acts: ['pick'], say: 'A thicket of small Chickasaw plum trees.'}
+    },
+    beasts: {rabbit: [50, 50, 96, 92]}},
+
+  river: {ground: 'g', hub: [50, 40],
+    paint: [['river'], ['F', 'band', 'top', 6]],
+    exits: [['camp', 50, 0], ['pond', 0, 55], ['creek', 100, 40]],
+    things: [['reeds', 13, 70, 0, 'cattails'], ['reeds', 17, 72, 0, 'cattails'], ['reeds', 15, 74, 0, 'cattails'], ['chimney', 32, 66, 0, 'mudflat'], ['chimney', 36, 68, 1, 'mudflat'],
+      ['snag', 72, 80, 0, 'snag'], ['clay', 82, 62, 0, 'claybank'], ['cane', 92, 48, 0, 'canebrake'], ['cane', 96, 54, 1, 'canebrake'],
+      ['pecan', 24, 30, 1], ['oak', 70, 24, 0], ['pecan', 88, 26, 1]],
+    marks: {edge: [48, 66], sandbar: [60, 74]},
+    scatter: [['reeds', 6, 'wet'], ['rock', 2, 'g']],
+    spots: {
+      cattails: {name: 'Cattails', acts: ['cattail_river'], say: 'Cattails in the shallows: starchy roots all year.'},
+      mudflat: {name: 'Mud flat', acts: ['crawfish'], say: 'Crawfish chimneys: little towers of mud pellets.'},
+      edge: {name: 'The water\'s edge', at: [48, 66], acts: ['drink_river', 'fill_river'], say: 'The river: slow, brown, and deep.'},
+      sandbar: {name: 'Sandbar', at: [60, 74], acts: ['seep', 'drink_seep', 'fill_seep'], say: 'A sandbar. Water seeps up through sand cleaner than the river.'},
+      snag: {name: 'Snag', acts: ['trapset', 'trapcheck'], say: 'A fallen log in the current. Fish shelter behind it.'},
+      claybank: {name: 'Clay bank', acts: ['clay'], say: 'A cut bank of slick gray clay.'},
+      canebrake: {name: 'Canebrake', acts: ['cane'], say: 'River cane: North America\'s own bamboo.'}
+    },
+    beasts: {}},
+
+  pond: {ground: 'g', hub: [80, 72],
+    paint: [['F', 'band', 'left', 6], ['F', 'band', 'top', 8], ['pond', 50, 48, 26, 21]],
+    exits: [['river', 100, 70]],
+    things: [['reeds', 24, 44, 0, 'cattailsP'], ['reeds', 26, 50, 0, 'cattailsP'], ['reeds', 70, 32, 0, 'cattailsP'], ['reeds', 74, 36, 0, 'cattailsP'], ['oak', 88, 24, 0]],
+    marks: {shallows: [50, 74], pondedge: [64, 76]},
+    scatter: [['reeds', 8, 'wet'], ['oak', 4, 'g'], ['fern', 3, 'g']],
+    spots: {
+      pondedge: {name: 'Gravelly edge', at: [64, 76], acts: ['drink_pond', 'fill_pond'], say: 'Still, warm water. Something big rolls under the surface.'},
+      shallows: {name: 'Shallows', at: [50, 74], acts: ['spear', 'frogs', 'turtle'], say: 'Knee-deep shallows over mud. Fish shadows slide by.'},
+      cattailsP: {name: 'Cattails', acts: ['cattail_pond'], say: 'The pond edge is thick with cattails.'}
+    },
+    beasts: {}},
+
+  creek: {ground: 'f', hub: [30, 60],
+    paint: [['creek', [[60, 0], [64, 20], [58, 40], [66, 60], [72, 80], [76, 100]]], ['g', 'ell', 30, 40, 18, 14], ['F', 'band', 'right', 4]],
+    exits: [['river', 0, 78]],
+    things: [['pecan', 24, 30, 0, 'pecans'], ['pecan', 40, 46, 0, 'pecans'], ['pecan', 20, 66, 2, 'grapes'], ['deadfall', 48, 78, 1, 'hardwood'], ['osage', 86, 30, 0, 'osage'], ['pecan', 50, 20, 1, 'stand'], ['pecan', 84, 70, 1]],
+    marks: {down: [88, 96]},
+    scatter: [['oak', 8, 'f'], ['fern', 5, 'f'], ['log', 2, 'f']],
+    spots: {
+      pecans: {name: 'Pecan tree', acts: ['pecans'], say: 'A tall pecan. In the fall the ground under it is covered in nuts.'},
+      grapes: {name: 'Grapevines and persimmon', acts: ['forage_creek'], say: 'Mustang grapevines hang from the limbs, and a persimmon stands beside them.'},
+      hardwood: {name: 'Fallen hardwood', acts: ['woodK'], say: 'Big fallen limbs of pecan and hackberry, dry and heavy.'},
+      osage: {name: 'Bois d\'arc grove', acts: ['stave'], say: 'Thorny trees dropping bumpy green fruit the size of softballs.'},
+      stand: {name: 'White sycamore', acts: ['hunt_creek'], say: 'A white-barked sycamore over a game crossing.'},
+      down: {name: 'Downstream', at: [88, 96], acts: ['explore_creek'], say: 'The creek runs on through the bottomland for miles.'}
+    },
+    beasts: {deer: [4, 10, 50, 60], squirrel: [4, 4, 50, 60], turkey: [10, 50, 50, 90]}},
+
+  spring: {ground: 'g', hub: [40, 76],
+    paint: [['h', 'band', 'left', 14], ['h', 'band', 'right', 14], ['h', 'band', 'top', 8], ['L', 'rect', 30, 8, 80, 30], ['m', 'ell', 55, 50, 13, 11], ['k', 'ell', 55, 50, 10, 8]],
+    exits: [['oak', 30, 100]],
+    things: [['fern', 40, 34, 0], ['fern', 68, 36, 0], ['fern', 34, 56, 0], ['fern', 74, 58, 0]],
+    marks: {pool: [55, 62]},
+    scatter: [['fern', 6, 'g'], ['rock', 3, 'g']],
+    spots: {pool: {name: 'The spring', at: [55, 62], acts: ['drink_spring', 'fill_spring'], say: 'Cold, clear water seeping from the foot of the ledge.'}},
+    beasts: {}}
+};
+const WSOLID = 'FwockLh';   // ground nobody walks on. H, the brush over the path to the spring, is solid until you find it.
+const tX = p => Math.max(0, Math.min(WW - 1, Math.round(p / 100 * (WW - 1)))), tY = p => Math.max(0, Math.min(WH - 1, Math.round(p / 100 * (WH - 1))));
+// how big each kind of thing is on the ground, in squares
+const FOOT = {bigboulder: [4, 3], oak: [1, 1], pecan: [1, 1], mulberry: [2, 1], osage: [1, 1], cedar: [1, 1], plum: [1, 1], bramble: [2, 1], deadfall: [2, 1], tangle: [3, 1], log: [2, 1], snag: [2, 1], clay: [2, 1], cane: [1, 1], stones: [2, 1], chimney: [1, 1], sapling: [1, 1]};
+
+function pgen(k){
+  const L = PLACES[k], R = rng(9923 + D.LOC_ORDER.indexOf(k) * 101), M = [];
+  for (let y = 0; y < WH; y++) M.push(new Array(WW).fill(L.ground));
   const inb = (x, y) => x >= 0 && y >= 0 && x < WW && y < WH, at = (x, y) => inb(x, y) ? M[y][x] : 'F', set = (x, y, c) => { if (inb(x, y)) M[y][x] = c; };
   const ell = (cx, cy, rx, ry, fn) => { for (let y = Math.floor(cy - ry - 1); y <= Math.ceil(cy + ry + 1); y++) for (let x = Math.floor(cx - rx - 1); x <= Math.ceil(cx + rx + 1); x++) if (inb(x, y)) fn(x, y, ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2); };
-  // the river along the south edge, and its muddy bank
-  for (let x = 0; x < WW; x++){ const top = 33 + Math.round(Math.sin(x / 6.3 + 0.4) * 0.8); for (let y = top; y < WH; y++) set(x, y, 'w'); set(x, top - 1, 'm'); }
-  // the Cross Timbers close in on the other three sides
-  for (let x = 0; x < WW; x++){ const d = 2 + (NZ.vn(x / 2.6, 1.7) > 0.58 ? 1 : 0); for (let y = 0; y < d; y++) set(x, y, 'F'); }
-  for (let y = 0; y < 32; y++){ const d = 2 + (NZ.vn(y / 2.6, 4.2) > 0.6 ? 1 : 0), e = 2 + (NZ.vn(y / 2.6, 8.8) > 0.58 ? 1 : 0); for (let x = 0; x < d; x++) set(x, y, 'F'); for (let x = WW - e; x < WW; x++) set(x, y, 'F'); }
-  // the pond, upstream: an old bend of the river, ringed with mud
-  ell(8.2, 29.2, 4.4, 2.3, (x, y, e) => { if (e < 1) set(x, y, 'o'); else if (e < 1.5 && at(x, y) === 'g') set(x, y, 'm'); });
-  // the Hidden Spring: a pocket under a sandstone ledge, a cold pool at its foot, thick brush all around
-  for (let x = 37; x <= 44; x++){ const b = x >= 39 && x <= 42 ? 4 : 3; for (let y = 2; y <= b; y++) set(x, y, 'L'); }
-  set(40, 5, 'k'); set(41, 5, 'k');
-  for (let y = 2; y <= 9; y++) set(35, y, 'h');
-  for (let x = 35; x <= 45; x++) set(x, 9, 'h');
-  // the creek runs out of the pool and south to the river
-  const CR = [[41.5, 5.5], [42, 9], [42.5, 12], [43, 15.5], [43, 19], [42.5, 23], [43.5, 27], [44, 30], [44, 34]];
-  for (let i = 1; i < CR.length; i++){
-    const a = CR[i - 1], b = CR[i], n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 3);
-    for (let k = 0; k <= n; k++){ const x = Math.floor(lerp(a[0], b[0], k / n)), y = Math.floor(lerp(a[1], b[1], k / n)); if (at(x, y) !== 'w') set(x, y, y <= 5 ? 'k' : 'c'); if (y >= 24 && at(x + 1, y) !== 'w' && at(x + 1, y) !== 'F') set(x + 1, y, 'c'); }
+  for (const p of L.paint){
+    const c = p[0];
+    if (c === 'river'){ for (let x = 0; x < WW; x++){ const top = tY(70) + Math.round(Math.sin(x / 5.2 + 0.4) * 1.1 + NZ.vn(x / 3, 2.2) * 1.2); for (let y = top; y < WH; y++) set(x, y, 'w'); set(x, top - 1, 'm'); if (NZ.vn(x / 2.5, 7.1) > 0.55) set(x, top - 2, 'm'); } continue; }
+    if (c === 'pond'){ const cx = p[1] / 100 * WW, cy = p[2] / 100 * WH, rx = p[3] / 100 * WW, ry = p[4] / 100 * WH; ell(cx, cy, rx + 1.4, ry + 1.4, (x, y, e) => { if (e < 1) set(x, y, 'm'); }); ell(cx, cy, rx, ry, (x, y, e) => { if (e < 1 + (NZ.vn(x / 2, y / 2) - 0.5) * 0.25) set(x, y, 'o'); }); continue; }
+    if (c === 'creek'){ const P = p[1]; for (let i = 1; i < P.length; i++){ const a = [P[i - 1][0] / 100 * (WW - 1), P[i - 1][1] / 100 * (WH - 1)], b = [P[i][0] / 100 * (WW - 1), P[i][1] / 100 * (WH - 1)], n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 3);
+      for (let j = 0; j <= n; j++){ const x = Math.round(lerp(a[0], b[0], j / n)), y = Math.round(lerp(a[1], b[1], j / n)); set(x, y, 'c'); set(x + 1, y, 'c'); if (at(x - 1, y) !== 'c') set(x - 1, y, 'm'); if (at(x + 2, y) !== 'c') set(x + 2, y, 'm'); } } continue; }
+    if (p[1] === 'band'){ const side = p[2], d = p[3] / 100;
+      for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++){ const jag = (NZ.vn(x / 2.6 + (side === 'top' ? 0 : y / 2.6), side === 'top' ? 1.7 : 4.2 + x / 2.6) - 0.5) * 2.2;
+        const inside = side === 'top' ? y < d * WH + jag : side === 'left' ? x < d * WW + jag : side === 'right' ? x > WW - 1 - d * WW - jag : y > WH - 1 - d * WH - jag; if (inside) set(x, y, c); } continue; }
+    if (p[1] === 'rect'){ for (let y = tY(p[3]); y <= tY(p[5]); y++) for (let x = tX(p[2]); x <= tX(p[4]); x++) set(x, y, c); continue; }
+    if (p[1] === 'ell'){ ell(p[2] / 100 * WW, p[3] / 100 * WH, p[4] / 100 * WW, p[5] / 100 * WH, (x, y, e) => { if (e < 1 + (NZ.vn(x / 2.5 + 3, y / 2.5) - 0.5) * 0.6) set(x, y, c); }); }
   }
-  set(35, 5, 'H');   // where a deer trail slips through the brush
-  // tallgrass on the prairie, and a few patches elsewhere
-  ell(37, 18, 7.5, 9.5, (x, y, e) => { if (e < 1 + (NZ.vn(x / 2.5 + 3, y / 2.5) - 0.5) * 0.7 && at(x, y) === 'g') set(x, y, 'G'); });
-  for (const q of [[20, 27, 3, 2], [32, 27, 3, 2], [8, 18, 2.5, 2], [21, 12, 2.5, 1.6]]) ell(q[0], q[1], q[2], q[3], (x, y, e) => { if (e < 1 && at(x, y) === 'g') set(x, y, 'G'); });
-  // leaf litter under the oak woods
-  const woods = (x, y) => (x >= 34.5 && y <= 9.5) ? 9 : Math.min(((x - 27) / 13) ** 2 + ((y - 6.5) / 5.5) ** 2, ((x - 11) / 7.5) ** 2 + ((y - 6) / 4) ** 2);
-  for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) if ((at(x, y) === 'g' || at(x, y) === 'G') && woods(x + 0.5, y + 0.5) < 1) set(x, y, 'f');
-
-  const O = [], B = new Uint8Array(WW * WH), RES = new Uint8Array(WW * WH);
-  const put = (t, x, y, v, w, h) => { w = w || 1; h = h || 1; O.push({t, x, y, v: v || 0, w, h}); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) B[(y - j) * WW + x + i] = 1; };
-  // the three boulders at camp, and the spots kept for what you build there
-  put('boulder', 23, 19, 0, 2, 2); put('boulder', 27, 19, 1, 2, 2); put('boulder', 25, 17, 2, 2, 2);
-  for (const k in WCAMP){ const q = WCAMP[k]; RES[q[1] * WW + q[0]] = 1; }
-  for (const q of [[25, 18], [26, 18], [25, 19], [26, 19], [21, 20], [31, 21], [30, 23], [34, 20], [33, 19], [34, 19], [29, 32], [27, 32]]) RES[q[1] * WW + q[0]] = 1;
-  put('mulberry', 19, 21, 0); put('oak', 19, 17, 0); put('oak', 33, 24, 0);
-
-  // trails: the cheapest way between two places, over ground that wanders a little
-  const cost = (x, y, spring) => { const c = at(x, y); if (WSOLID.indexOf(c) >= 0 || B[y * WW + x] || RES[y * WW + x]) return 0; if (c === 'H') return spring ? 1 : 0; return 1 + NZ.fbm(x / 3.5, y / 3.5 + 11, 2) * 2.4 + (c === 'G' ? 0.4 : 0) + (c === 'm' ? 0.8 : 0); };
-  function carve(a, b, spring){
+  const O = [], B = new Uint8Array(WW * WH), RES = new Uint8Array(WW * WH), spotAt = new Array(WW * WH).fill(null), spots = {};
+  const put = (t, x, y, v, w, h, spot) => { O.push({t, x, y, v: v || 0, w, h, spot: spot || null}); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++){ B[(y - j) * WW + x + i] = 1; if (spot) spotAt[(y - j) * WW + x + i] = spot; } };
+  // the exits, where a trail leaves the map
+  const exits = L.exits.map(e => { const x = tX(e[1]), y = tY(e[2]); return {to: e[0], x, y, hidden: e[3] === 'hidden', dir: x === 0 ? 'left' : x === WW - 1 ? 'right' : y === 0 ? 'up' : 'down'}; });
+  for (const e of exits) for (let d = 0; d < 3; d++){ const x = e.x + (e.dir === 'left' ? d : e.dir === 'right' ? -d : 0), y = e.y + (e.dir === 'up' ? d : e.dir === 'down' ? -d : 0); set(x, y, e.hidden ? 'H' : 't'); RES[y * WW + x] = 1; }
+  const hub = [tX(L.hub[0]), tY(L.hub[1])];
+  // the things that stand here, and the spots that belong to them
+  for (const q of L.things){
+    const f = FOOT[q[0]] || [1, 1], x = Math.max(0, Math.min(WW - f[0], tX(q[1]) - (f[0] >> 1))), y = Math.max(f[1] - 1, tY(q[2]));
+    put(q[0], x, y, q[3], f[0], f[1], q[4]);
+    if (q[4]){ const S = spots[q[4]] = spots[q[4]] || Object.assign({id: q[4], tiles: []}, L.spots[q[4]]); for (let j = 0; j < f[1]; j++) for (let i = 0; i < f[0]; i++) S.tiles.push([x + i, y - j]); }
+  }
+  // spots that are a patch of ground: a stretch of bank, a camp site, a path's end
+  const marks = Object.assign({}, L.marks || {});
+  for (const id in L.spots){ const S = L.spots[id]; if (S.at) marks[id] = S.at; if (S.site && L.sites) marks[id] = L.sites[S.site]; }
+  for (const id in marks){
+    const S = spots[id] = spots[id] || Object.assign({id, tiles: []}, L.spots[id]); if (!L.spots[id]) continue;
+    const x = tX(marks[id][0]), y = tY(marks[id][1]);
+    if (!S.site){ for (const d of [[0, 0], [1, 0], [0, 1], [1, 1]]){ const xx = x + d[0], yy = y + d[1]; if (!inb(xx, yy)) continue; S.tiles.push([xx, yy]); spotAt[yy * WW + xx] = id; RES[yy * WW + xx] = 1; } }
+    else { S.tiles.push([x, y]); spotAt[y * WW + x] = id; RES[y * WW + x] = 1; }
+  }
+  if (L.sites) for (const kk in L.sites){ const q = L.sites[kk], x = tX(q[0]), y = tY(q[1]); RES[y * WW + x] = 1; }
+  if (L.keep) for (const r of L.keep) for (let y = tY(r[1]); y <= tY(r[3]); y++) for (let x = tX(r[0]); x <= tX(r[2]); x++) RES[y * WW + x] = 1;
+  // trails: the cheapest way from each exit to the middle of the place, over ground that wanders a little
+  const cost = (x, y, open) => { const c = at(x, y); if (c === 'h' || c === 'H') return open && !B[y * WW + x] ? 1.2 : 0; if (WSOLID.indexOf(c) >= 0 || B[y * WW + x]) return 0; return 1 + NZ.fbm(x / 3.5, y / 3.5 + 11, 2) * 2.4 + (c === 'G' ? 0.4 : 0) + (c === 'm' ? 0.8 : 0) + (c === 's' ? 0.3 : 0); };
+  function carve(a, b, open){
     const N = WW * WH, dist = new Float64Array(N).fill(1e9), prev = new Int32Array(N).fill(-1), H = [], s0 = a[1] * WW + a[0], t0 = b[1] * WW + b[0];
     const push = (i, d) => { H.push([d, i]); let j = H.length - 1; while (j > 0){ const p = (j - 1) >> 1; if (H[p][0] <= H[j][0]) break; [H[p], H[j]] = [H[j], H[p]]; j = p; } };
     const pop = () => { const top = H[0], last = H.pop(); if (H.length){ H[0] = last; let j = 0; for (;;){ const l = j * 2 + 1, r = l + 1; let m = j; if (l < H.length && H[l][0] < H[m][0]) m = l; if (r < H.length && H[r][0] < H[m][0]) m = r; if (m === j) break; [H[m], H[j]] = [H[j], H[m]]; j = m; } } return top; };
     dist[s0] = 0; push(s0, 0);
     while (H.length){ const [d, i] = pop(); if (d > dist[i]) continue; if (i === t0) break; const x = i % WW, y = (i / WW) | 0;
-      for (const v of [[1, 0], [-1, 0], [0, 1], [0, -1]]){ const nx = x + v[0], ny = y + v[1]; if (!inb(nx, ny)) continue; const j = ny * WW + nx, c = j === t0 ? 1 : cost(nx, ny, spring); if (!c) continue; if (d + c < dist[j]){ dist[j] = d + c; prev[j] = i; push(j, d + c); } } }
-    for (let i = t0; i >= 0 && i !== s0; i = prev[i]){ const x = i % WW, y = (i / WW) | 0; if ('gGf'.indexOf(at(x, y)) >= 0) set(x, y, 't'); }
+      for (const v of [[1, 0], [-1, 0], [0, 1], [0, -1]]){ const nx = x + v[0], ny = y + v[1]; if (!inb(nx, ny)) continue; const j = ny * WW + nx, c = j === t0 ? 1 : cost(nx, ny, open); if (!c) continue; if (d + c < dist[j]){ dist[j] = d + c; prev[j] = i; push(j, d + c); } } }
+    for (let i = t0; i >= 0; i = prev[i]){ const x = i % WW, y = (i / WW) | 0, c = at(x, y); if ('gGfm'.indexOf(c) >= 0) set(x, y, 't'); else if (c === 'h') set(x, y, 'H'); if (i === s0) break; }
   }
-  for (const t of WTRAILS) carve(WPLACE[t[0]].s, WPLACE[t[1]].s, t[1] === 'spring');
-
-  // trees and plants, spread so none crowd another, and never on a trail or a place's standing spot
-  const nearSpot = (x, y) => Object.keys(WPLACE).some(k => Math.abs(WPLACE[k].s[0] - x) + Math.abs(WPLACE[k].s[1] - y) <= 1);
-  const free = (x, y) => inb(x, y) && 'gGfm'.indexOf(at(x, y)) >= 0 && !B[y * WW + x] && !RES[y * WW + x] && !nearSpot(x, y) && !(x >= 19 && x <= 34 && y >= 15 && y <= 24);
-  const spaced = (L, x, y, d) => L.every(q => (q[0] - x) ** 2 + (q[1] - y) ** 2 >= d * d);
-  const TREES = [[19, 17], [33, 24]];
-  const scatter = (t, n, test, d, vf, list) => { const L = list || []; let got = 0; for (let i = 0; i < n * 60 && got < n; i++){ const x = Math.floor(R() * WW), y = Math.floor(R() * WH); if (!test(x, y) || !free(x, y) || !spaced(L, x, y, d)) continue; L.push([x, y]); put(t, x, y, vf ? vf() : 0); got++; } return L; };
-  scatter('oak', 64, (x, y) => at(x, y) === 'f' && Math.hypot(x - 28, y - 7) > 2.6, 2.3, () => { const q = R(); return q < 0.2 ? 1 : q < 0.24 ? 2 : 0; }, TREES);
-  scatter('cedar', 14, (x, y) => ((x - 14) / 6.5) ** 2 + ((y - 13) / 4.5) ** 2 < 1 && Math.hypot(x - 14, y - 13) > 1.8, 2.0);
-  scatter('pecan', 10, (x, y) => ((x - 38.5) / 5) ** 2 + ((y - 28) / 4) ** 2 < 1 && Math.hypot(x - 39, y - 29) > 1.8, 2.4, () => { const q = R(); return q < 0.35 ? 1 : q < 0.55 ? 2 : 0; });
-  scatter('oak', 3, (x, y) => Math.hypot(x - 8, y - 25.5) < 4.5 && at(x, y) === 'g', 2.5, null, TREES);
-  scatter('oak', 5, (x, y) => at(x, y) === 'g' && (y < 17 || x < 8), 3, null, TREES);
-  for (const q of [[12, 21], [15, 20], [13, 24], [17, 24], [11, 23], [18, 23]]){ let n = 0; for (const d of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1]]){ const x = q[0] + d[0], y = q[1] + d[1]; if (n < 4 && free(x, y) && R() < 0.8){ put('bramble', x, y, n % 2); n++; } } }
-  scatter('yucca', 7, (x, y) => at(x, y) === 'G', 3);
-  scatter('pear', 6, (x, y) => at(x, y) === 'G' || (at(x, y) === 'g' && x > 30), 3);
-  scatter('rock', 9, (x, y) => at(x, y) !== 'm', 4, () => R() < 0.5 ? 1 : 0);
-  scatter('log', 4, (x, y) => at(x, y) === 'f', 5);
-  const wet = (x, y) => at(x, y) === 'm' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(v => 'wo'.indexOf(at(x + v[0], y + v[1])) >= 0);
-  scatter('reeds', 14, wet, 1.5);
-  scatter('fern', 6, (x, y) => at(x, y) === 'f' || (x > 35 && y < 9), 3);
+  for (const e of exits){ const inward = [e.x + (e.dir === 'left' ? 2 : e.dir === 'right' ? -2 : 0), e.y + (e.dir === 'up' ? 2 : e.dir === 'down' ? -2 : 0)]; carve(inward, hub, e.hidden); }
+  for (const tr of L.trails || []) carve([tX(tr[0][0]), tY(tr[0][1])], [tX(tr[1][0]), tY(tr[1][1])], false);
+  // trees and plants, spread so none crowd another, and never on a trail, a spot, or the middle
+  const free = (x, y) => inb(x, y) && 'gGfm'.indexOf(at(x, y)) >= 0 && !B[y * WW + x] && !RES[y * WW + x] && Math.abs(x - hub[0]) + Math.abs(y - hub[1]) > 3;
+  const placed = O.map(o => [o.x, o.y]);
+  const spaced = (x, y, d) => placed.every(q => (q[0] - x) ** 2 + (q[1] - y) ** 2 >= d * d);
+  const wet = (x, y) => at(x, y) === 'm' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(v => 'wock'.indexOf(at(x + v[0], y + v[1])) >= 0);
+  for (const sc of L.scatter || []){
+    const [t, n, ground] = sc; let got = 0;
+    for (let i = 0; i < n * 80 && got < n; i++){
+      const x = Math.floor(R() * WW), y = Math.floor(R() * WH);
+      if (!free(x, y) || !(ground === 'wet' ? wet(x, y) : at(x, y) === ground) || !spaced(x, y, t === 'oak' || t === 'pecan' ? 2.4 : 1.8)) continue;
+      const v = t === 'oak' ? (R() < 0.2 ? 1 : R() < 0.06 ? 2 : 0) : t === 'rock' ? (R() < 0.5 ? 1 : 0) : t === 'cedar' ? Math.floor(R() * 9) : 0;
+      put(t, x, y, v, 1, 1); placed.push([x, y]); got++;
+    }
+  }
   O.sort((a, b) => a.y - b.y || a.x - b.x);
-  return {M, O, B, RES};
+  return {k, M, O, B, RES, spotAt, spots, exits, hub};
+}
+// every place's map, made once
+const WMAPS = {};
+const wmap = k => WMAPS[k] || (WMAPS[k] = pgen(k));
+// the next place to walk toward on the way to k, along the trails
+function wnextHop(from, to){
+  if (from === to) return to;
+  const prev = {[from]: null}, Q = [from];
+  while (Q.length){ const a = Q.shift(); for (const e of PLACES[a].exits){ const b = e[0]; if (b in prev) continue; prev[b] = a; if (b === to){ let c = b; while (prev[c] !== from) c = prev[c]; return c; } Q.push(b); } }
+  return null;
 }
 
-/* ---------- where you are, and where you can go ---------- */
-const wfound = s => !!(s && s.found && s.found.spring);
-function wzone(x, y, s){ // the place whose heart is nearest, if one is near
-  let best = null, bd = 1e9;
-  for (const k in WPLACE){ if (k === 'spring' && !wfound(s)) continue; const m = WPLACE[k].m, d = Math.hypot(x - m[0], y - m[1]); if (d < bd){ bd = d; best = k; } }
-  return bd <= 13 ? {k: best, d: bd} : null;
-}
-// standing here means you are somewhere else: clearly nearer another place's heart than the one the game has you at
-function wswitch(x, y, s){
-  const z = wzone(x, y, s); if (!z || z.k === s.loc) return null;
-  const m = WPLACE[s.loc] && WPLACE[s.loc].m, dc = m ? Math.hypot(x - m[0], y - m[1]) : 1e9;
-  return z.d + 1.5 < dc ? z.k : null;
-}
-function wground(Wd, x, y){ return !Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= WW || y >= WH ? 'F' : Wd.M[y][x]; }
-function wopen(Wd, x, y, s){ // can you stand here?
-  const c = wground(Wd, x, y);
-  if (WSOLID.indexOf(c) >= 0 || (c === 'H' && !wfound(s))) return false;
-  return !Wd.B[y * WW + x] && !(Wd.dyn && Wd.dyn[y * WW + x]);
-}
-// the easiest walk to a tile (keeping to trails where it can), or to a tile beside it when it is something you can't stand on
 const WCOST = {t: 1, H: 1, g: 1.35, m: 1.4, f: 1.5, G: 1.6};
 function wroute(Wd, s, sx, sy, tx, ty, ok){
   const adj = !ok(tx, ty), N = WW * WH, dist = new Float64Array(N).fill(1e9), prev = new Int32Array(N).fill(-1), H = [], s0 = sy * WW + sx;
@@ -5034,7 +5182,8 @@ function wart(F){
     pleaf: lr(mix(c.oak, '#4f6e3e', 0.35), mix(c.oakLight, '#a2bf6c', 0.3)), sleaf: lr(mix(c.oak, '#6b9650', 0.3), mix(c.oakLight, '#c4da8e', 0.3)), syc: '#d8d2bf',
     fern: lr(mix(c.leaf, '#4e7a3e', 0.4), mix(c.light, '#9cc070', 0.4)),
     rock: c.rock, wrock: mix(c.rock, '#7a6e60', 0.7), grass: c.front, grassT: mix(c.front, c.stalk, 0.5), stalk: c.stalk, stalk2: c.stalk2, seed: c.seed, sand: c.sand,
-    berryHi: '#9a7aac', berryRed: '#b0383a', pool: c.water, snow: '#eef1ee', bag: '#a99a67', sod: '#879661', bowl: '#8a6f4c', cane: '#c4b27a'
+    berryHi: '#9a7aac', berryRed: '#b0383a', pool: c.water, snow: '#eef1ee', bag: '#a99a67', sod: '#879661', bowl: '#8a6f4c', cane: '#c4b27a',
+    osageFall: lr('#b9a33e', '#e2cf6a'), clay: '#a19c8e'
   });
   const RC = {};
   return {P, c, F, winter, ramp(k){ return RC[k] || (RC[k] = Px.ramp(P[k] || '#8a8a7a')); }};
@@ -5067,7 +5216,7 @@ function wdist(src, w, h, cap){ // chamfer distance to the nearest pixel where s
 }
 function wbake(Wd, A, o){
   const c = A.c, Wp = WW * WT, Hp = WH * WT, N = Wp * Hp, M = Wd.M, snow = o.snow;
-  const CODE = {g: 0, G: 1, f: 2, t: 3, m: 4, w: 5, o: 6, c: 7, k: 8, L: 9, F: 10, h: 11, H: 11};
+  const CODE = {g: 0, G: 1, f: 2, t: 3, s: 3, m: 4, w: 5, o: 6, c: 7, k: 8, L: 9, F: 10, h: 11, H: 11};
   const ch = (x, y) => { let q = M[clamp(y, 0, WH - 1)][clamp(x, 0, WW - 1)]; if (q === 'H' && o.found) q = 't'; return q; };
   const K = new Uint8Array(N);
   // solid ground keeps to its own tiles; walkable ground takes on the ragged edges of its neighbors
@@ -5217,7 +5366,32 @@ const WOBJ = {
     g.P([S[0], S[1], S[2], [-4, -14], [-3, -2]], 'wrock', {sh: 'dir', nx: -0.8, ny: -0.05, tex: 'stone', edge: 2});
     g.P([S[1], S[2], S[3], S[4], S[5], [2, -14], [-4, -14]], 'wrock', {sh: 'dir', nx: -0.25, ny: -0.9, tex: 'stone', edge: 2});
     for (const q of [[-9, -18, 0], [-5, -21, 1], [4, -20, 0], [9, -14, 1], [-11, -8, 0], [6, -6, 0]]) g.D(q[0], q[1], q[2] ? 'lichen2' : 'lichen', 3, 1.3);
-    g.L(3, -12, 5, -4, 'wrock', 0, 0.45); }}
+    g.L(3, -12, 5, -4, 'wrock', 0, 0.45); }},
+  // things you use in the places, painted the same way
+  bigboulder: {box: [70, 58, 35, 54], sh: [28, 6], paint(g, A, v){ g.push(0, 0, 1.65); WOBJ.boulder.paint(g, A, v); g.pop(); }},
+  deadfall: {box: [40, 22, 20, 19], sh: [15, 3], paint(g, A, v){ const k = v ? 'bark' : 'dead';
+    for (const q of [[-14, -3, 12, -6, 2.2], [-10, -8, 14, -2, 2], [-16, -9, 6, -12, 1.7], [-4, -4, 16, -9, 1.8], [-12, -13, 10, -10, 1.4]]){ g.C(q[0], q[1], q[2], q[3], q[4], q[4] * 0.9, k, {edge: 1, tex: 'bark'}); g.E(q[2] + 0.6, q[3], q[4] * 0.8, q[4], 'woodL', {edge: 1}); }
+    g.stroke('M-6,-12 l-2,-4 M4,-10 l2,-4 M-12,-6 l-3,-2', 0.5, 0.4, k, {edge: 1}); }},
+  tangle: {box: [52, 26, 26, 23], sh: [20, 3], paint(g, A){ g.C(-22, -4, 20, -7, 3.2, 2.6, 'dead', {edge: 1, tex: 'bark'}); g.E(21, -7, 2.4, 2.8, 'woodL', {edge: 1});
+    g.stroke('M-20,-4 Q-16,-16 -10,-6 Q-4,4 2,-8 Q8,-18 14,-6 Q18,0 22,-10', 0.7, 0.6, 'vine', {edge: 1});
+    if (!A.c.bare || A.F.month === 2) for (const q of [[-16, -12], [-8, -9], [-1, -6], [6, -12], [12, -10], [18, -8], [-12, -4], [4, -3]]) g.E(q[0], q[1], 3.2, 2.4, q[0] % 3 ? 'bush' : 'bush2', {edge: 2, tex: 'leaf'});
+    for (const q of [[-10, -10], [8, -11]]) for (const d of [[-1.4, 0], [1.4, 0], [0, -1.6]]) g.E(q[0] + d[0], q[1] + d[1], 1.1, 0.9, 'berryRed', {lv: 2}); }},
+  stones: {box: [30, 14, 15, 11], sh: null, paint(g, A, v){ for (const q of (v ? [[-8, -2, 3.4], [0, -4, 2.6], [7, -2, 3], [3, -1, 2], [-3, -6, 2.2]] : [[-9, -3, 2.8], [-2, -2, 3.4], [6, -4, 2.6], [10, -1, 2], [1, -6, 2]])){ g.E(q[0], q[1], q[2], q[2] * 0.7, 'rock', {edge: 1, tex: 'stone'}); g.D(q[0] - 0.6, q[1] - q[2] * 0.4, 'rock', 4, 0.9); } }},
+  plum: {box: [30, 30, 15, 28], sh: [9, 2.5], paint(g, A, v){ g.C(0, -1, 0.5, -10, 1.5, 1, 'bark', {edge: 1, tex: 'bark'}); g.C(0, -6, -5, -12, 0.8, 0.6, 'bark', {edge: 1});
+    if (!A.c.bare || A.F.month === 2) for (const q of [[-5, -16, 7, 5], [5, -17, 6, 5], [0, -21, 6, 4], [-2, -13, 5, 3.6]]) g.E(q[0], q[1], q[2], q[3], v ? 'bush' : 'bush2', {edge: 2, tex: 'leaf'});
+    if (A.F.month === 2) for (const q of [[-6, -18], [2, -22], [6, -16], [-2, -14]]) g.D(q[0], q[1], 'bloom', 4, 1.6); }},
+  cane: {box: [28, 40, 14, 38], sh: [8, 2], paint(g, A, v){ const rr = rng(v * 5 + 2); for (let i = 0; i < 9; i++){ const x = (i - 4) * 2.4 + (rr() - 0.5), h = 24 + rr() * 10, bend = (rr() - 0.5) * 6;
+    g.stroke(`M${x.toFixed(1)},0 Q${(x + bend * 0.3).toFixed(1)},${(-h / 2).toFixed(1)} ${(x + bend).toFixed(1)},${(-h).toFixed(1)}`, 0.7, 0.5, 'cane', {edge: 1});
+    for (let j = 1; j < 4; j++){ const y = -h * j / 4, xx = x + bend * j / 4, sd = (i + j) % 2 ? 1 : -1; g.stroke(`M${xx.toFixed(1)},${y.toFixed(1)} q${sd * 3},${-1.5} ${sd * 5},${0.5}`, 0.7, 0.3, 'bush2', {edge: 1}); } } }},
+  clay: {box: [40, 22, 20, 19], sh: null, paint(g){ g.P([[-18, 0], [-16, -12], [-6, -16], [8, -15], [17, -10], [18, 0]], 'clay', {sh: 'dir', nx: 0.1, ny: 0.4, tex: 'stone', edge: 1});
+    g.P([[-16, -12], [-6, -16], [8, -15], [17, -10], [6, -9], [-8, -9]], 'sod', {sh: 'dir', nx: 0, ny: -0.8, tex: 'thatch', edge: 1}); for (const y of [-6, -3]) g.L(-15, y, 16, y - 0.5, 'clay', 1, 0.3); }},
+  chimney: {box: [22, 14, 11, 12], sh: null, paint(g, A, v){ for (const q of (v ? [[-5, 0, 0.9], [4, -2, 1]] : [[-6, -1, 1], [1, 0, 0.8], [6, -2, 0.9]])){ g.path(`M${q[0] - 2.5 * q[2]},${q[1]} q${q[2]},${-6 * q[2]} ${2.5 * q[2]},${-6 * q[2]} q${1.5 * q[2]},0 ${2.5 * q[2]},${6 * q[2]} Z`, 'chimney', {sh: 'cyl', tex: 'stone', edge: 1}); g.D(q[0] - 0.5, q[1] - 6 * q[2], 'nose', 0, 1); } }},
+  snag: {box: [44, 18, 22, 14], sh: null, paint(g){ g.C(-20, -2, 18, -6, 2.6, 2.2, 'dead', {edge: 1, tex: 'bark'}); g.E(19, -6, 2, 2.4, 'woodL', {edge: 1}); g.stroke('M-8,-4 l-3,-7 M4,-5 l2,-8 M12,-6 l4,-5', 0.7, 0.4, 'dead', {edge: 1}); }},
+  osage: {box: [52, 48, 26, 45], sh: [13, 4], paint(g, A){ g.E(0, -1, 6, 2, 'bark', {lv: 1, snow: 0}); g.C(0, -1, -1, -12, 3.4, 2.2, 'bark', {edge: 1, tex: 'bark'}); g.stroke('M-1,-10 C-6,-16 -10,-20 -14,-24 M0,-11 C4,-17 9,-20 13,-26', 1.2, 0.6, 'bark', {edge: 1});
+    if (!A.c.bare || A.F.month === 2) wCrown(g, A, A.F.month === 9 || A.F.month === 10 ? 'osageFall' : 'bush2', 0.95); else wCrown(g, A, 'leaf2', 0.95);
+    if (A.F.month >= 7 && A.F.month <= 10) for (const q of [[-10, -20], [6, -26], [12, -16], [-4, -14]]) g.E(q[0], q[1], 2.2, 2.2, 'osage', {edge: 1, tex: 'fur'}); }},
+  sapling: {box: [16, 28, 8, 26], sh: [4, 1.5], paint(g, A, v){ g.stroke('M0,0 Q-1,-12 1,-22', 1, 0.5, 'bark', {edge: 1}); if (!v) g.C(0.2, -6, 0.4, -14, 1.1, 0.9, 'woodL', {lv: 3});
+    if (!A.c.bare) for (const q of [[-3, -20], [3, -22], [0, -25]]) g.E(q[0], q[1], 2.4, 1.8, 'bush2', {edge: 2, tex: 'leaf'}); }}
 };
 
 /* ---------- camp, as you've built it ---------- */
@@ -5300,20 +5474,22 @@ const WBEAST = {
 };
 
 /* ---------- the walk's state ---------- */
-const WV = {Wd: null, A: null, base: null, gkey: '', akey: '', bkey: '', nkey: '', spr: {}, blds: [], btile: null, beasts: [],
-  box: null, cv: null, ctx: null, fb: null, fx: null, Z: null, cam: [0, 0], pad: null, tag: null, say: null, menu: null, hooks: {},
+const WV = {map: null, A: null, base: null, gkey: '', akey: '', bkey: '', nkey: '', spr: {}, blds: [], btile: null, beasts: [],
+  box: null, cv: null, ctx: null, Z: null, cam: [0, 0], pad: null, tag: null, say: null, menu: null, qline: null, hooks: {},
   S: null, h: null, F: null, lt: null, goal: null, pos: null, game: null, moving: false, fromX: 0, fromY: 0, toX: 0, toY: 0, t: 0, steps: 0,
-  held: null, keys: [], path: [], auto: false, relo: false, bump: null, hist: [], fade: 0, raf: 0, last: 0, vis: true, calm: false, snow: false,
-  menuOpen: false, msel: 0, macts: [], tagT: 0, sayT: 0, sayKey: '', sayAt: 0, puffs: null, drops: null};
+  held: null, keys: [], path: [], auto: false, dest: null, bump: null, hist: [], fade: 0, raf: 0, last: 0, vis: true, calm: false, snow: false,
+  menuOpen: false, msel: 0, macts: [], menuAt: 0, menuLoc: '', tagT: 0, sayT: 0, sayKey: '', sayAt: 0, puffs: null, drops: null, entry: null};
 const WSAY = {
-  oak: 'A post oak: leathery, cross-shaped leaves, deadwood all around.', oak1: 'A blackjack oak, dark and scrubby.', oak2: 'A dead oak, gray and bare. Good firewood.',
+  oak: 'A post oak: leathery, cross-shaped leaves.', oak1: 'A blackjack oak, dark and scrubby.', oak2: 'A dead oak, gray and bare.',
   pecan: 'A pecan tree, tall in the bottomland.', pecan1: 'A sycamore, its bark peeling away in white patches.', pecan2: 'A persimmon tree.', mulberry: 'The big red mulberry.',
-  cedar: 'An eastern red cedar. Stringy bark, and dry branches low down.', bramble: 'Blackberry brambles. Thorny.', yucca: 'Yucca: stiff leaves with needle tips.',
-  pear: 'Prickly pear. Mind the spines.', reeds: 'Cattails, thick at the water’s edge.', fern: 'Ferns in the shade.', rock: 'A lump of sandstone.', log: 'A fallen log, soft with rot.',
-  boulder: 'One of the three ten-foot boulders.', shelter: 'Your shelter.', ring: 'Your fire ring.', wood: 'Your woodpile.', store: 'Your woodstore.', rack: 'Your drying rack.',
-  rain: 'Your rain catcher.', look: 'Your lookout.', bench: 'Your workbench.', cache: 'Your food cache.', crate: 'Your crates.', pot: 'Your pot.', seep: 'The seep you dug.', snare: 'Your snare.',
+  cedar: 'An eastern red cedar.', bramble: 'Blackberry brambles. Thorny.', yucca: 'Yucca: stiff leaves with needle tips.', pear: 'Prickly pear. Mind the spines.',
+  reeds: 'Cattails, thick at the water\'s edge.', fern: 'Ferns in the shade.', rock: 'A lump of sandstone.', log: 'A fallen log, soft with rot.', bigboulder: 'One of the three ten-foot boulders.',
+  deadfall: 'A heap of dead, dry wood.', tangle: 'A dead tree smothered in vines.', stones: 'Loose limestone.', plum: 'A Chickasaw plum.', cane: 'River cane.', clay: 'A bank of gray clay.',
+  chimney: 'Crawfish chimneys.', snag: 'A log in the water.', osage: 'An Osage orange: bois d\'arc.', sapling: 'A young tree.',
+  shelter: 'Your shelter.', ring: 'Your fire ring.', wood: 'Your woodpile.', store: 'Your wood store.', rack: 'Your drying rack.', rain: 'Your rain catcher.', look: 'Your lookout.',
+  bench: 'Your workbench.', cache: 'Your food cache.', crate: 'Your crates.', pot: 'Your pot.', seep: 'The seep you dug.', snare: 'Your snare.', trap: 'Your fish trap.',
   w: 'The river: slow, brown, and deep.', o: 'The pond. Something big rolls under the surface.', c: 'The creek runs clear over gravel.', k: 'A pool of cold, clear water.',
-  L: 'A sandstone ledge, dark with seepage.', F: 'The Cross Timbers: too thick to push through.', h: 'Thick brush, too tangled to push through.', H: 'Thick brush, too tangled to push through.',
+  L: 'A sandstone ledge.', F: 'The Cross Timbers: too thick to push through.', h: 'Thick brush, too tangled to push through.', H: 'Thick brush, too tangled to push through.',
   bison: 'A bison. Better give it room.', deer: 'A white-tailed deer.', turkey: 'A wild turkey.', rabbit: 'A cottontail.', squirrel: 'A fox squirrel.'
 };
 const wesc = x => String(x == null ? '' : x).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
@@ -5322,47 +5498,81 @@ function wsp(key, box, fn, noline){
   if (!s){ Px.setLight(-0.55, -0.72, 0.5, 0.95); Px.setSnow(WV.snow ? 0.6 : 0); s = WV.spr[key] = wspr(WV.A, box[0], box[1], box[2], box[3], fn, noline); Px.setSnow(0); }
   return s;
 }
+const wfound = s => !!(s && s.found && s.found.spring);
+function wground(Wd, x, y){ return !Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= WW || y >= WH ? 'F' : Wd.M[y][x]; }
+function wopen(Wd, x, y, s){ // can you stand here?
+  const c = wground(Wd, x, y);
+  if (WSOLID.indexOf(c) >= 0 || (c === 'H' && !wfound(s))) return false;
+  return !Wd.B[y * WW + x] && !(Wd.dyn && Wd.dyn[y * WW + x]);
+}
+
+/* ---------- paintings: when one has come back for a place, it is drawn instead of the game's own picture ---------- */
+// The art that exists, by name (art/places/<name>.webp); a single-file build puts the pictures in window.STRANDED_ART.
+const ART_HAVE = [];
+const ART_FILE = {camp: '01-camp', cedar: '02-cedar-stand', oak: '03-oak-woods', prairie: '04-prairie', berry: '05-berry-thicket', river: '06-river-bank', pond: '07-pond', creek: '08-creek-bottom', spring: '09-hidden-spring'};
+const ART = {};
+function wpainting(k, month){
+  const season = ['winter', 'winter', '', '', '', 'summer', 'summer', 'summer', 'fall', 'fall', 'fall', 'winter'][month], base = ART_FILE[k];
+  for (const n of season ? [base + '-' + season, base] : [base]){
+    const inline = root.STRANDED_ART && root.STRANDED_ART[n];
+    if (!inline && ART_HAVE.indexOf(n) < 0) continue;
+    let a = ART[n];
+    if (!a){ a = ART[n] = {img: new Image(), ok: false, bad: false}; a.img.onload = () => { a.ok = true; WV.base = null; wkick(); }; a.img.onerror = () => { a.bad = true; }; a.img.src = inline || ('art/places/' + n + '.webp'); }
+    if (a.ok) return a.img;
+    if (!a.bad) return null;   // still loading: the game's own picture meanwhile
+  }
+  return null;
+}
 
 /* ---------- camp as built, and the animals about ---------- */
-function wbuildKey(s, F){ const t = s.tools || {}; return JSON.stringify([F.shelter, F.fire, F.wood, F.crates, F.meat, Object.keys(t).filter(k => t[k]).sort(), !!(s.trap && s.trap.set), F.flood, s.snare && s.snare.set ? s.snare.loc : '']); }
+const siteXY = k => { const q = PLACES.camp.sites[k]; return [tX(q[0]), tY(q[1])]; };
+function wbuildKey(s, F){ const t = s.tools || {}; return JSON.stringify([s.loc, F.shelter, F.fire, F.wood, F.crates, F.meat, Object.keys(t).filter(k => t[k]).sort(), !!(s.trap && s.trap.set), F.flood, s.snare && s.snare.set ? s.snare.loc : '']); }
 function wbuilds(s, F){
   const L = [], t = s.tools || {}, has = k => !!t[k], dyn = new Uint8Array(WW * WH), bt = {};
-  const at = (k, w) => { const q = WCAMP[k]; return {bx: (q[0] + (w ? w / 2 : 0.5)) * WT, by: (q[1] + 1) * WT - 2}; };
+  const at = (k, w) => { const q = siteXY(k); return {bx: (q[0] + (w ? w / 2 : 0.5)) * WT, by: (q[1] + 1) * WT - 2}; };
   const block = (k, tiles) => { for (const q of tiles){ dyn[q[1] * WW + q[0]] = 1; bt[q[1] * WW + q[0]] = k; } };
   const add = (k, a, p, key, tiles) => { L.push(Object.assign({k, a, key}, p)); if (tiles) block(k, tiles); };
-  add('shelter', {level: F.shelter, bed: has('bedding'), blanket: has('blanket')}, {bx: 26 * WT, by: 20 * WT - 1.5}, 'shelter' + F.shelter + (has('bedding') ? 'b' : '') + (has('blanket') ? 'k' : ''), F.shelter >= 2 ? [[25, 18], [26, 18], [25, 19], [26, 19]] : null);
-  add('ring', F.fire, at('ring'), 'ring' + F.fire, [WCAMP.ring]);
-  if (has('woodstore')) add('store', 0, at('wood', 2), 'store', [[30, 21], [31, 21]]);
-  else if (F.wood > 0) add('wood', F.wood > 1 ? 3 : 2, at('wood'), 'wood' + F.wood, [WCAMP.wood]);
-  if (has('rack')) add('rack', F.meat, at('rack', 2), 'rack' + (F.meat ? 1 : 0), [[20, 20], [21, 20]]);
-  if (has('rain')) add('rain', 0, at('rain'), 'rain', [WCAMP.rain]);
-  if (has('workbench')) add('bench', 0, at('bench', 2), 'bench', [[29, 23], [30, 23]]);
-  if (has('cache')) add('cache', 0, at('cache'), 'cache', [WCAMP.cache]);
-  if (has('lookout')) add('look', 0, at('look', 2), 'look', [[33, 20], [34, 20], [33, 19], [34, 19]]);
-  if (F.crates > 0) add('crate', F.crates, at('crate'), 'crate' + F.crates, [WCAMP.crate]);
-  if (has('pot') || has('bowl')) add('pot', has('pot'), at('pot'), 'pot' + (has('pot') ? 1 : 0), [WCAMP.pot]);
-  if (has('seep')) add('seep', 0, at('seep'), 'seep', [WCAMP.seep]);
-  if (s.trap && s.trap.set && !F.flood) add('trap', 0, at('trap'), 'trap', null);
-  if (s.snare && s.snare.set && WPLACE[s.snare.loc]){
-    const p = WPLACE[s.snare.loc].s;
-    for (const d of [[2, 1], [-2, 1], [2, -1], [-2, -1], [1, 2], [-1, 2]]){ const x = p[0] + d[0], y = p[1] + d[1]; if (!wopen(WV.Wd, x, y, s) || dyn[y * WW + x]) continue; add('snare', 0, {bx: (x + 0.5) * WT, by: (y + 1) * WT - 2}, 'snare', [[x, y]]); break; }
+  const site = k => [siteXY(k)], site2 = k => { const q = siteXY(k); return [q, [q[0] + 1, q[1]]]; };
+  if (s.loc === 'camp'){
+    add('shelter', {level: F.shelter, bed: has('bedding'), blanket: has('blanket')}, {bx: 23.5 * WT, by: 11 * WT}, 'shelter' + F.shelter + (has('bedding') ? 'b' : '') + (has('blanket') ? 'k' : ''), F.shelter >= 2 ? [[22, 9], [23, 9], [24, 9], [22, 10], [23, 10], [24, 10]] : null);
+    add('ring', F.fire, at('ring'), 'ring' + F.fire, site('ring'));
+    if (has('woodstore')) add('store', 0, at('wood', 2), 'store', site2('wood'));
+    else if (F.wood > 0) add('wood', F.wood > 1 ? 3 : 2, at('wood'), 'wood' + F.wood, site('wood'));
+    if (has('rack')) add('rack', F.meat, at('rack', 2), 'rack' + (F.meat ? 1 : 0), site2('rack'));
+    if (has('rain')) add('rain', 0, at('rain'), 'rain', site('rain'));
+    if (has('workbench')) add('bench', 0, at('bench', 2), 'bench', site2('bench'));
+    if (has('cache')) add('cache', 0, at('cache'), 'cache', site('cache'));
+    if (has('lookout')){ const q = siteXY('look'); add('look', 0, at('look', 2), 'look', [q, [q[0] + 1, q[1]], [q[0], q[1] - 1], [q[0] + 1, q[1] - 1]]); }
+    if (F.crates > 0) add('crate', F.crates, at('crate'), 'crate' + F.crates, site('crate'));
+    if (has('pot') || has('bowl')) add('pot', has('pot'), at('pot'), 'pot' + (has('pot') ? 1 : 0), site('pot'));
+  }
+  if (s.loc === 'river'){
+    const sb = WV.map.spots.sandbar, sn = WV.map.spots.snag;
+    if (has('seep') && sb){ const q = sb.tiles[0]; add('seep', 0, {bx: (q[0] + 1) * WT, by: (q[1] + 1) * WT - 2}, 'seep', null); }
+    if (s.trap && s.trap.set && !F.flood && sn){ const q = sn.tiles[0]; add('trap', 0, {bx: (q[0] + 1) * WT, by: (q[1] + 1) * WT - 6}, 'trap', null); }
+  }
+  if (s.snare && s.snare.set && s.snare.loc === s.loc){
+    const sp = WV.map.spots.deertrail || WV.map.spots.runs, q0 = sp ? sp.tiles[0] : WV.map.hub;
+    for (const d of [[2, 1], [-2, 1], [2, -1], [-2, -1], [1, 2], [-1, 2]]){ const x = q0[0] + d[0], y = q0[1] + d[1]; if (!wopen(WV.map, x, y, s) || dyn[y * WW + x]) continue; add('snare', 0, {bx: (x + 0.5) * WT, by: (y + 1) * WT - 2}, 'snare', [[x, y]]); break; }
   }
   return {L, dyn, bt};
 }
 function wpop(s, k){ const e = s.eco && s.eco[k], sp = D.SPECIES[k]; return e && e.ind && sp ? clamp(e.ind.length / sp.start, 0, 2) : 0; }
-function wbeastKey(s, F, lt){ const W = s.world || {}, sc = k => W.scare && W.scare[k] > s.t ? 1 : 0; return [F.day, Math.floor(F.hour / 2), W.bison > 0 ? 1 : 0, lt.dh > -0.4 && lt.dh < 1.2 ? 1 : 0, lt.dh > 0.3 ? 1 : 0, lt.wet ? 1 : 0, sc('oak'), sc('prairie'), sc('creek'), ['deer', 'turkey', 'rabbit', 'squirrel'].map(k => Math.round(wpop(s, k) * 5)).join('')].join('|'); }
+function wbeastKey(s, F, lt){ const W = s.world || {}, sc = k => W.scare && W.scare[k] > s.t ? 1 : 0; return [s.loc, F.day, Math.floor(F.hour / 2), W.bison > 0 ? 1 : 0, lt.dh > -0.4 && lt.dh < 1.2 ? 1 : 0, lt.dh > 0.3 ? 1 : 0, lt.wet ? 1 : 0, sc(s.loc), ['deer', 'turkey', 'rabbit', 'squirrel'].map(k => Math.round(wpop(s, k) * 5)).join('')].join('|'); }
 function wbeasts(s, F, lt){
-  const L = [], W = s.world || {}, scared = k => !!(W.scare && W.scare[k] > s.t), r = rng((F.day || 1) * 131 + Math.floor(F.hour / 2) * 7 + 1);
-  const dawnDusk = lt.dh > -0.4 && lt.dh < 1.2, day = lt.dh > 0.3, wet = lt.wet;
-  const herd = (k, n, box) => { for (let i = 0; i < n; i++) for (let tries = 0; tries < 40; tries++){
-    const x = box[0] + Math.floor(r() * (box[2] - box[0] + 1)), y = box[1] + Math.floor(r() * (box[3] - box[1] + 1));
-    if (!wopen(WV.Wd, x, y, s) || L.some(b => b.x === x && b.y === y) || wground(WV.Wd, x, y) === 't') continue;
-    L.push({k, x, y, fx: x, fy: y, t: 1, sp: 1, face: r() < 0.5 ? -1 : 1, next: r() * 3, box, graze: r() < 0.5, flick: 0}); break; } };
-  if (W.bison > 0) herd('bison', 5, [31, 11, 41, 25]);
-  if (wpop(s, 'deer') > 0 && dawnDusk && !wet){ if (!scared('oak')) herd('deer', wpop(s, 'deer') > 0.6 ? 2 : 1, [17, 3, 33, 12]); if (!scared('creek')) herd('deer', 1, [35, 24, 42, 31]); }
-  if (wpop(s, 'turkey') > 0.1 && day && !wet && !scared('prairie')) herd('turkey', wpop(s, 'turkey') > 0.7 ? 3 : 2, [29, 19, 36, 26]);
-  if (wpop(s, 'rabbit') > 0.1 && lt.dh > -0.8 && lt.dh < 1.8 && !wet) herd('rabbit', 2, [16, 24, 31, 30]);
-  if (wpop(s, 'squirrel') > 0.1 && day && !wet && !scared('oak')) herd('squirrel', 2, [17, 3, 34, 12]);
+  const L = [], W = s.world || {}, scared = !!(W.scare && W.scare[s.loc] > s.t), r = rng((F.day || 1) * 131 + Math.floor(F.hour / 2) * 7 + D.LOC_ORDER.indexOf(s.loc) * 17 + 1);
+  const dawnDusk = lt.dh > -0.4 && lt.dh < 1.2, day = lt.dh > 0.3, wet = lt.wet, B = PLACES[s.loc].beasts || {};
+  const herd = (k, n) => { const b = B[k]; if (!b) return; const box = [tX(b[0]), tY(b[1]), tX(b[2]), tY(b[3])];
+    for (let i = 0; i < n; i++) for (let tries = 0; tries < 40; tries++){
+      const x = box[0] + Math.floor(r() * (box[2] - box[0] + 1)), y = box[1] + Math.floor(r() * (box[3] - box[1] + 1));
+      if (!wopen(WV.map, x, y, s) || L.some(b => b.x === x && b.y === y) || wground(WV.map, x, y) === 't' || WV.map.spotAt[y * WW + x]) continue;
+      L.push({k, x, y, fx: x, fy: y, t: 1, sp: 1, face: r() < 0.5 ? -1 : 1, next: r() * 3, box, graze: r() < 0.5, flick: 0}); break; } };
+  if (W.bison > 0) herd('bison', 5);
+  if (scared) return L;
+  if (wpop(s, 'deer') > 0 && dawnDusk && !wet) herd('deer', wpop(s, 'deer') > 0.6 ? 2 : 1);
+  if (wpop(s, 'turkey') > 0.1 && day && !wet) herd('turkey', wpop(s, 'turkey') > 0.7 ? 3 : 2);
+  if (wpop(s, 'rabbit') > 0.1 && lt.dh > -0.8 && lt.dh < 1.8 && !wet) herd('rabbit', 2);
+  if (wpop(s, 'squirrel') > 0.1 && day && !wet) herd('squirrel', 2);
   return L;
 }
 function wbeastStep(b, now, dt){
@@ -5370,7 +5580,7 @@ function wbeastStep(b, now, dt){
   if (now < b.next) return;
   const P = WV.pos, near = Math.abs(b.x - P.x) + Math.abs(b.y - P.y), flee = b.k !== 'bison' && near <= (b.k === 'deer' ? 5 : 3), m = flee ? 3 : 0;
   const opts = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(v => { const x = b.x + v[0], y = b.y + v[1];
-    return x >= b.box[0] - m && x <= b.box[2] + m && y >= b.box[1] - m && y <= b.box[3] + m && wopen(WV.Wd, x, y, WV.S) && !(x === P.x && y === P.y) && !(WV.moving && x === WV.toX && y === WV.toY) && !WV.beasts.some(o => o !== b && o.x === x && o.y === y); });
+    return x >= b.box[0] - m && x <= b.box[2] + m && y >= b.box[1] - m && y <= b.box[3] + m && wopen(WV.map, x, y, WV.S) && !(x === P.x && y === P.y) && !(WV.moving && x === WV.toX && y === WV.toY) && !WV.beasts.some(o => o !== b && o.x === x && o.y === y); });
   if (flee) opts.sort((u, v) => (Math.abs(b.x + v[0] - P.x) + Math.abs(b.y + v[1] - P.y)) - (Math.abs(b.x + u[0] - P.x) + Math.abs(b.y + u[1] - P.y)));
   if (!opts.length || (!flee && Math.random() < 0.45)){ b.next = now + 1 + Math.random() * 3; b.graze = !b.graze; b.flick = now; return; }
   const v = flee ? opts[0] : opts[(Math.random() * opts.length) | 0];
@@ -5381,25 +5591,24 @@ function wbeastStep(b, now, dt){
 
 /* ---------- mounting: the canvas, the pad, and the keys ---------- */
 function wmount(wrap, hooks){
-  WV.hooks = hooks || {}; if (!WV.Wd) WV.Wd = wgen();
-  wrap.innerHTML = '<div class="world" tabindex="0" role="application" aria-roledescription="map" aria-label="The clearing seen from above. Walk with the arrow keys or WASD, or tap where you want to go. Z or Enter shows what you can do here."><canvas aria-hidden="true"></canvas><div class="wtag" aria-hidden="true"></div><div class="wsay" aria-live="polite"></div><button type="button" class="wfield">Field map</button><div class="wmenu" role="menu" hidden></div></div><div class="wpad"><div class="dpad" role="group" aria-label="Walk"><span></span><button type="button" data-d="up" aria-label="Walk north">▲</button><span></span><button type="button" data-d="left" aria-label="Walk west">◀</button><span class="dc"></span><button type="button" data-d="right" aria-label="Walk east">▶</button><span></span><button type="button" data-d="down" aria-label="Walk south">▼</button><span></span></div><div class="wmid"><b class="wplace"></b><span>A: things to do here</span></div><div class="ab"><button type="button" class="b" data-k="b" aria-label="B: back">B</button><button type="button" class="a" data-k="a" aria-label="A: things to do here">A</button></div><p class="whint">Walk with the arrow keys or WASD, or click where you want to go. Z or Enter: things to do here.</p></div>';
-  const pad = wrap.querySelector('.wpad');
-  const box = wrap.querySelector('.world');
-  WV.box = box; WV.cv = box.querySelector('canvas'); WV.ctx = WV.cv.getContext('2d'); WV.fb = document.createElement('canvas'); WV.fx = WV.fb.getContext('2d');
-  WV.tag = box.querySelector('.wtag'); WV.say = box.querySelector('.wsay'); WV.menu = box.querySelector('.wmenu'); WV.pad = pad; WV.Z = null; WV.menuOpen = false;
+  WV.hooks = hooks || {};
+  wrap.innerHTML = '<div class="world" tabindex="0" role="application" aria-roledescription="map" aria-label="Where you are, seen from above. Walk with the arrow keys or WASD, or tap where you want to go. Tap a thing, or press Z or Enter, to use it."><canvas aria-hidden="true"></canvas><div class="wtag" aria-hidden="true"></div><div class="wquest" aria-live="polite"></div><div class="wsay" aria-live="polite"></div><button type="button" class="wfield">Map</button><div class="wmenu" role="menu" hidden></div></div><div class="wpad"><div class="dpad" role="group" aria-label="Walk"><span></span><button type="button" data-d="up" aria-label="Walk north">▲</button><span></span><button type="button" data-d="left" aria-label="Walk west">◀</button><span class="dc"></span><button type="button" data-d="right" aria-label="Walk east">▶</button><span></span><button type="button" data-d="down" aria-label="Walk south">▼</button><span></span></div><div class="wmid"><b class="wplace"></b><span>A: use what you face</span></div><div class="ab"><button type="button" class="b" data-k="b" aria-label="B: stop">B</button><button type="button" class="a" data-k="a" aria-label="A: use what you face">A</button></div><p class="whint">Walk with the arrow keys or WASD, or click where you want to go. Click a thing, or press Z or Enter, to use it.</p></div>';
+  const pad = wrap.querySelector('.wpad'), box = wrap.querySelector('.world');
+  WV.box = box; WV.cv = box.querySelector('canvas'); WV.ctx = WV.cv.getContext('2d', {willReadFrequently: !!root.__gb});
+  WV.tag = box.querySelector('.wtag'); WV.say = box.querySelector('.wsay'); WV.menu = box.querySelector('.wmenu'); WV.qline = box.querySelector('.wquest'); WV.pad = pad; WV.Z = null; WV.menuOpen = false;
   if (WV.ro) WV.ro.disconnect(); if (WV.io) WV.io.disconnect();
   if (root.ResizeObserver){ WV.ro = new ResizeObserver(() => { WV.Z = null; wkick(); }); WV.ro.observe(box); }
   if (root.IntersectionObserver){ WV.io = new IntersectionObserver(es => { for (const e of es) WV.vis = e.isIntersecting; wkick(); }); WV.io.observe(box); }
   WV.cv.addEventListener('pointerdown', e => {
     box.focus({preventScroll: true}); const Z = WV.Z; if (!Z) return; e.preventDefault();
     const r = WV.cv.getBoundingClientRect(), ax = (e.clientX - r.left) / r.width * Z.W + WV.cam[0], ay = (e.clientY - r.top) / r.height * Z.H + WV.cam[1];
-    wtap(Math.floor(ax / WT), Math.floor(ay / WT));
+    wtap(Math.floor(ax / WT), Math.floor(ay / WT), ay);
   });
   box.querySelector('.wfield').addEventListener('click', () => { if (WV.menuOpen) wmenuClose(); if (WV.hooks.field) WV.hooks.field(); });
   WV.menu.addEventListener('click', e => { const b = e.target.closest('[data-wi]'); if (b) wchoose(+b.dataset.wi); });
   pad.querySelectorAll('[data-d]').forEach(b => {
     const d = b.dataset.d;
-    const on = e => { e.preventDefault(); if (WV.menuOpen){ wmenuMove(d === 'up' ? -1 : d === 'down' ? 1 : 0); return; } if (WV.auto) return; WV.held = d; WV.tap = d; WV.path = []; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (x) {} wkick(); };
+    const on = e => { e.preventDefault(); if (WV.menuOpen){ wmenuMove(d === 'up' ? -1 : d === 'down' ? 1 : 0); return; } if (WV.auto) return; WV.held = d; WV.tap = d; WV.path = []; WV.bump = null; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (x) {} wkick(); };
     const off = () => { b.classList.remove('on'); if (WV.held === d) WV.held = null; };
     b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
     b.addEventListener('contextmenu', e => e.preventDefault());
@@ -5413,7 +5622,7 @@ function wlive(){ return !!(WV.box && WV.box.isConnected && WV.box.offsetParent 
 function wkeydown(e){
   if (!wlive() || e.ctrlKey || e.metaKey || e.altKey) return;
   const ae = document.activeElement; if (ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable)) return;
-  if (document.getElementById('scrim')){ if (WV.menuOpen) wmenuClose(); return; }
+  if (document.getElementById('scrim') || document.getElementById('skill')){ if (WV.menuOpen) wmenuClose(); return; }
   const aKey = e.key === 'z' || e.key === 'Z' || e.key === 'Enter' || e.key === ' ';
   if (aKey && e.repeat){ e.preventDefault(); return; }   // holding a key down never does things nobody chose
   if (WV.menuOpen){
@@ -5425,125 +5634,203 @@ function wkeydown(e){
     return;
   }
   const dir = WKEY[e.key];
-  if (dir){ e.preventDefault(); if (WV.auto) return; if (WV.keys.indexOf(dir) < 0) WV.keys.push(dir); WV.held = dir; if (!e.repeat) WV.tap = dir; WV.path = []; wkick(); return; }
+  if (dir){ e.preventDefault(); if (WV.auto) return; if (WV.keys.indexOf(dir) < 0) WV.keys.push(dir); WV.held = dir; if (!e.repeat) WV.tap = dir; WV.path = []; WV.bump = null; wkick(); return; }
   const plain = !ae || ae === document.body || ae === WV.box;
   if (e.key === 'z' || e.key === 'Z' || ((e.key === 'Enter' || e.key === ' ') && plain)){ e.preventDefault(); wA(); }
+  else if ((e.key === 'x' || e.key === 'X') && plain){ e.preventDefault(); wB(); }
 }
 function wkeyup(e){ const dir = WKEY[e.key]; if (!dir) return; WV.keys = WV.keys.filter(k => k !== dir); WV.held = WV.keys.length ? WV.keys[WV.keys.length - 1] : null; }
 
-/* ---------- following the game: season, camp, animals, and where the game says you are ---------- */
+/* ---------- following the game: the place you're in, the season, camp, animals, and the quest's target ---------- */
 function wsync(s, h, o){
   if (!WV.box || !s) return;
+  const placeChanged = !WV.map || WV.map.k !== s.loc || WV.game !== s, from = WV.map ? WV.map.k : null;
   WV.S = s; WV.h = h; WV.goal = (o && o.goal) || null;
+  if (WV.qline){ const q = o && o.quest; WV.qline.textContent = q || ''; WV.qline.classList.toggle('on', !!q); }
+  if (placeChanged){ WV.map = wmap(s.loc); WV.base = null; WV.bkey = ''; WV.nkey = ''; }
   const F = facts(s, h), lt = light(F, s.loc), cr = s.crops || {}, ripe = k => (cr[k] && cr[k].ripe) || 0;
-  WV.F = Object.assign({}, F, {berries: ripe('blackberry') > 0.5 || ripe('dewberry') > 0.5}); WV.lt = lt; WV.calm = still();
-  const gk = [F.month, lt.snow ? 1 : 0, F.dry, wfound(s) ? 1 : 0, F.flood ? 1 : 0, Math.round(bloom(F) * 4)].join('|');
+  WV.F = Object.assign({}, F, {berries: ripe('blackberry') > 0.5 || ripe('dewberry') > 0.5 || ripe('dagr') > 0.3}); WV.lt = lt; WV.calm = still();
+  const gk = [s.loc, F.month, lt.snow ? 1 : 0, F.dry, wfound(s) ? 1 : 0, F.flood ? 1 : 0, Math.round(bloom(F) * 4)].join('|');
   const ak = gk + '|' + [WV.F.berries, F.mulberry, F.tuna, F.persimmon, F.pecan].map(x => x ? 1 : 0).join('');
   if (gk !== WV.gkey){ WV.gkey = gk; WV.base = null; }
   if (ak !== WV.akey){ WV.akey = ak; WV.spr = {}; WV.A = null; WV.snow = !!lt.snow; }
-  const bk = wbuildKey(s, WV.F); if (bk !== WV.bkey){ WV.bkey = bk; const B = wbuilds(s, WV.F); WV.blds = B.L; WV.Wd.dyn = B.dyn; WV.btile = B.bt;
-    if (WV.pos && WV.game === s && !wopen(WV.Wd, WV.pos.x, WV.pos.y, s)) wplace(WPLACE[s.loc].s); }
+  const bk = wbuildKey(s, WV.F); if (bk !== WV.bkey){ WV.bkey = bk; const B = wbuilds(s, WV.F); WV.blds = B.L; WV.map.dyn = B.dyn; WV.btile = B.bt; }
   const nk = wbeastKey(s, F, lt); if (nk !== WV.nkey){ WV.nkey = nk; WV.beasts = wbeasts(s, F, lt); }
-  if (WV.game !== s || !WV.pos){
+  if (placeChanged){
     WV.game = s; const m = s.map;
-    if (m && wopen(WV.Wd, m.x, m.y, s) && !wswitch(m.x, m.y, s) && !wfar(m.x, m.y, s)) wplace([m.x, m.y], m.dir); else wplace(WPLACE[s.loc].s);
-  } else if (!WV.auto && (wswitch(WV.pos.x, WV.pos.y, s) || wfar(WV.pos.x, WV.pos.y, s))){ if (WV.moving) WV.relo = true; else wgo(s.loc); }
+    if (WV.entry && WV.entry.k === s.loc){ wplace(WV.entry.at, WV.entry.dir); WV.entry = null; }
+    else if (m && m.loc === s.loc && wopen(WV.map, m.x, m.y, s)) wplace([m.x, m.y], m.dir);
+    else { const e = from && WV.map.exits.find(x => x.to === from); wplace(e ? wstepIn(e) : WV.map.hub, e ? winward(e) : 'down'); }
+    if (from && from !== s.loc) wtag(D.LOCS[s.loc].name);
+  } else if (WV.pos && !wopen(WV.map, WV.pos.x, WV.pos.y, s) && !WV.moving) wplace(WV.map.hub);
+  if (WV.dest && WV.dest === s.loc && !WV.auto) WV.dest = null;
+  if (WV.dest && !WV.auto && !WV.moving) wroam();
   const p = WV.pad && WV.pad.querySelector('.wplace'); if (p) p.textContent = D.LOCS[s.loc].name;
   if (WV.menuOpen && (s.dead || s.pending || s.loc !== WV.menuLoc)) wmenuClose();
   wkick();
 }
-function wfar(x, y, s){ const m = WPLACE[s.loc] && WPLACE[s.loc].m; return !m || Math.hypot(x - m[0], y - m[1]) > 15; }
+const winward = e => ({left: 'right', right: 'left', up: 'down', down: 'up'})[e.dir];
+function wstepIn(e){ const d = WDIR[winward(e)]; for (let k = 2; k >= 0; k--){ const x = e.x + d[0] * k, y = e.y + d[1] * k; if (wopen(WV.map, x, y, WV.S)) return [x, y]; } return WV.map.hub; }
 function wplace(t, dir){
-  WV.pos = {x: t[0], y: t[1], dir: dir || 'down'}; WV.moving = false; WV.path = []; WV.auto = false; WV.relo = false;
+  WV.pos = {x: t[0], y: t[1], dir: dir || 'down'}; WV.moving = false; WV.path = []; WV.auto = false; WV.bump = null;
   const s = WV.S; let behind = [t[0], t[1]];
-  for (const d of [[0, 1], [-1, 0], [1, 0], [0, -1]]) if (wopen(WV.Wd, t[0] + d[0], t[1] + d[1], s)){ behind = [t[0] + d[0], t[1] + d[1]]; break; }
+  for (const d of [[0, 1], [-1, 0], [1, 0], [0, -1]]) if (wopen(WV.map, t[0] + d[0], t[1] + d[1], s)){ behind = [t[0] + d[0], t[1] + d[1]]; break; }
   WV.hist = [{x: t[0], y: t[1]}, {x: behind[0], y: behind[1]}];
-  if (s) s.map = {x: t[0], y: t[1], dir: WV.pos.dir};
+  if (s) s.map = {loc: s.loc, x: t[0], y: t[1], dir: WV.pos.dir};
   WV.fade = wlive() && !WV.calm ? 1 : 0;
 }
-// the buttons took you somewhere: walk there if it's on screen and not far, or just be there
+// walk on your own toward a place: to the exit on the way there, and on through the next place
+function wroam(){
+  const s = WV.S, k = WV.dest; if (!k || !s || s.loc === k){ WV.dest = null; return; }
+  const hop = wnextHop(s.loc, k), e = hop && WV.map.exits.find(x => x.to === hop && (!x.hidden || wfound(s)));
+  if (!e){ WV.dest = null; return; }
+  const P = wroute(WV.map, s, WV.pos.x, WV.pos.y, e.x, e.y, (x, y) => wopen(WV.map, x, y, s));
+  if (!P){ WV.dest = null; return; }
+  if (!P.length){ WV.dest = null; return; }
+  WV.path = P; WV.auto = true; WV.held = null; WV.bump = null; wkick();
+}
 function wgo(k){
-  const sp = WPLACE[k].s, s = WV.S;
-  if (wlive() && !WV.calm){ const P = wroute(WV.Wd, s, WV.pos.x, WV.pos.y, sp[0], sp[1], (x, y) => wopen(WV.Wd, x, y, s)); if (P && P.length && P.length <= 60){ WV.path = P; WV.auto = true; WV.held = null; wkick(); return; } }
-  wplace(sp); wtag(D.LOCS[k].name);
+  if (!WV.S) return;
+  if (k === WV.S.loc){ const h = WV.map.hub; wtap(h[0], h[1]); return; }
+  WV.dest = k;
+  if (WV.calm || !wlive()){   // reduced motion, or out of sight: no walking to watch, only the trips themselves
+    let guard = 0;
+    while (WV.dest && WV.S.loc !== WV.dest && guard++ < 6){ const hop = wnextHop(WV.S.loc, WV.dest); if (!hop || !wtravel(hop)) break; }
+    WV.dest = null; return;
+  }
+  wroam();
+}
+// the trip itself: the engine charges the time, water and energy, and whatever happens on the way happens
+function wtravel(k){
+  let ok = false; try { ok = !!(WV.hooks.arrive && WV.hooks.arrive(k)); } catch (e) { if (root.console) console.error(e); }
+  return ok && WV.S.loc === k;
 }
 
 /* ---------- walking ---------- */
-function wcan(){ const s = WV.S; return !!s && !s.dead && !s.pending && !WV.menuOpen && !WV.auto && !document.getElementById('scrim') && (!WV.hooks.canMove || WV.hooks.canMove()); }
+function wcan(){ const s = WV.S; return !!s && !s.dead && !s.pending && !WV.menuOpen && !document.getElementById('scrim') && !document.getElementById('skill') && (!WV.hooks.canMove || WV.hooks.canMove()); }
 function wupdate(dt, now){
   if (!WV.S) return;
   if (!WV.calm) for (const b of WV.beasts) wbeastStep(b, now, dt);
   if (WV.fade > 0) WV.fade = Math.max(0, WV.fade - dt * 3.2);
   if (WV.moving){
-    WV.t += dt * (WV.auto ? 10 : 5.5); if (WV.t < 1) return;
+    WV.t += dt * (WV.auto ? 9 : 5.5); if (WV.t < 1) return;
     const carry = WV.t - 1; WV.moving = false; WV.t = 0; WV.pos.x = WV.toX; WV.pos.y = WV.toY;
     WV.hist.unshift({x: WV.pos.x, y: WV.pos.y}); if (WV.hist.length > 4) WV.hist.pop();
     if (WV.path.length && WV.path[0].x === WV.pos.x && WV.path[0].y === WV.pos.y) WV.path.shift();
-    WV.S.map = {x: WV.pos.x, y: WV.pos.y, dir: WV.pos.dir};
+    WV.S.map = {loc: WV.S.loc, x: WV.pos.x, y: WV.pos.y, dir: WV.pos.dir};
     clearTimeout(WV.saveT); WV.saveT = setTimeout(() => { if (!WV.moving && WV.hooks.saved) WV.hooks.saved(); }, 1500);   // remember where you stopped
-    if (WV.relo){ WV.relo = false; wgo(WV.S.loc); return; }
-    if (WV.auto){ if (!WV.path.length){ WV.auto = false; wtag(D.LOCS[WV.S.loc].name); return; } }
-    else if (warrive()) return;
+    if (warrive()) return;
+    if (WV.auto && !WV.path.length){ WV.auto = false; if (WV.bump){ const b = WV.bump; WV.bump = null; wface(b.x, b.y); wuse(b.x, b.y); } return; }
     wnext(carry); return;
   }
   wnext(0);
 }
 function wnext(carry){
-  if (WV.auto){ const n = WV.path[0]; if (!n){ WV.auto = false; return; } wstep(n.x - WV.pos.x, n.y - WV.pos.y, carry); return; }
+  if (WV.auto){ if (!wcan() && !(WV.S && !WV.S.dead && !WV.S.pending)){ WV.auto = false; return; } const n = WV.path[0]; if (!n){ WV.auto = false; return; } wstep(n.x - WV.pos.x, n.y - WV.pos.y, carry); return; }
   if (!wcan()) return;
   let d = null;
   if (WV.path.length){ const n = WV.path[0]; d = [n.x - WV.pos.x, n.y - WV.pos.y]; if (Math.abs(d[0]) + Math.abs(d[1]) !== 1){ WV.path = []; d = null; } }
   else if (WV.held || WV.tap) d = WDIR[WV.held || WV.tap];
-  else if (WV.bump){ const b = WV.bump; WV.bump = null; const dx = b.x - WV.pos.x, dy = b.y - WV.pos.y; if (Math.abs(dx) + Math.abs(dy) === 1){ WV.pos.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up'; wlook(b.x, b.y); } }
+  else if (WV.bump){ const b = WV.bump; WV.bump = null; wface(b.x, b.y); wuse(b.x, b.y); }
   WV.tap = null;
   if (d) wstep(d[0], d[1], carry);
 }
+function wface(x, y){ const dx = x - WV.pos.x, dy = y - WV.pos.y; if (Math.abs(dx) + Math.abs(dy) >= 1) WV.pos.dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); }
 function wstep(dx, dy, carry){
   WV.pos.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
   const tx = WV.pos.x + dx, ty = WV.pos.y + dy, s = WV.S;
-  if (wopen(WV.Wd, tx, ty, s) && !WV.beasts.some(b => b.x === tx && b.y === ty)){ WV.moving = true; WV.fromX = WV.pos.x; WV.fromY = WV.pos.y; WV.toX = tx; WV.toY = ty; WV.t = Math.min(0.5, carry || 0); WV.steps++; return; }
-  WV.path = [];
-  if (WV.auto){ WV.auto = false; wplace(WPLACE[s.loc].s); wtag(D.LOCS[s.loc].name); return; }
+  // walking off the edge of the map, at a trail's end: the way to the next place
+  const off = tx < 0 || ty < 0 || tx >= WW || ty >= WH, ex = off && WV.map.exits.find(e => e.x === WV.pos.x && e.y === WV.pos.y && (!e.hidden || wfound(s)));
+  if (ex){ wleave(ex); return; }
+  if (wopen(WV.map, tx, ty, s) && !WV.beasts.some(b => b.x === tx && b.y === ty)){ WV.moving = true; WV.fromX = WV.pos.x; WV.fromY = WV.pos.y; WV.toX = tx; WV.toY = ty; WV.t = Math.min(0.5, carry || 0); WV.steps++; return; }
+  WV.path = []; if (WV.auto){ WV.auto = false; WV.dest = null; }
   wlook(tx, ty);
 }
-// you stepped somewhere new: if it is another place, walking there is the engine's to decide
+// you stepped onto a trail's end: the next place, if the engine lets you go
 function warrive(){
-  const s = WV.S, k = wswitch(WV.pos.x, WV.pos.y, s); if (!k) return false;
-  let ok = false; try { ok = !!(WV.hooks.arrive && WV.hooks.arrive(k)); } catch (e) { if (root.console) console.error(e); }
-  if (!ok || WV.S.loc !== k){ WV.pos.x = WV.fromX; WV.pos.y = WV.fromY; WV.hist.shift(); WV.path = []; WV.S.map = {x: WV.pos.x, y: WV.pos.y, dir: WV.pos.dir}; return true; }
-  wtag(D.LOCS[k].name);
-  if (!wcan()){ WV.path = []; WV.held = null; WV.keys = []; return true; }
-  return false;
+  const e = WV.map.exits.find(x => x.x === WV.pos.x && x.y === WV.pos.y && (!x.hidden || wfound(WV.S)));
+  if (!e) return false;
+  const pointsOut = (e.dir === 'left' && WV.pos.dir === 'left') || (e.dir === 'right' && WV.pos.dir === 'right') || (e.dir === 'up' && WV.pos.dir === 'up') || (e.dir === 'down' && WV.pos.dir === 'down');
+  if (!pointsOut && !(WV.auto && !WV.path.length)) return false;
+  wleave(e); return true;
+}
+function wleave(e){
+  const from = WV.S.loc, back = PLACES[e.to].exits.find(q => q[0] === from), M2 = wmap(e.to);
+  const ein = back ? M2.exits.find(q => q.to === from) : null;
+  WV.entry = {k: e.to, at: ein ? (() => { const d = WDIR[winward(ein)]; return [ein.x + d[0], ein.y + d[1]]; })() : M2.hub, dir: ein ? winward(ein) : 'down'};
+  const keep = WV.dest; WV.auto = false; WV.path = []; WV.held = null; WV.keys = [];
+  if (!wtravel(e.to)){ WV.entry = null; WV.dest = null; WV.pos.dir = winward(e); wface(WV.pos.x - WDIR[e.dir][0], WV.pos.y - WDIR[e.dir][1]); return; }
+  WV.dest = keep && keep !== e.to ? keep : null;
 }
 function wtap(tx, ty){
   if (WV.menuOpen){ wmenuClose(); return; }
   if (!wcan() || !WV.pos) return;
-  const P = WV.pos; if (tx === P.x && ty === P.y && !WV.moving){ wA(); return; }
-  const s = WV.S, ok = (x, y) => wopen(WV.Wd, x, y, s) && !WV.beasts.some(b => b.x === x && b.y === y);
-  const sx = WV.moving ? WV.toX : P.x, sy = WV.moving ? WV.toY : P.y, path = wroute(WV.Wd, s, sx, sy, tx, ty, ok);
-  if (!path || path.length > 90) return;
-  WV.path = path; WV.bump = ok(tx, ty) ? null : {x: tx, y: ty}; WV.held = null; wkick();
+  const P = WV.pos, s = WV.S;
+  if (tx === P.x && ty === P.y && !WV.moving){ wA(); return; }
+  WV.dest = null;
+  const sid = wspotAt(tx, ty), exit = WV.map.exits.find(e => Math.abs(e.x - tx) + Math.abs(e.y - ty) <= 1 && (!e.hidden || wfound(s)));
+  const ok = (x, y) => wopen(WV.map, x, y, s) && !WV.beasts.some(b => b.x === x && b.y === y);
+  const sx = WV.moving ? WV.toX : P.x, sy = WV.moving ? WV.toY : P.y;
+  if (exit && !sid){ const path = wroute(WV.map, s, sx, sy, exit.x, exit.y, ok); if (path){ WV.path = path; WV.auto = true; WV.dest = exit.to; WV.bump = null; WV.held = null; wkick(); } return; }
+  // tapping a thing walks you up to it, then shows what you can do with it
+  if (sid && !ok(tx, ty)){ const S = WV.map.spots[sid] || {tiles: [[tx, ty]]}; let best = null;
+    for (const q of S.tiles){ const path = wroute(WV.map, s, sx, sy, q[0], q[1], ok); if (path && (!best || path.length < best.path.length)) best = {path, q}; }
+    if (best){ if (!best.path.length){ wface(best.q[0], best.q[1]); wuse(best.q[0], best.q[1]); return; } WV.path = best.path; WV.bump = {x: best.q[0], y: best.q[1]}; WV.auto = true; WV.held = null; wkick(); }
+    return; }
+  const path = wroute(WV.map, s, sx, sy, tx, ty, ok);
+  if (!path || path.length > 120) return;
+  if (!path.length){ if (sid) wuse(tx, ty); return; }
+  WV.path = path; WV.auto = !!sid; WV.bump = sid ? {x: tx, y: ty} : (ok(tx, ty) ? null : {x: tx, y: ty}); WV.held = null; wkick();
 }
+function wspotAt(x, y){ if (x < 0 || y < 0 || x >= WW || y >= WH) return null; return WV.map.spotAt[y * WW + x] || null; }
 function wlook(x, y){
   const now = performance.now(), key = x + ',' + y; if (key === WV.sayKey && now - WV.sayAt < 2500) return;
+  const sid = wspotAt(x, y), S = sid && WV.map.spots[sid];
+  if (S && wspotItems(S).length){ WV.sayKey = key; WV.sayAt = now; wsay(S.say + ' A: ' + S.name.toLowerCase() + '.'); return; }
   const b = WV.beasts.find(q => q.x === x && q.y === y), bt = WV.btile && WV.btile[y * WW + x];
-  let text = b ? WSAY[b.k] : bt ? WSAY[bt] : null;
-  if (!text){ const o = WV.Wd.O.find(q => x >= q.x && x < q.x + q.w && y <= q.y && y > q.y - q.h); if (o) text = WSAY[o.t + (o.v || '')] || WSAY[o.t]; }
-  if (!text) text = WSAY[wground(WV.Wd, x, y)];
+  let text = S ? S.say : b ? WSAY[b.k] : bt ? WSAY[bt] : null;
+  if (!text){ const o = WV.map.O.find(q => x >= q.x && x < q.x + q.w && y <= q.y && y > q.y - q.h); if (o) text = WSAY[o.t + (o.v || '')] || WSAY[o.t]; }
+  if (!text) text = WSAY[wground(WV.map, x, y)];
   if (!text) return;
   WV.sayKey = key; WV.sayAt = now; wsay(text);
 }
-function wtag(text){ if (!WV.tag) return; WV.tag.textContent = text; WV.tag.classList.add('on'); clearTimeout(WV.tagT); WV.tagT = setTimeout(() => WV.tag && WV.tag.classList.remove('on'), 2200); const p = WV.pad && WV.pad.querySelector('.wplace'); if (p) p.textContent = text; }
-function wsay(text){ if (!WV.say) return; WV.say.textContent = text; WV.say.classList.add('on'); clearTimeout(WV.sayT); WV.sayT = setTimeout(() => WV.say && WV.say.classList.remove('on'), 2600); }
+function wtag(text){ if (!WV.tag) return; WV.tag.textContent = text; WV.tag.classList.add('on'); clearTimeout(WV.tagT); WV.tagT = setTimeout(() => WV.tag && WV.tag.classList.remove('on'), 2200); }
+function wsay(text){ if (!WV.say) return; WV.say.textContent = text; WV.say.classList.add('on'); clearTimeout(WV.sayT); WV.sayT = setTimeout(() => WV.say && WV.say.classList.remove('on'), 3200); }
 
-/* ---------- the A button: what you can do here, as a menu ---------- */
-function wA(){ if (WV.menuOpen){ if (performance.now() - WV.menuAt > 350) wchoose(WV.msel); return; } if (wcan()) wmenuOpen(); }
-function wB(){ if (WV.menuOpen){ wmenuClose(); return; } if (WV.auto) return; WV.path = []; WV.bump = null; }
-function wmenuOpen(){
-  const acts = (WV.hooks.actions && WV.hooks.actions()) || [], s = WV.S; WV.macts = acts; WV.menuLoc = s.loc;
-  WV.menu.innerHTML = `<div class="wm-h"><b>${wesc(D.LOCS[s.loc].name)}</b><span>What will you do?</span></div><div class="wm-l">` + acts.map((a, i) => `<button type="button" role="menuitem" data-wi="${i}"${a.ok ? '' : ' aria-disabled="true"'}><span class="ic">${a.icon || ''}</span><span class="nm">${wesc(a.name)}</span><span class="hr">${wesc(a.dur)}</span></button>`).join('') + '<button type="button" role="menuitem" data-wi="-1"><span class="ic">↩</span><span class="nm">Keep walking</span><span class="hr"></span></button></div><p class="wm-sub"></p>';
+/* ---------- using things: A, a tap on a thing, or bumping into it and pressing A ---------- */
+// what you can do with a thing right now: its jobs that exist here, and the projects built there that aren't done yet
+function wspotItems(S){
+  const acts = (WV.hooks.actions && WV.hooks.actions()) || [], recs = (WV.hooks.recipes && WV.hooks.recipes()) || [], out = [];
+  for (const id of S.acts || []){ const a = acts.find(x => x.id === id); if (a) out.push(Object.assign({kind: 'act'}, a)); }
+  for (const id of S.makes || []){ const r = recs.find(x => x.id === id); if (r && r.status !== 'done') out.push({kind: 'make', id, icon: r.icon, name: r.started ? 'Keep working: ' + r.name.charAt(0).toLowerCase() + r.name.slice(1) : r.name, dur: r.dur, ok: r.status === 'ok', why: r.why, sub: r.desc}); }
+  return out;
+}
+// what you face: the thing you stand on, the thing in front of you, or anything beside you
+function wfacing(){
+  const P = WV.pos, d = WDIR[P.dir], cand = [[P.x, P.y], [P.x + d[0], P.y + d[1]], [P.x + 1, P.y], [P.x - 1, P.y], [P.x, P.y + 1], [P.x, P.y - 1]];
+  for (const q of cand){ const sid = wspotAt(q[0], q[1]); if (sid && wspotItems(WV.map.spots[sid]).length) return sid; }
+  return null;
+}
+function wuse(x, y){ const sid = wspotAt(x, y); if (sid && wspotItems(WV.map.spots[sid]).length) wmenuOpen(sid); else wlook(x, y); }
+function wA(){ if (WV.menuOpen){ if (performance.now() - WV.menuAt > 350) wchoose(WV.msel); return; } if (!wcan()) return; wmenuOpen(wfacing()); }
+function wB(){ if (WV.menuOpen){ wmenuClose(); return; } if (WV.auto) return; WV.path = []; WV.bump = null; WV.dest = null; }
+// the menu: a thing's jobs, or, facing nothing, what you can do anywhere: rest, sleep, and make things from your pack
+function wmenuOpen(sid){
+  const s = WV.S, S = sid && WV.map.spots[sid];
+  let items, head;
+  if (S){ items = wspotItems(S); head = S.name; }
+  else {
+    const acts = (WV.hooks.actions && WV.hooks.actions()) || [], recs = (WV.hooks.recipes && WV.hooks.recipes()) || [];
+    items = acts.filter(a => a.id === 'rest' || a.id === 'sleep').map(a => Object.assign({kind: 'act'}, a));
+    for (const r of recs) if (r.anywhere && r.status !== 'done') items.push({kind: 'make', id: r.id, icon: r.icon, name: r.name, dur: r.dur, ok: r.status === 'ok', why: r.why, sub: r.desc});
+    head = 'You, at the ' + D.LOCS[s.loc].name.replace(/^The /, '');
+  }
+  WV.macts = items; WV.menuLoc = s.loc;
+  WV.menu.innerHTML = `<div class="wm-h"><b>${wesc(head)}</b><span>What will you do?</span></div><div class="wm-l">` + items.map((a, i) => `<button type="button" role="menuitem" data-wi="${i}"${a.ok ? '' : ' aria-disabled="true"'}${WV.goal && (WV.goal.act === a.id || WV.goal.craft === a.id) ? ' class="hint"' : ''}><span class="ic">${a.icon || ''}</span><span class="nm">${wesc(a.name)}</span><span class="hr">${wesc(a.dur)}</span></button>`).join('') + '<button type="button" role="menuitem" data-wi="-1"><span class="ic">↩</span><span class="nm">Keep walking</span><span class="hr"></span></button></div><p class="wm-sub"></p>';
   WV.menu.hidden = false; WV.menuOpen = true; WV.menuAt = performance.now(); WV.held = null; WV.keys = []; WV.path = [];
-  WV.msel = Math.max(0, acts.findIndex(a => a.ok)); wmenuMove(0);
+  const hinted = items.findIndex(a => a.ok && WV.goal && (WV.goal.act === a.id || WV.goal.craft === a.id));
+  WV.msel = hinted >= 0 ? hinted : Math.max(0, items.findIndex(a => a.ok)); if (!items.length) WV.msel = 0;
+  wmenuMove(0);
 }
 function wmenuMove(d){
   const items = WV.menu.querySelectorAll('[data-wi]'); if (!items.length) return;
@@ -5559,7 +5846,9 @@ function wchoose(i){
   if (idx < 0){ wmenuClose(); return; }
   const a = WV.macts[idx]; if (!a){ wmenuClose(); return; }
   if (!a.ok){ WV.msel = i; wmenuMove(0); return; }   // can't do it: the reason is showing below
-  wmenuClose(); if (WV.hooks.run) WV.hooks.run(a.id);
+  wmenuClose();
+  if (a.kind === 'make'){ if (WV.hooks.make) WV.hooks.make(a.id); }
+  else if (WV.hooks.run) WV.hooks.run(a.id);
 }
 
 /* ---------- drawing ---------- */
@@ -5574,26 +5863,31 @@ function wframe(now){
   if (WV.calm && !(WV.moving || WV.auto || WV.held || WV.tap || WV.path.length || WV.fade > 0)){ WV.last = 0; return; }   // reduced motion: a still picture until you move
   WV.raf = requestAnimationFrame(wframe);
 }
+// about 240 art pixels across on any screen, so the world is the same size on a phone and a laptop
 function wmeasure(){
   const r = WV.box.getBoundingClientRect(); if (!(r.width > 20 && r.height > 20)) return null;
-  const dpr = Math.min(3, root.devicePixelRatio || 1), devW = Math.round(r.width * dpr), devH = Math.round(r.height * dpr), k = Math.max(1, Math.round(devW / 224));
-  return {devW, devH, k, W: Math.ceil(devW / k), H: Math.ceil(devH / k)};
+  const dpr = Math.min(3, root.devicePixelRatio || 1), devW = Math.round(r.width * dpr), devH = Math.round(r.height * dpr), k = Math.max(1, devW / 240);
+  return {devW, devH, k, W: devW / k, H: devH / k};
 }
-function wppos(){ const e = WV.moving ? WV.t : 0, x = WV.moving ? lerp(WV.fromX, WV.toX, e) : WV.pos.x, y = WV.moving ? lerp(WV.fromY, WV.toY, e) : WV.pos.y; return {x: (x + 0.5) * WT, y: (y + 1) * WT - 3, tx: Math.round(x), ty: Math.round(y)}; }
+function wppos(){ const e = WV.moving ? WV.t : 0, x = WV.moving ? lerp(WV.fromX, WV.toX, e) : WV.pos.x, y = WV.moving ? lerp(WV.fromY, WV.toY, e) : WV.pos.y; return {x: (x + 0.5) * WT, y: (y + 1) * WT - 3}; }
 function wdraw(now){
-  if (!WV.Z){ const Z = wmeasure(); if (!Z) return; WV.Z = Z; WV.cv.width = Z.devW; WV.cv.height = Z.devH; WV.fb = document.createElement('canvas'); WV.fb.width = Z.W; WV.fb.height = Z.H; WV.fx = WV.fb.getContext('2d', {willReadFrequently: !!root.__gb}); }
-  const Z = WV.Z, W = Z.W, H = Z.H, c = WV.fx, s = WV.S, t = WV.calm ? 40 : now / 1000;
+  if (!WV.Z){ const Z = wmeasure(); if (!Z) return; WV.Z = Z; WV.cv.width = Z.devW; WV.cv.height = Z.devH; }
+  const Z = WV.Z, W = Z.W, H = Z.H, c = WV.ctx, s = WV.S, t = WV.calm ? 40 : now / 1000, MW = WW * WT, MH = WH * WT;
   if (!WV.A) WV.A = wart(WV.F);
-  if (!WV.base) WV.base = wbake(WV.Wd, WV.A, {snow: !!WV.lt.snow, found: wfound(s), bloom: bloom(WV.F), flood: WV.F.flood});
-  const pp = wppos(), cx = Math.round(clamp(pp.x - W / 2, 0, WW * WT - W)), cy = Math.round(clamp(pp.y - 8 - H / 2, 0, WH * WT - H)); WV.cam = [cx, cy];
-  c.imageSmoothingEnabled = false; c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
-  c.drawImage(WV.base.cv, cx, cy, W, H, 0, 0, W, H);
-  wwater(c, cx, cy, W, H, t);
-  // everything that stands up, back to front
+  const art = wpainting(s.loc, WV.F.month);
+  if (!art && !WV.base) WV.base = wbake(WV.map, WV.A, {snow: !!WV.lt.snow, found: wfound(s), bloom: bloom(WV.F), flood: WV.F.flood});
+  const pp = wppos(), cx = MW <= W ? (MW - W) / 2 : clamp(pp.x - W / 2, 0, MW - W), cy = MH <= H ? (MH - H) / 2 : clamp(pp.y - 8 - H / 2, 0, MH - H); WV.cam = [cx, cy];
+  c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.fillStyle = '#1d2621'; c.fillRect(0, 0, Z.devW, Z.devH);
+  c.setTransform(Z.k, 0, 0, Z.k, 0, 0);
+  // the ground: the painting, smoothly scaled, or the game's own pixel picture, crisp
+  if (art){ c.imageSmoothingEnabled = true; const sx = art.naturalWidth / MW, sy = art.naturalHeight / MH; c.drawImage(art, Math.max(0, cx) * sx, Math.max(0, cy) * sy, Math.min(W, MW) * sx, Math.min(H, MH) * sy, Math.max(0, -cx), Math.max(0, -cy), Math.min(W, MW), Math.min(H, MH)); }
+  else { c.imageSmoothingEnabled = false; c.drawImage(WV.base.cv, Math.max(0, cx), Math.max(0, cy), Math.min(W, MW), Math.min(H, MH), Math.max(0, -cx), Math.max(0, -cy), Math.min(W, MW), Math.min(H, MH)); wwater(c, cx, cy, W, H, t); }
+  c.imageSmoothingEnabled = false;
+  // everything that stands up, back to front: the painting already has the land's own trees and rocks in it
   const L = [], inView = (x, y, sp) => !(x - sp.ax > cx + W || y - sp.ay > cy + H || x - sp.ax + sp.w < cx || y - sp.ay + sp.h < cy);
-  for (const o of WV.Wd.O){ const T = WOBJ[o.t], bx = (o.x + o.w / 2) * WT, by = (o.y + 1) * WT - 2; if (bx < cx - 40 || bx > cx + W + 40 || by < cy - 8 || by > cy + H + 60) continue;
+  if (!art) for (const o of WV.map.O){ const T = WOBJ[o.t]; if (!T) continue; const bx = (o.x + o.w / 2) * WT, by = (o.y + 1) * WT - 2; if (bx < cx - 70 || bx > cx + W + 70 || by < cy - 8 || by > cy + H + 70) continue;
     const sp = wsp(o.t + o.v, T.box, g => T.paint(g, WV.A, o.v)); if (inView(bx, by, sp)) L.push({x: bx, y: by, sp, sh: T.sh}); }
-  for (const b of WV.blds){ const T = WBUILD[b.k], sp = wsp('b:' + b.key, T.box, g => T.paint(g, WV.A, b.a)); if (inView(b.bx, b.by, sp)) L.push({x: b.bx, y: b.by, sp, sh: T.sh});
+  for (const b of WV.blds){ const T = WBUILD[b.k], sp = wsp('b:' + b.key, T.box, g => { if (b.k === 'shelter') g.push(0, 0, 1.5); T.paint(g, WV.A, b.a); if (b.k === 'shelter') g.pop(); }); if (inView(b.bx, b.by, sp)) L.push({x: b.bx, y: b.by, sp, sh: T.sh});
     if (b.k === 'ring' && WV.F.fire === 'lit'){ const f = (Math.floor(t * 7.5) + (Math.floor(t * 2.1) & 1)) % 4, fs = wsp('flame' + f, [16, 16, 8, 14], g => { g.push(0, 0, 0.55); flamePaint(g, f); g.pop(); }, true); L.push({x: b.bx, y: b.by + 0.1, dy: -3, sp: fs}); } }
   const walkers = [];
   for (const b of WV.beasts){ const T = WBEAST[b.k], e = b.t, x = (lerp(b.fx, b.x, e) + 0.5) * WT, y = (lerp(b.fy, b.y, e) + 1) * WT - 3;
@@ -5610,11 +5904,10 @@ function wdraw(now){
   for (const d of L) if (d.sh){ const S2 = wshadow(d.sh[0], d.sh[1]); c.drawImage(S2, Math.round(d.x + 2 - S2.width / 2 - cx), Math.round(d.y - S2.height / 2 - cy)); }
   for (const d of L) c.drawImage(d.sp.cv, Math.round(d.x - d.sp.ax - cx), Math.round(d.y + (d.dy || 0) - d.sp.ay - cy));
   // tallgrass hides feet
-  for (const q of walkers){ const tx = Math.floor(q[0] / WT), ty = Math.floor(q[1] / WT); if (wground(WV.Wd, tx, ty) === 'G') c.drawImage(WV.base.cv, tx * WT, ty * WT + 10, WT, 6, tx * WT - cx, ty * WT + 10 - cy, WT, 6); }
+  if (!art) for (const q of walkers){ const tx = Math.floor(q[0] / WT), ty = Math.floor(q[1] / WT); if (wground(WV.map, tx, ty) === 'G') c.drawImage(WV.base.cv, tx * WT, ty * WT + 10, WT, 6, tx * WT - cx, ty * WT + 10 - cy, WT, 6); }
   wsmoke(c, cx, cy, t); wweather(c, W, H, t); wgrade(c, W, H); wlights(c, cx, cy, W, H, t); wmarker(c, cx, cy, W, H, t);
   if (WV.fade > 0){ c.fillStyle = `rgba(10,12,16,${WV.fade.toFixed(3)})`; c.fillRect(0, 0, W, H); }
-  if (root.__gb) gbify(c, W, H);
-  const d = WV.ctx; d.imageSmoothingEnabled = false; d.drawImage(WV.fb, 0, 0, W * Z.k, H * Z.k);
+  if (root.__gb){ c.setTransform(1, 0, 0, 1, 0, 0); gbify(c, Z.devW, Z.devH); }
 }
 function wwater(c, cx, cy, W, H, t){
   if (WV.calm) return; const G = WV.base.glints, K = WV.base.K, Wp = WV.base.Wp;
@@ -5657,13 +5950,24 @@ function wlights(c, cx, cy, W, H, t){
       g.addColorStop(0, `rgba(255,170,80,${(0.42 * dark).toFixed(3)})`); g.addColorStop(0.5, `rgba(255,140,60,${(0.15 * dark).toFixed(3)})`); g.addColorStop(1, 'rgba(255,120,40,0)');
       c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(x - R, y - R, R * 2, R * 2); c.globalCompositeOperation = 'source-over'; } }
   if (dark > 0.6 && !lt.wet && F.month >= 4 && F.month <= 8 && !WV.calm) for (let i = 0; i < 12; i++){ // fireflies on summer nights
-    const x = Math.round(((NZ.hsh(i, 1, 3) * W + Math.sin(t * 0.3 + i) * 20) % W + W) % W), y = Math.round(((NZ.hsh(i, 2, 3) * H + Math.cos(t * 0.25 + i * 2) * 14) % H + H) % H), a = Math.max(0, Math.sin(t * 1.3 + i * 1.7));
+    const x = Math.round(((NZ.hsh(i, 1, 3) * W + Math.sin(t * 0.3 + i) * 20) % W + W) % W), y = Math.round(((NZ.hsh(i, 2, 3) * H + Math.cos(t * 0.25 + i) * 14) % H + H) % H), a = Math.max(0, Math.sin(t * 1.3 + i * 1.7));
     if (a < 0.2) continue; c.fillStyle = `rgba(233,224,143,${(a * 0.3).toFixed(2)})`; c.fillRect(x - 1, y, 3, 1); c.fillRect(x, y - 1, 1, 3); c.fillStyle = `rgba(247,242,170,${a.toFixed(2)})`; c.fillRect(x, y, 1, 1); }
 }
-// the Next step card's destination: a marker over it, or an arrow at the edge pointing its way
+// the quest's target: a marker over the thing to use here, or over the trail toward the place it's in, or an arrow at the edge
+function wtarget(){
+  const s = WV.S, g = WV.goal; if (!g || !s) return null;
+  const here = !g.go || g.go === s.loc;
+  if (here){
+    const want = g.act || g.craft; if (!want) return null;
+    for (const id in WV.map.spots){ const S = WV.map.spots[id]; if ((S.acts || []).indexOf(want) >= 0 || (S.makes || []).indexOf(want) >= 0){ const q = S.tiles[0]; return q ? {x: q[0], y: q[1], spot: id} : null; } }
+    return null;
+  }
+  const hop = wnextHop(s.loc, g.go), e = hop && WV.map.exits.find(x => x.to === hop && (!x.hidden || wfound(s)));
+  return e ? {x: e.x, y: e.y, exit: hop} : null;
+}
 function wmarker(c, cx, cy, W, H, t){
-  const s = WV.S, k = WV.goal; if (!k || !WPLACE[k] || k === s.loc || (k === 'spring' && !wfound(s))) return;
-  const sp = WPLACE[k].s, x = Math.round((sp[0] + 0.5) * WT - cx), y = Math.round(sp[1] * WT - 12 - cy + (WV.calm ? 0 : Math.sin(t * 4) * 1.5));
+  const T = wtarget(); if (!T) return;
+  const x = Math.round((T.x + 0.5) * WT - cx), y = Math.round(T.y * WT - (T.spot ? 14 : 6) - cy + (WV.calm ? 0 : Math.sin(t * 4) * 1.5));
   if (x >= 5 && x <= W - 5 && y >= 1 && y <= H - 8){ wchev(c, x, y); return; }
   const a = Math.atan2(y - H / 2, x - W / 2), ex = clamp(x, 7, W - 8), ey = clamp(y, 7, H - 8);
   c.save(); c.translate(ex + 0.5, ey + 0.5); c.rotate(a);
@@ -5683,7 +5987,7 @@ function gbify(c, W, H){
   for (let y = 0, i = 0; y < H; y++) for (let x = 0; x < W; x++, i += 4){ const l = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255 + (NZ.bay(x, y) - 0.5) * 0.1, q = GBP[l < 0.3 ? 0 : l < 0.52 ? 1 : l < 0.74 ? 2 : 3]; d[i] = q[0]; d[i + 1] = q[1]; d[i + 2] = q[2]; }
   c.putImageData(id, 0, 0);
 }
-root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), goTo: k => { if (!WPLACE[k]) return; const p = WPLACE[k].s; wtap(p[0], p[1]); }, closeMenu: () => { if (WV.menuOpen) wmenuClose(); }, _v: WV};
+root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), goTo: k => { if (PLACES[k]) wgo(k); }, closeMenu: () => { if (WV.menuOpen) wmenuClose(); }, places: PLACES, map: k => wmap(k), _v: WV};
 function wsetgb(on){ root.__gb = !!on; WV.Z = null; VIEWS.forEach(v => { if (v.S) v.draw(performance.now()); }); wkick(); }
 
 root.Scene = {show, light, dayRibbon};
@@ -5707,8 +6011,8 @@ const store = {
   del(k){ try { window.localStorage.removeItem(k); } catch (e) {} }
 };
 
-let S = null, tab = 'here', jtab = 'log', sel = null, seenGuide = 0, seenAch = 0;
-let view = store.get(KEY.view) === 'scene' ? 'scene' : 'map';
+let S = null, tab = 'here', jtab = 'quests', sel = null, seenGuide = 0, seenAch = 0;
+let view = 'map';   // the walk; the side view is a look around
 if (window.World) World.gb(store.get('clearing.gb.v1') === '1');
 let craftGroup = 'All', planTrail = [], planOpen = '';
 let opt = {start: 'spring', party: 'solo', rations: 'each', diff: 'medium'};
@@ -5918,9 +6222,9 @@ function titleScreen(){
     `<button type="button" data-opt="${key}" data-v="${v}" aria-pressed="${opt[key] === v}">${esc(label)}<span>${esc(sub)}</span></button>`).join('') + '</div>';
   app.innerHTML = `<main id="title">
 <div class="plate" id="plate"></div>
-<h1>The Clearing</h1>
-<p class="by">A survival game. Rules by Dagr.</p>
-<p class="lede">You wake up in a clearing in North Texas, in a world where people never existed. You have two crates, two tarps, a box of ration bars, two knives, and a rifle with 50 rounds. Real plants, real animals, real weather. Survive as long as you can.</p>
+<h1>Stranded</h1>
+<p class="by">The Clearing. A survival game. Rules by Dagr.</p>
+<p class="lede">You wake up in a clearing in North Texas, in a world where people never existed. You have two crates, two tarps, a box of ration bars, two knives, and a rifle with 50 rounds. Real plants, real animals, real weather. Walk the land, learn it, and survive as long as you can.</p>
 <div class="optset"><p>When do you arrive?</p>${choice('start', Object.keys(D.STARTS).map(k => [k, D.STARTS[k].label, D.STARTS[k].sub]))}</div>
 <div class="optset"><p>Who's out there?</p>${choice('party', [['solo', 'Just you', 'Every job is yours'], ['duo', 'You and a partner', 'Two sets of hands, two mouths to feed']])}</div>
 ${opt.party === 'duo' ? `<div class="optset"><p>Ration bars</p>${choice('rations', [['each', '100 each', 'As in Dagr\'s game'], ['shared', '100 to share', 'Harder: half the food']])}</div>` : ''}
@@ -5943,7 +6247,7 @@ ${best ? `<p class="best">Longest survival on this device: ${best} days.</p>` : 
 
 /* ---------- game screen ---------- */
 function startGame(s, fresh){
-  S = s; tab = 'here'; jtab = 'log'; sel = null; craftGroup = 'All';
+  S = s; tab = 'here'; jtab = 'quests'; sel = null; craftGroup = 'All';
   if (S.pin && !D.RECIPES.some(r => r.id === S.pin)) delete S.pin;
   seenGuide = Object.keys(S.guide).length; seenAch = Object.keys(S.ach).length;
   app.innerHTML = `<div id="game" data-panel="here">
@@ -5955,7 +6259,7 @@ function startGame(s, fresh){
 </header>
 <section class="stage" id="stage" data-view="${view}" aria-label="Where you are">
 <div class="stage-art"><div id="scene"></div><div class="mapwrap" id="mapwrap"></div></div>
-<div class="stage-bar"><h2 id="placename"></h2><div class="viewseg" role="group" aria-label="Show"><button type="button" data-view="scene">View</button><button type="button" data-view="map">Map</button></div></div>
+<div class="stage-bar"><h2 id="placename"></h2><div class="viewseg" role="group" aria-label="Show"><button type="button" data-view="map">Walk</button><button type="button" data-view="scene">Look</button></div></div>
 </section>
 <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 <section class="panel" id="panel"></section>
@@ -6008,8 +6312,10 @@ function worldHooks(){
   return {
     canMove: () => !!S && !S.dead && !S.pending && !$('#scrim'),
     arrive(k){ if (!S) return false; if (tab !== 'here'){ tab = 'here'; $('#game').dataset.panel = 'here'; } const R = E.travel(S, k); if (!R) return false; if (R.err){ toast(R.lines[0]); return false; } handle(R, true); return S.loc === k; },
-    run(id){ handle(E.run(S, id)); },
+    run(id){ runAct(id); },
+    make(id){ doCraft(id); },
     actions: () => E.actions(S).map(a => ({id: a.id, icon: a.icon, name: a.name, dur: a.id === 'sleep' ? 'Until dawn' : durLabel(a.h), ok: a.ok, sub: a.sub, why: a.why})),
+    recipes: () => E.recipes(S).map(r => Object.assign({}, r, {dur: recipeTime(r)})),
     field: () => fieldMapSheet(),
     saved(){ if (S && !S.dead) autosave(); }
   };
@@ -6017,12 +6323,12 @@ function worldHooks(){
 function fieldMapSheet(){
   if (!S) return;
   const h = E.hud(S), g = guidance();
-  openSheet(`<div class="sh-head"><span class="ic">🗺️</span><h2>Field map</h2></div><div class="fieldmap"><svg class="map ${mapSeason(h.month)}" viewBox="0 0 380 290" role="img" aria-label="The whole clearing, as you have mapped it">${mapBase('f')}<g>${mapDyn(S, h, g && g.step && g.step.go)}</g></svg></div><div class="foot"><button type="button" class="btn hot" data-close>Back to walking</button></div>`);
+  openSheet(`<div class="sh-head"><span class="ic">🗺️</span><h2>Field map</h2></div><p class="note" style="margin-top:4px">Tap a place to walk there along the trails.</p><div class="fieldmap"><svg class="map ${mapSeason(h.month)}" viewBox="0 0 380 290" role="img" aria-label="The whole clearing, as you have mapped it">${mapBase('f')}<g>${mapDyn(S, h, g && g.step && g.step.go)}</g></svg></div><div class="foot"><button type="button" class="btn hot" data-close>Back to walking</button></div>`);
 }
 function renderMap(h){
   h = h || E.hud(S);
   const g = guidance();
-  if (window.World) World.sync(S, h, {goal: g && g.step && g.step.go});
+  if (window.World) World.sync(S, h, {goal: g && g.step, quest: g ? (g.tone === 'urgent' ? '⚠ ' + g.text : (g.title ? g.title + ': ' : '') + g.text) : ''});
 }
 function renderCallout(){
   const c = $('#callout'); if (!c) return;
@@ -6056,54 +6362,70 @@ function renderPanel(){
 }
 
 /* ---------- guidance: one card, one voice ----------
-   Urgent needs first, then the project you pinned, then the game's own suggestion. */
+   Right-now needs first, then a project you chose to follow, then the quest. It says what, where and how, and the
+   orange marker on the map shows the way. Nothing on it does the job for you. */
 function recipeView(id){ return E.recipes(S).find(r => r.id === id); }
 function guidance(){
   if (!S || S.dead || S.pending) return null;
   const A = E.advice(S);
-  if (A && A.tone === 'urgent') return {tone: 'urgent', head: 'Right now', text: A.text, step: A, recipe: null};
+  if (A && A.tone === 'urgent') return {tone: 'urgent', head: 'Right now', text: A.text, how: A.how || '', step: A};
   if (S.pin){
     const r = recipeView(S.pin);
-    if (r && r.status !== 'done'){ const step = E.plan(S, S.pin); return {tone: 'goal', head: 'Your project', text: r.name, step, recipe: S.pin, pinned: true}; }
+    if (r && r.status !== 'done'){ const step = E.plan(S, S.pin) || {}; return {tone: 'goal', head: 'Your project', title: r.name, text: step.text || '', how: '', step, recipe: S.pin, pinned: true}; }
   }
-  if (!A) return null;
-  if (A.recipe) return {tone: 'goal', head: 'Next step', text: A.text, step: E.plan(S, A.recipe), recipe: A.recipe, note: A.note};
-  return {tone: 'goal', head: 'Next step', text: A.text, step: A, recipe: null, note: A.note};
+  const Q = E.quests(S), q = Q.current;
+  if (q && q.step) return {tone: 'quest', head: q.side ? 'Side quest' : 'Chapter ' + q.ch + ': ' + q.chapter, title: q.title, text: q.step.text, how: q.step.how || '', step: q.step, quest: q};
+  if (A) return {tone: 'goal', head: 'The field book says', text: A.text, how: A.how || '', step: A};
+  return null;
 }
-function stepButtons(step, hot){
+// where the step happens, in words: the thing to use here, or the place to head for
+function spotFor(loc, id){ const M = World.map(loc); for (const k in M.spots){ const sp = M.spots[k]; if ((sp.acts || []).indexOf(id) >= 0 || (sp.makes || []).indexOf(id) >= 0) return sp; } return null; }
+function whereLine(st){
+  if (!st) return '';
+  if (st.go && st.go !== S.loc) return 'Head for the ' + shortPlace(st.go) + ': follow the orange arrow on the map.';
+  const want = st.act || st.craft; if (!want) return '';
+  if (st.craft && recipeView(st.craft) && recipeView(st.craft).anywhere) return 'You can make it anywhere: press A with nothing in front of you, or use the Craft tab.';
+  if (want === 'sleep' || want === 'rest') return S.loc === 'camp' ? 'At the boulders, or press A with nothing in front of you.' : 'Press A with nothing in front of you.';
+  const sp = spotFor(S.loc, want);
+  return sp ? 'Here: the ' + sp.name.charAt(0).toLowerCase() + sp.name.slice(1) + ', under the orange marker. Walk up to it and tap it.' : '';
+}
+function packButtons(step){
   if (!step) return '';
-  const cls = 'btn' + (hot ? ' hot' : '');
-  if (step.drink) return `<button type="button" class="${cls}" data-drink="${step.drink}">Drink clean water</button>`;
-  if (step.tab) return `<button type="button" class="${step.tab === 'journal' ? 'btn' : cls}" data-tab="${step.tab}">${step.tab === 'journal' ? 'Open the Journal' : 'Open your pack'}</button>`;
-  if (step.craft){ const r = recipeView(step.craft); return `<button type="button" class="${cls}" data-craft="${step.craft}">${esc(r.name)}, ${durLabel(r.hours)}</button>`; }
-  if (step.go && S.loc !== step.go){ const t = E.travelList(S).find(x => x.id === step.go); return `<button type="button" class="${cls}" data-go="${step.go}">Walk to the ${esc(shortPlace(step.go))}${t ? ', ' + t.mins + ' min' : ''}</button>`; }
-  if (step.act){
-    const a = E.actions(S).find(a => a.id === step.act);
-    if (!a) return '';
-    return `<button type="button" class="${cls}" data-act="${a.id}"${a.ok ? '' : ' disabled'}>${esc(a.name)}${a.id === 'sleep' ? '' : ', ' + durLabel(a.h)}</button>${a.ok ? '' : `<span class="why">${esc(a.why)}</span>`}`;
-  }
+  if (step.drink) return `<button type="button" class="btn hot" data-drink="${step.drink}">Drink clean water</button>`;
+  if (step.tab === 'pack') return `<button type="button" class="btn hot" data-tab="pack">Open your pack</button>`;
   return '';
 }
 function nextCard(){
   const g = guidance(); if (!g) return '';
-  const p = E.progression(S), how = g.step ? g.step.how || (g.step.text && g.step.text !== g.text ? g.step.text : '') : '';
-  const stage = p.complete ? '' : `<span class="prog">${esc(p.stage)}, ${p.checklist.filter(x => x.done).length} of ${p.checklist.length}</span>`;
-  return `<div class="next${g.tone === 'urgent' ? ' urgent' : ''}"><div class="next-head"><span>${g.head}</span>${g.tone === 'urgent' ? '' : stage}</div>
-<p class="next-goal">${esc(g.text)}</p>${how ? `<p class="next-how">${esc(how)}</p>` : ''}${g.note ? `<p class="next-how">${esc(g.note)}</p>` : ''}
-<div class="next-actions">${stepButtons(g.step, true)}${g.recipe ? `<button type="button" class="btn" data-crecipe="${g.recipe}">See the plan</button>` : ''}</div></div>`;
+  const st = g.step || {}, q = g.quest, where = st.later ? '' : whereLine(st);
+  let h = `<div class="next${g.tone === 'urgent' ? ' urgent' : ''}"><div class="next-head"><span>${esc(g.head)}</span>${q ? `<span class="prog">${q.progress} of ${q.total}</span>` : ''}</div>`;
+  if (g.title) h += `<p class="qtitle">${esc(g.title)}</p>`;
+  if (q && q.total > 1) h += '<ul class="qsteps">' + q.steps.map((x, i) => `<li class="${x.done ? 'done' : i === q.progress || (!x.done && q.steps.slice(0, i).every(y => y.done)) ? 'now' : ''}"><span class="tick">${x.done ? '✓' : '○'}</span>${esc(x.text)}</li>`).join('') + '</ul>';
+  else h += `<p class="next-goal">${esc(g.text)}</p>`;
+  if (g.how) h += `<p class="next-how">${esc(g.how)}</p>`;
+  if (where) h += `<p class="next-how where">${esc(where)}</p>`;
+  const hungry = g.tone !== 'urgent' && (E.hud(S).food < 70 || S.gear.bars < 20 * S.P) && E.foodTip(S);
+  if (hungry) h += `<p class="next-how tip">Food: ${esc(hungry.text)}</p>`;
+  h += `<div class="next-actions">${packButtons(st)}${q ? '<button type="button" class="btn" data-tab="journal" data-jq="1">Quest log</button>' : ''}${g.recipe ? `<button type="button" class="btn" data-crecipe="${g.recipe}">See the plan</button>` : ''}</div></div>`;
+  return h;
 }
 
 /* ---------- tabs ---------- */
 function hereTab(){
-  const L = E.locInfo(S), acts = E.actions(S), g = guidance(), step = g && g.step;
-  const hintAct = step && step.act && (!step.go || step.go === S.loc) ? step.act : '', hintGo = step && step.go && step.go !== S.loc ? step.go : '';
+  const L = E.locInfo(S), acts = E.actions(S), recs = E.recipes(S), M = World.map(S.loc);
   let h = `<div class="place"><p class="desc">${esc(L.desc)}</p>${L.notes.length ? '<ul>' + L.notes.map(n => `<li>${esc(n)}</li>`).join('') + '</ul>' : ''}</div>`;
   h += nextCard();
-  h += '<div class="sect"><h3>Things to do</h3><ul class="acts">' + acts.map(a =>
-    `<li><button type="button" class="act${a.id === hintAct ? ' hinted' : ''}" data-act="${a.id}"${a.ok ? '' : ' disabled'}><span class="ic">${a.icon}</span><span class="nm">${esc(a.name)}</span><span class="hr">${a.id === 'sleep' ? 'Until dawn' : durLabel(a.h)}</span><span class="sub">${esc(a.ok ? a.sub : a.why)}</span></button></li>`).join('') + '</ul></div>';
+  // what's here: the things you can walk up to and use, and what each is good for
+  const rows = [];
+  for (const k in M.spots){
+    const sp = M.spots[k], jobs = (sp.acts || []).map(id => acts.find(a => a.id === id)).filter(Boolean).map(a => a.name.charAt(0).toLowerCase() + a.name.slice(1));
+    const makes = (sp.makes || []).map(id => recs.find(r => r.id === id)).filter(r => r && r.status !== 'done').map(r => r.name.charAt(0).toLowerCase() + r.name.slice(1));
+    if (jobs.length || makes.length) rows.push(`<li class="row"><span class="ic">${esc((acts.find(a => (sp.acts || []).indexOf(a.id) >= 0) || recs.find(r => (sp.makes || []).indexOf(r.id) >= 0) || {}).icon || '•')}</span><div><div class="nm">${esc(sp.name)}</div><div class="sub">${esc(jobs.concat(makes).join(', '))}</div></div><span></span></li>`);
+  }
+  if (rows.length) h += `<div class="sect"><h3>Here<span class="count">walk up to a thing and tap it</span></h3><ul class="rows">${rows.join('')}</ul></div>`;
   if (S.loc === 'camp') h += '<div class="sect"><h3>Your camp</h3><div class="camp" style="margin-top:0;border-top:0">' + E.campInfo(S).map(([i, t]) => `<p><span>${i}</span><span>${esc(t)}</span></p>`).join('') + '</div></div>';
-  h += '<div class="sect"><h3>Walk to</h3><div class="go">' + E.travelList(S).map(t =>
-    `<button type="button" class="${t.id === hintGo ? 'hinted' : ''}" data-go="${t.id}">${esc(t.name)}<span>${t.mins} min</span></button>`).join('') + '</div></div>';
+  const ways = World.places[S.loc].exits.filter(e => e[3] !== 'hidden' || S.found.spring).map(e => shortPlace(e[0]));
+  h += `<p class="note">Trails from here lead to the ${esc(ways.join(', the ').replace(/, the ([^,]*)$/, ' and the $1'))}. Walk off the end of a trail, or open the map.</p>`;
   return h;
 }
 function packTab(){
@@ -6191,9 +6513,10 @@ function sourceLinks(k, r){
   if (k === 'tarp') return 'Your two tarps are all the tarp there is. You have ' + fmtN(S.gear.tarp) + ' m² left.';
   const src = E.sourceOf(S, k); if (!src) return '';
   let h = esc(src.text + ' at the ' + shortPlace(src.loc) + '.') + (src.note ? ' ' + esc(src.note) : '') + ' ';
-  if (S.loc === src.loc){ const a = E.actions(S).find(a => a.id === src.act); if (a) h += `<button type="button" class="link" data-act="${a.id}"${a.ok ? '' : ' disabled'}>${a.ok ? 'Do it now, ' + durLabel(a.h) : esc(a.why)}</button>`; }
-  else { const t = E.travelList(S).find(x => x.id === src.loc); h += `<button type="button" class="link" data-go="${src.loc}">Walk there${t ? ', ' + t.mins + ' min' : ''}</button>`; }
-  if (k === 'poles' && r.planks && S.gear.crates > 0) h += `<br>Crate planks work too, one for one. ${S.loc === 'camp' ? '<button type="button" class="link" data-act="crate">Take apart a crate, 1 h</button>' : 'Take a crate apart at camp.'}`;
+  const sp = spotFor(src.loc, src.act);
+  if (S.loc === src.loc) h += sp ? 'It\'s here: the ' + esc(sp.name.charAt(0).toLowerCase() + sp.name.slice(1)) + '.' : '';
+  else h += `<button type="button" class="link" data-go="${src.loc}">Walk there</button>`;
+  if (k === 'poles' && r.planks && S.gear.crates > 0) h += '<br>Crate planks work too, one for one: take a crate apart at camp.';
   return h;
 }
 function openPlan(id, back){
@@ -6234,14 +6557,31 @@ function openPlan(id, back){
 /* ---------- journal ---------- */
 function journalTab(){
   const gc = E.guideCount(S);
-  const segs = [['log', 'Log'], ['camp', 'Camp'], ['guide', 'Guide ' + gc.found + '/' + gc.total], ['wild', 'Wildlife'], ['badges', 'Badges ' + Object.keys(S.ach).length + '/' + Object.keys(D.ACH).length]];
+  const qd = E.quests(S);
+  const segs = [['quests', 'Quests ' + qd.done + '/' + qd.total], ['log', 'Log'], ['camp', 'Camp'], ['guide', 'Guide ' + gc.found + '/' + gc.total], ['wild', 'Wildlife'], ['badges', 'Badges ' + Object.keys(S.ach).length + '/' + Object.keys(D.ACH).length]];
   let h = '<div class="seg">' + segs.map(([k, l]) => `<button type="button" data-j="${k}" aria-pressed="${jtab === k}">${esc(l)}</button>`).join('') + '</div>';
-  if (jtab === 'camp') h += campView();
+  if (jtab === 'quests') h += questLog();
+  else if (jtab === 'camp') h += campView();
   else if (jtab === 'guide') h += guideView();
   else if (jtab === 'wild') h += wildView();
   else if (jtab === 'badges') h += badgeView();
   else h += logView();
   return h;
+}
+function questLog(){
+  const Q = E.quests(S), cur = Q.current && Q.current.id;
+  const card = q => `<div class="quest${q.finished ? ' done' : ''}${q.id === cur ? ' now' : ''}"><div class="qh"><span class="tick">${q.finished ? '✓' : q.id === cur ? '▶' : '○'}</span><b>${esc(q.title)}</b><span class="qp">${q.progress}/${q.total}</span></div>` +
+    (q.id === cur || (!q.finished && q.side) ? `<p class="qstory">${esc(q.story)}</p><ul class="qsteps">${q.steps.map(x => `<li class="${x.done ? 'done' : ''}"><span class="tick">${x.done ? '✓' : '○'}</span>${esc(x.text)}</li>`).join('')}</ul>` : q.finished ? `<p class="qstory">${esc(q.doneText)}</p>` : '') +
+    (!q.finished && q.id !== cur ? `<button type="button" class="link" data-follow="${esc(q.id)}">Follow this quest</button>` : q.id === cur && S.quest.follow ? `<button type="button" class="link" data-follow="${esc(q.id)}">Back to the main quest</button>` : '') + '</div>';
+  let h = '<div class="qlog"><p class="road-intro">The quest card follows the next main quest, or one you pick here. Side quests open when their season or chance comes.</p>';
+  const open = Q.all.filter(q => q.side && !q.finished);
+  if (open.length) h += '<h3>Side quests<span>' + open.length + ' open</span></h3>' + open.map(card).join('');
+  for (let ch = 1; ch < D.CHAPTERS.length; ch++){ const L = Q.all.filter(q => !q.side && q.ch === ch); if (!L.length) continue;
+    const done = L.filter(q => q.finished).length, seen = done || L.some(q => q.id === cur) || L[0].ch <= ((Q.all.find(q => q.id === Q.main) || {}).ch || 9);
+    h += `<h3>${ch}. ${esc(D.CHAPTERS[ch])}<span>${done}/${L.length}</span></h3>` + (seen ? L.map(card).join('') : '<p class="note">Later.</p>'); }
+  const sdone = Q.all.filter(q => q.side && q.finished);
+  if (sdone.length) h += '<h3>Side quests done<span>' + sdone.length + '</span></h3>' + sdone.map(card).join('');
+  return h + '</div>';
 }
 function campView(){
   const p = E.progression(S);
@@ -6355,8 +6695,13 @@ function showResult(R){
   h += '<div class="story">' + R.lines.map(l => `<p>${esc(l)}</p>`).join('') + '</div>';
   if (R.gains.length) h += '<div class="gains">' + R.gains.map(gainChip).join('') + '</div>';
   h += deltas(R.delta);
-  if (R.notes.length || R.ach.length){
-    h += '<div class="news">' + R.notes.map(k => `<p>New in your field guide: <b>${esc(D.GUIDE[k].name)}</b></p>`).join('') +
+  if ((R.quests || []).length){
+    const next = E.quests(S).current;
+    h += '<div class="qdone">' + R.quests.map(id => { const q = E.quest(S, id); return `<p class="qd-h">Quest done: <b>${esc(q.title)}</b></p><p>${esc(q.doneText)}</p>`; }).join('') +
+      (next && !next.side && R.quests.indexOf(next.id) < 0 ? `<p class="qd-h">Next: <b>${esc(next.title)}</b></p><p>${esc(next.story)}</p>` : '') + '</div>';
+  }
+  if (R.notes.length || R.ach.length || (R.opened || []).length){
+    h += '<div class="news">' + (R.opened || []).map(id => `<p>New side quest: <b>${esc(E.quest(S, id).title)}</b>. See the Journal.</p>`).join('') + R.notes.map(k => `<p>New in your field guide: <b>${esc(D.GUIDE[k].name)}</b></p>`).join('') +
       R.ach.map(k => `<p>🏅 Badge earned: <b>${esc(D.ACH[k].name)}</b></p>`).join('') + '</div>';
   }
   if (S.dead) h += deathBlock();
@@ -6371,12 +6716,12 @@ function handle(R, quiet){
   sel = null;
   sheetReturnFocus = null;
   render();
-  const simple = quiet && !S.dead && !S.pending && R.lines.length <= 1 && !R.notes.length && !R.ach.length;
+  const simple = quiet && !S.dead && !S.pending && R.lines.length <= 1 && !R.notes.length && !R.ach.length && !(R.quests || []).length && !(R.opened || []).length;
   if (simple){ closeSheet(); toast(R.lines[0] || R.title); }
   else showResult(R);
 }
 function introSheet(){
-  openSheet(`<div class="sh-head"><span class="ic">🌄</span><h2>Day 1</h2></div><div class="story">${E.intro(S).map(l => `<p>${esc(l)}</p>`).join('')}</div><p class="note">The clock only moves when you do something. The Next step card always has a suggestion, and it's only a suggestion.</p><div class="foot"><button type="button" class="btn hot" data-close>Look around</button></div>`);
+  openSheet(`<div class="sh-head"><span class="ic">🌄</span><h2>Day 1</h2></div><div class="story">${E.intro(S).map(l => `<p>${esc(l)}</p>`).join('')}</div>${(() => { const q = E.quests(S).current; return q ? `<div class="qdone"><p class="qd-h">Your first quest: <b>${esc(q.title)}</b></p><p>${esc(q.story)}</p></div>` : ''; })()}<p class="note">Tap the ground to walk, and tap a thing to use it. The orange marker shows where your quest leads. The clock only moves when you do something.</p><div class="foot"><button type="button" class="btn hot" data-close>Look around</button></div>`);
 }
 function menuSheet(){
   const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -6391,14 +6736,14 @@ function menuSheet(){
 }
 function helpSheet(){
   openSheet(`<div class="sh-head"><span class="ic">📖</span><h2>How to play</h2></div><div class="help">
-<p><b>Everything takes time.</b> Each action shows how long it takes, and the clock only moves when you act. Reading, planning, and looking at the map are free.</p>
-<p><b>Follow the Next step card, or don't.</b> It points at the most useful thing to do and has a button that does it. Pick any project in the Craft tab as your own and the card follows that instead. Thirst, hunger, and nightfall always cut in line.</p>
-<p><b>Move around.</b> Use Walk to at the bottom of Here, or switch the picture to Map and tap a place.</p>
-<p><b>Water comes first.</b> You lose several liters a day, more in the heat. River and pond water can make you sick. Boiled water, rain, and springs are safe.</p>
+<p><b>Walk.</b> Tap the ground and you walk there, or use the D-pad or the arrow keys. Each place has trails at its edges; walk off the end of one to go to the next place. The Map button shows the whole clearing, and you can tap a place on it to walk there.</p>
+<p><b>Use things.</b> Tap a thing (a cedar, the fire ring, the river's edge) and you walk up to it and see what you can do with it. Or face it and press A. Press A with nothing in front of you to rest, sleep, or make small things from your pack.</p>
+<p><b>Everything takes time.</b> Each job shows how long it takes, and the clock only moves when you do something. Walking around inside a place is free; the trip between places costs time, water and energy.</p>
+<p><b>Follow the quests, or don't.</b> The quest card says what to do, where, and how, and the orange marker on the map shows the way. You can follow a different quest from the Journal. Thirst, nightfall and exhaustion always cut in line.</p>
+<p><b>Skill moments.</b> Starting a fire, spearing fish, shooting, picking berries and killing a snake are done with your hands. Do them well and the odds go your way.</p>
+<p><b>Water comes first.</b> You lose several liters a day, twice that in the summer heat. River and pond water can make you sick. Boiled water, rain, and springs are safe.</p>
 <p><b>Then food.</b> Fifteen ration bars a day keep a person even. Make them last with berries, fish, nuts, and game. Fresh meat spoils fast unless you smoke it on a drying rack.</p>
-<p><b>Build things.</b> Tap any project in Craft to see what it takes and where each material comes from. Big projects are built a session at a time, and the materials go in when you start.</p>
-<p><b>Grow your camp.</b> A workbench, wood store, food cache, hearth, and lookout each make life easier. The picture of your camp shows everything you've built.</p>
-<p><b>Sleep at camp.</b> A roof, a bed, and a fire that lasts until dawn mean a good night. A night in the open can be dangerous.</p>
+<p><b>The seasons.</b> Spring and fall are kind. Summer is hard: heat and thirst. Winter is the hardest: northers, ice, short days and little to forage. Use the easy months to get ready.</p>
 <p><b>The animals evolve.</b> Hunt one kind hard and the survivors get warier. Watch it happen in Journal, under Wildlife.</p>
 <p><b>Dagr's rules.</b> Real-world physics, and survive as long as you can.</p>
 </div><div class="foot"><button type="button" class="btn hot" data-close>Got it</button></div>`);
@@ -6426,6 +6771,12 @@ function setTab(t){
   tab = t; $('#game').dataset.panel = t; renderTabs(); renderPanel();
   window.scrollTo(0, 0);
 }
+// A job from the world: the skill ones get a skill moment first, and how it went changes the odds.
+function runAct(id){
+  if (!S) return;
+  const go = skill => handle(E.run(S, id, skill == null ? undefined : {skill}));
+  if (window.Skill && Skill.for(id) && E.actions(S).some(a => a.id === id && a.ok)) Skill.play(Skill.for(id), S, go); else go();
+}
 function doCraft(id){
   const result = E.craft(S, id);
   if (result && !result.err && S.pin === id){
@@ -6436,7 +6787,7 @@ function doCraft(id){
   handle(result);
 }
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-act],[data-go],[data-eat],[data-bars],[data-drink],[data-craft],[data-choose],[data-close],[data-confirm],[data-tab],[data-j],[data-loc],[data-m],[data-opt],[data-view],[data-crecipe],[data-cpin],[data-cgroup],[data-cback]');
+  const b = e.target.closest('[data-follow],[data-act],[data-go],[data-eat],[data-bars],[data-drink],[data-craft],[data-choose],[data-close],[data-confirm],[data-tab],[data-j],[data-loc],[data-m],[data-opt],[data-view],[data-crecipe],[data-cpin],[data-cgroup],[data-cback]');
   if (!b){
     if (sel && S && !e.target.closest('.callout')){ sel = null; renderMap(); }
     return;
@@ -6464,14 +6815,20 @@ document.addEventListener('click', e => {
   if ('close' in d){ closeSheet(); if (S) render(); return; }
   if (!S) return;
   if (d.view){ view = d.view; store.set(KEY.view, view); sel = null; renderView(); renderMap(); return; }
-  if (d.tab){ closeSheet(true); sheetReturnFocus = null; setTab(d.tab); return; }
+  if (d.tab){ closeSheet(true); sheetReturnFocus = null; if (d.jq) jtab = 'quests'; setTab(d.tab); return; }
+  if (d.follow){ if (E.follow(S, d.follow)){ autosave(); render(); toast(S.quest.follow ? 'The quest card will follow this quest.' : 'Back to the main quest.'); } return; }
   if (d.j){ jtab = d.j; renderPanel(); return; }
   if (d.cgroup){ craftGroup = d.cgroup; renderPanel(); return; }
   if (d.loc){
     if (b.closest('.fieldmap')){ sheetReturnFocus = null; closeSheet(); if (d.loc !== S.loc) World.goTo(d.loc); else toast('You are here.'); return; }
     sel = sel === d.loc ? null : d.loc; renderMap(); return;
   }
-  if (S.pending || S.dead){ if (d.choose) return handle(E.choose(S, d.choose)); return; }
+  if (S.pending || S.dead){
+    if (!d.choose) return;
+    const k = d.choose, kind = window.Skill && Skill.forChoice(k, S);
+    if (kind){ closeSheet(true); return Skill.play(kind, S, skill => handle(E.choose(S, k, skill == null ? undefined : {skill}))); }
+    return handle(E.choose(S, k));
+  }
   if (d.crecipe) return openPlan(d.crecipe);
   if ('cback' in d){ const prev = planTrail.pop(); if (prev) openPlan(prev, true); return; }
   if (d.cpin){
@@ -6480,8 +6837,8 @@ document.addEventListener('click', e => {
     toast(S.pin ? 'The Next step card will follow this project.' : 'Back to the game\'s own suggestions.');
     return;
   }
-  if (d.act) return handle(E.run(S, d.act));
-  if (d.go){ if (tab !== 'here'){ tab = 'here'; $('#game').dataset.panel = 'here'; } const from = S.loc, R = E.travel(S, d.go); handle(R); if (R && !R.err){ window.scrollTo(0, 0); walkOnMap(from, S.loc); } return; }
+  if (d.act) return runAct(d.act);
+  if (d.go){ sheetReturnFocus = null; closeSheet(); if (tab !== 'here') setTab('here'); window.scrollTo(0, 0); if (d.go !== S.loc) World.goTo(d.go); return; }
   if (d.craft) return doCraft(d.craft);
   if (d.eat) return handle(E.eat(S, +d.eat), true);
   if (d.bars) return handle(E.eatBars(S, +d.bars), true);
