@@ -156,6 +156,10 @@ h1,h2,h3,p{margin:0}
 @media (pointer:coarse),(hover:none){.wpad{display:grid}.wpad .whint{display:none}}
 @media (hover:hover) and (pointer:fine){.wpad{display:block;padding:8px 12px}.wpad .dpad,.wpad .ab,.wpad .wmid{display:none}}
 @media (max-width:360px){.dpad{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px)}.ab button{width:52px;height:52px}.ab button.b{width:44px;height:44px}}
+/* The narrowest phones: the place name gets its own row above the pad instead of squeezing under B. */
+@media (max-width:340px){.wpad{grid-template-columns:auto 1fr}.wmid{grid-column:1/-1;order:-1}.wmid span{display:none}.ab{justify-self:end}}
+/* A phone held sideways: the header scrolls away and the map fits above the pad, so you can see yourself while you walk. */
+@media (orientation:landscape) and (max-height:500px) and (max-width:899px){.hud{position:static}.world{aspect-ratio:auto;height:max(170px,calc(100vh - 150px));height:max(170px,calc(100dvh - 150px))}}
 .fieldmap{border:1.5px solid var(--ink);background:var(--map-paper);margin-top:10px}
 .fieldmap svg{display:block;width:100%;height:auto}
 
@@ -3117,6 +3121,14 @@ E.load = function(str){
     if (!object(s.wx.today) || !object(s.wx.next) || !Number.isFinite(s.wx.today.hi) || !Number.isFinite(s.wx.today.lo) || !Number.isFinite(s.wx.next.hi) || !Number.isFinite(s.wx.next.lo)) return null;
     if (s.food.some(f => !object(f) || !Object.prototype.hasOwnProperty.call(D.FOODS, f.key) || !Number.isFinite(f.exp) || !Number.isFinite(f.kcal) || !Number.isFinite(f.kg) || (f.rack && (!object(f.rack) || !Number.isFinite(f.rack.prog) || !Number.isFinite(f.rack.req))))) return null;
     if (Object.keys(s.proj).some(id => !Object.prototype.hasOwnProperty.call(RMAP, id) || !object(s.proj[id]) || !Number.isFinite(s.proj[id].done) || !Number.isFinite(s.proj[id].total) || s.proj[id].total <= 0 || s.proj[id].done < 0 || s.proj[id].done > s.proj[id].total)) return null;
+    // anything that ends up on the screen has to be what the game itself would have written there
+    const num = x => typeof x === 'number' && Number.isFinite(x);
+    if (Object.keys(s.ach).some(k => !num(s.ach[k])) || Object.keys(s.guide).some(k => !num(s.guide[k]))) return null;
+    if (Object.keys(s.stats).some(k => !num(s.stats[k])) || s.food.some(f => !Number.isInteger(f.id))) return null;
+    if (Object.keys(D.SPECIES).some(k => !num(s.eco[k].good) || !num(s.eco[k].bad) || !num(s.eco[k].taken) || !num(s.eco[k].w0))) return null;
+    if (s.log.some(entry => !num(entry.t) || (entry.icon != null && (typeof entry.icon !== 'string' || entry.icon.length > 8)) || entry.lines.some(l => typeof l !== 'string'))) return null;
+    if (s.pin != null && !Object.prototype.hasOwnProperty.call(RMAP, s.pin)) delete s.pin;
+    if (s.map != null && !(object(s.map) && Number.isInteger(s.map.x) && Number.isInteger(s.map.y) && s.map.x >= 0 && s.map.x < 48 && s.map.y >= 0 && s.map.y < 36)) delete s.map;
     for (const id of ['workbench','woodstore','cache','hearth','lookout']) if (!(id in s.tools)) s.tools[id] = false;
     return s;
   } catch (e) { return null; }
@@ -4614,7 +4626,7 @@ function wswitch(x, y, s){
   const m = WPLACE[s.loc] && WPLACE[s.loc].m, dc = m ? Math.hypot(x - m[0], y - m[1]) : 1e9;
   return z.d + 1.5 < dc ? z.k : null;
 }
-function wground(Wd, x, y){ return x < 0 || y < 0 || x >= WW || y >= WH ? 'F' : Wd.M[y][x]; }
+function wground(Wd, x, y){ return !Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= WW || y >= WH ? 'F' : Wd.M[y][x]; }
 function wopen(Wd, x, y, s){ // can you stand here?
   const c = wground(Wd, x, y);
   if (WSOLID.indexOf(c) >= 0 || (c === 'H' && !wfound(s))) return false;
@@ -5016,7 +5028,7 @@ function wmount(wrap, hooks){
   WV.menu.addEventListener('click', e => { const b = e.target.closest('[data-wi]'); if (b) wchoose(+b.dataset.wi); });
   pad.querySelectorAll('[data-d]').forEach(b => {
     const d = b.dataset.d;
-    const on = e => { e.preventDefault(); if (WV.menuOpen){ wmenuMove(d === 'up' ? -1 : d === 'down' ? 1 : 0); return; } WV.held = d; WV.tap = d; WV.path = []; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (x) {} wkick(); };
+    const on = e => { e.preventDefault(); if (WV.menuOpen){ wmenuMove(d === 'up' ? -1 : d === 'down' ? 1 : 0); return; } if (WV.auto) return; WV.held = d; WV.tap = d; WV.path = []; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (x) {} wkick(); };
     const off = () => { b.classList.remove('on'); if (WV.held === d) WV.held = null; };
     b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
     b.addEventListener('contextmenu', e => e.preventDefault());
@@ -5030,18 +5042,20 @@ function wlive(){ return !!(WV.box && WV.box.isConnected && WV.box.offsetParent 
 function wkeydown(e){
   if (!wlive() || e.ctrlKey || e.metaKey || e.altKey) return;
   const ae = document.activeElement; if (ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable)) return;
+  if (document.getElementById('scrim')){ if (WV.menuOpen) wmenuClose(); return; }
+  const aKey = e.key === 'z' || e.key === 'Z' || e.key === 'Enter' || e.key === ' ';
+  if (aKey && e.repeat){ e.preventDefault(); return; }   // holding a key down never does things nobody chose
   if (WV.menuOpen){
     const k = e.key;
     if (k === 'ArrowUp' || k === 'w' || k === 'W'){ wmenuMove(-1); e.preventDefault(); }
     else if (k === 'ArrowDown' || k === 's' || k === 'S'){ wmenuMove(1); e.preventDefault(); }
     else if (k === 'Escape' || k === 'x' || k === 'X'){ wmenuClose(); e.preventDefault(); e.stopPropagation(); }
-    else if (k === 'z' || k === 'Z' || k === 'Enter' || k === ' '){ wchoose(WV.msel); e.preventDefault(); }
+    else if (aKey){ wchoose(WV.msel); e.preventDefault(); }
     return;
   }
-  if (document.getElementById('scrim')) return;
   const dir = WKEY[e.key];
-  if (dir){ e.preventDefault(); if (WV.keys.indexOf(dir) < 0) WV.keys.push(dir); WV.held = dir; if (!e.repeat) WV.tap = dir; WV.path = []; wkick(); return; }
-  const plain = !ae || ae === document.body || WV.box.contains(ae);
+  if (dir){ e.preventDefault(); if (WV.auto) return; if (WV.keys.indexOf(dir) < 0) WV.keys.push(dir); WV.held = dir; if (!e.repeat) WV.tap = dir; WV.path = []; wkick(); return; }
+  const plain = !ae || ae === document.body || ae === WV.box;
   if (e.key === 'z' || e.key === 'Z' || ((e.key === 'Enter' || e.key === ' ') && plain)){ e.preventDefault(); wA(); }
 }
 function wkeyup(e){ const dir = WKEY[e.key]; if (!dir) return; WV.keys = WV.keys.filter(k => k !== dir); WV.held = WV.keys.length ? WV.keys[WV.keys.length - 1] : null; }
@@ -5056,14 +5070,15 @@ function wsync(s, h, o){
   const ak = gk + '|' + [WV.F.berries, F.mulberry, F.tuna, F.persimmon, F.pecan].map(x => x ? 1 : 0).join('');
   if (gk !== WV.gkey){ WV.gkey = gk; WV.base = null; }
   if (ak !== WV.akey){ WV.akey = ak; WV.spr = {}; WV.A = null; WV.snow = !!lt.snow; }
-  const bk = wbuildKey(s, WV.F); if (bk !== WV.bkey){ WV.bkey = bk; const B = wbuilds(s, WV.F); WV.blds = B.L; WV.Wd.dyn = B.dyn; WV.btile = B.bt; }
+  const bk = wbuildKey(s, WV.F); if (bk !== WV.bkey){ WV.bkey = bk; const B = wbuilds(s, WV.F); WV.blds = B.L; WV.Wd.dyn = B.dyn; WV.btile = B.bt;
+    if (WV.pos && WV.game === s && !wopen(WV.Wd, WV.pos.x, WV.pos.y, s)) wplace(WPLACE[s.loc].s); }
   const nk = wbeastKey(s, F, lt); if (nk !== WV.nkey){ WV.nkey = nk; WV.beasts = wbeasts(s, F, lt); }
   if (WV.game !== s || !WV.pos){
     WV.game = s; const m = s.map;
     if (m && wopen(WV.Wd, m.x, m.y, s) && !wswitch(m.x, m.y, s) && !wfar(m.x, m.y, s)) wplace([m.x, m.y], m.dir); else wplace(WPLACE[s.loc].s);
   } else if (!WV.auto && (wswitch(WV.pos.x, WV.pos.y, s) || wfar(WV.pos.x, WV.pos.y, s))){ if (WV.moving) WV.relo = true; else wgo(s.loc); }
   const p = WV.pad && WV.pad.querySelector('.wplace'); if (p) p.textContent = D.LOCS[s.loc].name;
-  if (WV.menuOpen && (s.dead || s.pending)) wmenuClose();
+  if (WV.menuOpen && (s.dead || s.pending || s.loc !== WV.menuLoc)) wmenuClose();
   wkick();
 }
 function wfar(x, y, s){ const m = WPLACE[s.loc] && WPLACE[s.loc].m; return !m || Math.hypot(x - m[0], y - m[1]) > 15; }
@@ -5151,12 +5166,12 @@ function wtag(text){ if (!WV.tag) return; WV.tag.textContent = text; WV.tag.clas
 function wsay(text){ if (!WV.say) return; WV.say.textContent = text; WV.say.classList.add('on'); clearTimeout(WV.sayT); WV.sayT = setTimeout(() => WV.say && WV.say.classList.remove('on'), 2600); }
 
 /* ---------- the A button: what you can do here, as a menu ---------- */
-function wA(){ if (WV.menuOpen){ wchoose(WV.msel); return; } if (wcan()) wmenuOpen(); }
-function wB(){ if (WV.menuOpen){ wmenuClose(); return; } WV.path = []; WV.bump = null; }
+function wA(){ if (WV.menuOpen){ if (performance.now() - WV.menuAt > 350) wchoose(WV.msel); return; } if (wcan()) wmenuOpen(); }
+function wB(){ if (WV.menuOpen){ wmenuClose(); return; } if (WV.auto) return; WV.path = []; WV.bump = null; }
 function wmenuOpen(){
-  const acts = (WV.hooks.actions && WV.hooks.actions()) || [], s = WV.S; WV.macts = acts;
+  const acts = (WV.hooks.actions && WV.hooks.actions()) || [], s = WV.S; WV.macts = acts; WV.menuLoc = s.loc;
   WV.menu.innerHTML = `<div class="wm-h"><b>${wesc(D.LOCS[s.loc].name)}</b><span>What will you do?</span></div><div class="wm-l">` + acts.map((a, i) => `<button type="button" role="menuitem" data-wi="${i}"${a.ok ? '' : ' aria-disabled="true"'}><span class="ic">${a.icon || ''}</span><span class="nm">${wesc(a.name)}</span><span class="hr">${wesc(a.dur)}</span></button>`).join('') + '<button type="button" role="menuitem" data-wi="-1"><span class="ic">↩</span><span class="nm">Keep walking</span><span class="hr"></span></button></div><p class="wm-sub"></p>';
-  WV.menu.hidden = false; WV.menuOpen = true; WV.held = null; WV.keys = []; WV.path = [];
+  WV.menu.hidden = false; WV.menuOpen = true; WV.menuAt = performance.now(); WV.held = null; WV.keys = []; WV.path = [];
   WV.msel = Math.max(0, acts.findIndex(a => a.ok)); wmenuMove(0);
 }
 function wmenuMove(d){
@@ -5297,7 +5312,7 @@ function gbify(c, W, H){
   for (let y = 0, i = 0; y < H; y++) for (let x = 0; x < W; x++, i += 4){ const l = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255 + (NZ.bay(x, y) - 0.5) * 0.1, q = GBP[l < 0.3 ? 0 : l < 0.52 ? 1 : l < 0.74 ? 2 : 3]; d[i] = q[0]; d[i + 1] = q[1]; d[i + 2] = q[2]; }
   c.putImageData(id, 0, 0);
 }
-root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), _v: WV};
+root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), goTo: k => { if (!WPLACE[k]) return; const p = WPLACE[k].s; wtap(p[0], p[1]); }, closeMenu: () => { if (WV.menuOpen) wmenuClose(); }, _v: WV};
 function wsetgb(on){ root.__gb = !!on; WV.Z = null; VIEWS.forEach(v => { if (v.S) v.draw(performance.now()); }); wkick(); }
 
 root.Scene = {show, light, dayRibbon};
@@ -5730,7 +5745,7 @@ function packTab(){
     else if (f.bitter){ sub += 'Too bitter to eat. Leach them at camp (Craft tab).'; cls = 'warn'; }
     else { sub += spoilText(f.hrs); if (f.cached) sub += ' The cache is slowing it down.'; if (f.hrs < 24) cls = 'bad'; else if (f.hrs < 48) cls = 'warn'; if (f.raw) sub += ' Raw: cook it at camp first.'; }
     const ok = !f.rack && !f.bitter;
-    h += `<li class="row"><span class="ic">${f.icon}</span><div><div class="nm">${esc(f.name)}</div><div class="sub ${cls}">${esc(sub)}</div></div><button type="button" class="btn" data-eat="${f.id}"${ok ? '' : ' disabled'}>${f.raw ? 'Eat raw' : 'Eat'}</button></li>`;
+    h += `<li class="row"><span class="ic">${f.icon}</span><div><div class="nm">${esc(f.name)}</div><div class="sub ${cls}">${esc(sub)}</div></div><button type="button" class="btn" data-eat="${esc(f.id)}"${ok ? '' : ' disabled'}>${f.raw ? 'Eat raw' : 'Eat'}</button></li>`;
   }
   if (!F.length) h += '<li class="row"><span class="ic">🧺</span><div><div class="nm">No wild food yet</div><div class="sub">Forage, fish, and hunt to make the bars last.</div></div><span></span></li>';
   h += '</ul></div>';
@@ -5868,7 +5883,7 @@ function campView(){
 function logView(){
   const L = S.log.filter(e => ['Eat', 'Drink', 'Ration bars'].indexOf(e.title) < 0).slice(-80).reverse();
   if (!L.length) return '<p class="note">Nothing yet. Everything you do gets written down here.</p>';
-  return '<ul class="log">' + L.map(e => `<li><div class="t">Day ${Math.floor(e.t / 24) + 1}, ${E.clock(e.t % 24)}</div><div class="h">${e.icon || ''} ${esc(e.title)}</div><p>${esc(e.lines.join(' '))}</p></li>`).join('') + '</ul>';
+  return '<ul class="log">' + L.map(e => `<li><div class="t">Day ${Math.floor(e.t / 24) + 1}, ${E.clock(e.t % 24)}</div><div class="h">${esc(e.icon || '')} ${esc(e.title)}</div><p>${esc(e.lines.join(' '))}</p></li>`).join('') + '</ul>';
 }
 function guideView(){
   return '<div class="guide">' + E.guideList(S).map(c => `<h3>${esc(c.cat)}</h3>` +
@@ -5890,18 +5905,19 @@ function wildView(){
   for (const e of E.ecoList(S)){
     const pct = Math.abs(e.pct) < 0.5 ? 0 : e.pct, up = pct >= 1, dn = pct <= -1;
     h += `<div class="sp"><div class="top"><span>${e.icon}</span><span class="nm">${esc(e.name)}</span><span class="pct${up ? ' up' : dn ? ' down' : ''}">${pct > 0 ? '+' : ''}${pct}% wariness</span></div>
-<div class="meta">${fmt(e.pop)} now (${fmt(e.start)} when you arrived). You've taken ${fmt(e.taken)}. Mutations: ${e.good} helpful, ${e.bad} harmful. Mutation rate ${(e.ms * 100).toFixed(1)}%.</div>${spChart(e)}</div>`;
+<div class="meta">${fmt(e.pop)} now (${fmt(e.start)} when you arrived). You've taken ${fmt(e.taken)}. Mutations: ${fmt(e.good)} helpful, ${fmt(e.bad)} harmful. Mutation rate ${(e.ms * 100).toFixed(1)}%.</div>${spChart(e)}</div>`;
   }
   return h;
 }
 function badgeView(){
   return Object.keys(D.ACH).map(k => { const a = D.ACH[k], d = S.ach[k];
-    return `<div class="badge${d ? '' : ' no'}"><span class="ic">${d ? '🏅' : '○'}</span><div><div class="nm">${esc(a.name)}</div><div class="how">${esc(a.how)}.${d ? ' Earned on day ' + d + '.' : ''}</div></div></div>`; }).join('');
+    return `<div class="badge${d ? '' : ' no'}"><span class="ic">${d ? '🏅' : '○'}</span><div><div class="nm">${esc(a.name)}</div><div class="how">${esc(a.how)}.${d ? ' Earned on day ' + esc(d) + '.' : ''}</div></div></div>`; }).join('');
 }
 
 /* ---------- sheets ---------- */
 let sheetLocked = false, sheetReturnFocus = null;
 function openSheet(html, cls, locked){
+  if (window.World && World.closeMenu) World.closeMenu();
   const keep = sheetReturnFocus || document.activeElement;
   closeSheet(true);
   sheetReturnFocus = keep;
@@ -5955,8 +5971,8 @@ function encounterBlock(){
 function deathBlock(){
   const m = E.summary(S), st = m.stats;
   return `<div class="death"><p class="big">You survived ${daysText(m.days, m.hours)}.</p><p>${esc(m.causeText)}</p>
-<div class="statgrid"><div><span>Calories eaten</span><b>${fmt(st.kcal)}</b></div><div><span>Ration bars</span><b>${st.bars}</b></div>
-<div><span>Fish caught</span><b>${st.fish}</b></div><div><span>Game taken</span><b>${st.game}</b></div>
+<div class="statgrid"><div><span>Calories eaten</span><b>${fmt(st.kcal)}</b></div><div><span>Ration bars</span><b>${fmt(st.bars)}</b></div>
+<div><span>Fish caught</span><b>${fmt(st.fish)}</b></div><div><span>Game taken</span><b>${fmt(st.game)}</b></div>
 <div><span>Safe water</span><b>${Math.round(st.cleanL)} L</b></div><div><span>Untreated water</span><b>${Math.round(st.rawL)} L</b></div>
 <div><span>Field guide</span><b>${m.guide} of ${m.guideTotal}</b></div><div><span>Badges</span><b>${m.ach} of ${m.achTotal}</b></div></div></div>
 <div class="foot"><button type="button" class="btn" data-m="title">Title screen</button><button type="button" class="btn hot" data-m="again">Play again</button></div>`;
@@ -6079,7 +6095,10 @@ document.addEventListener('click', e => {
   if (d.tab){ closeSheet(true); sheetReturnFocus = null; setTab(d.tab); return; }
   if (d.j){ jtab = d.j; renderPanel(); return; }
   if (d.cgroup){ craftGroup = d.cgroup; renderPanel(); return; }
-  if (d.loc){ sel = sel === d.loc ? null : d.loc; renderMap(); return; }
+  if (d.loc){
+    if (b.closest('.fieldmap')){ sheetReturnFocus = null; closeSheet(); if (d.loc !== S.loc) World.goTo(d.loc); else toast('You are here.'); return; }
+    sel = sel === d.loc ? null : d.loc; renderMap(); return;
+  }
   if (S.pending || S.dead){ if (d.choose) return handle(E.choose(S, d.choose)); return; }
   if (d.crecipe) return openPlan(d.crecipe);
   if ('cback' in d){ const prev = planTrail.pop(); if (prev) openPlan(prev, true); return; }
