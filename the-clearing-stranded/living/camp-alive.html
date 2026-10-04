@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stranded Living Camp</title>
+<meta name="description" content="The camp at the boulders, alive: the painting with the survivor, the fire, the shelter and the wildlife made in code.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;display=swap">
+<link rel="stylesheet" href="camp-alive.css">
+</head>
+<body>
+<main id="app">
+  <canvas id="stage" aria-label="The camp at the boulders. Tap the ground to walk there."></canvas>
+  <div class="loading" id="loading">Painting the camp…</div>
+  <header class="top">
+    <span class="kicker">Stranded</span>
+    <h1>The Boulders</h1>
+    <span class="clock" id="clock">6:30 pm · late May · clear</span>
+  </header>
+  <p class="say" id="say">Tap the ground to walk. Tap the fire ring, the shelter, the woodpile or the crates to use them.</p>
+  <section class="sheet" aria-label="Controls">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="t-sky" aria-selected="false" data-tab="sky">Weather</button>
+      <button role="tab" id="t-camp" aria-selected="false" data-tab="camp">Camp</button>
+      <button role="tab" id="t-moves" aria-selected="false" data-tab="moves">Moves</button>
+      <button role="tab" id="t-view" aria-selected="false" data-tab="view">View</button>
+    </div>
+    <div class="panel" id="p-sky" role="tabpanel" hidden>
+      <div class="row"><span class="label">Hour</span>
+        <div class="hour"><input type="range" id="hour" min="0" max="24" step="0.05" value="18.5" aria-label="Hour of the day"><output id="hourOut">6:30 pm</output></div>
+        <div class="chips"><button id="clockRuns" aria-pressed="true">Clock runs (a day in six minutes)</button></div>
+      </div>
+      <div class="row"><span class="label">Season</span><div class="seg" id="season"></div></div>
+      <div class="row"><span class="label">Weather</span><div class="seg" id="weather"></div></div>
+    </div>
+    <div class="panel" id="p-camp" role="tabpanel" hidden>
+      <div class="row"><span class="label">Fire</span><div class="seg" id="fire"></div></div>
+      <div class="row"><span class="label">Shelter</span><div class="seg" id="shelter"></div></div>
+      <div class="row"><span class="label">Built and stored</span><div class="chips" id="builds"></div></div>
+    </div>
+    <div class="panel" id="p-moves" role="tabpanel" hidden>
+      <div class="row"><span class="label">Do it now</span><div class="chips" id="moves"></div></div>
+      <div class="row"><span class="label">How they feel</span><div class="chips" id="feel"></div></div>
+    </div>
+    <div class="panel" id="p-view" role="tabpanel" hidden>
+      <div class="row"><span class="label">Camera</span><div class="seg" id="zoom"></div></div>
+      <div class="row"><span class="label">Who is here</span><div class="chips" id="who"></div></div>
+      <div class="row"><span class="label">Under the hood</span><div class="chips" id="debug"></div><p class="stats" id="stats"></p></div>
+      <p class="note">Only the painting is a picture. The survivor, the fire, the shelter, the animals, the moving grass and every bit of weather and light are made in code.</p>
+    </div>
+  </section>
+</main>
+<script src="vendor/three.r128.min.js"></script>
+<script src="trace.js"></script>
+<script src="merge.js"></script>
+<script src="traces/camp.js"></script>
+<script src="stage.js"></script>
+<script src="survivor.js"></script>
+<script src="camp.js"></script>
+<script src="life.js"></script>
+<script src="walker.js"></script>
+<script src="camp-alive.js"></script>
+</body>
+</html>

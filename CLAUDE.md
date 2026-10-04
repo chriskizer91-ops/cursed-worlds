@@ -24,5 +24,10 @@ Games Chris builds from what his son Dagr describes. Each game gets its own fold
 - It is meant to be hard and to teach real survival. Spring and fall are the easiest seasons, summer is
   harder, winter is hardest. Easy, Medium and Hard scale the whole game; the seasons differ inside each.
 - No quest or action can be won by pressing one button over and over. Quests must say where to go and what to do.
+- Only the backgrounds are pictures (Dagr, October 4, 2026). The survivor, the animals, the fire, the shelter, the
+  things you build, the icons, and all light, weather and seasons are made in code (`the-clearing-stranded/living/`,
+  three.js r128, the envoi living-battlefield technique). Ask Chris only for background paintings.
+- Each painting is traced to the game (`living/traces/`); check a trace with `tools/trace-check.mjs` and the living
+  page with `tools/living-check.mjs`, which must end with "all good".
 - The robot players (`tools/autoplay.mjs`) and the phone test (`tools/phone-check.mjs`) must both end
   with "all good" before a push.

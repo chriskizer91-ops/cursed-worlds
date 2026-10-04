@@ -1,13 +1,13 @@
-# Batch 1: the nine places (9 pictures, all Must)
+# Batch 1: the nine places (9 pictures, all Must; the camp is done)
 
-**How to use this:** paste each prompt (the quoted block) into your image tool. For **01**, attach
-`walk-top-meadow.png` (the Thareia meadow walking map) as the style reference. When you have a camp painting you
-like, save it as `01-camp.png`; from then on attach `01-camp.png` as the style reference for 02 to 09, so all nine
-places look like one world. Save each picture with the exact file name given, zip them, and send the zip back. High
+**01 is done.** The camp painting came back on October 4, 2026 and the game uses it as it is. For 02 to 09, attach
+`01-camp.png` as the style reference, so all nine places look like one world.
+
+**How to use this:** paste each prompt (the quoted block) into your image tool, with `01-camp.png` attached. Save each picture with the exact file name given, zip them, and send the zip back. High
 resolution is fine; I'll compress everything. It helps to make each one two to four times and keep the one that
 follows the layout best.
 
-All nine are late spring and green. The seasons come later, as edits of these (batch 4).
+All nine are late spring and green. The game makes summer, fall and winter from them in code, so there are no season pictures to make.
 
 **About the numbers.** Every place is laid out the same way the game is: positions are *percent across* from the
 left edge and *percent down* from the top edge, and each spot is where the thing stands on the ground. The game's
@@ -29,7 +29,7 @@ keep it, just tell me what moved.
 
 ---
 
-**01 · The Boulders (camp)** · `01-camp.png` · **Must** · [match style: `walk-top-meadow.png`]
+**01 · The Boulders (camp)** · `01-camp.png` · **Done** (October 4, 2026; kept here as a record of what was asked)
 
 > Use the attached picture only as a guide to painting style, colors, daylight and camera angle. Don't copy anything in it (its path, trees, rocks, wall or layout): this is a new place.
 >

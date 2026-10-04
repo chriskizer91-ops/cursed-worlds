@@ -4,6 +4,12 @@ Dagr's survival game. You are a grown-up stranded alone in the North Texas wild 
 
 Play it here: https://claude.ai/artifact/CeSyczAQN8DmkVMw2rAKZM
 
+**The living camp (October 4, 2026):** https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT. This is a demo of where the game is going.
+Dagr wants everything made in code except the backgrounds. So your camp painting is the background, and the survivor,
+the fire, the shelter, the animals, the moving grass, the light, the weather and the seasons are all made in code on
+top of it. Tap the ground to walk there; tap the fire ring, the shelter or the woodpile to use them. The `living/`
+folder has the details.
+
 ## What changed from the first version
 
 - **You walk now.** Each place is its own map. Tap the ground to walk there. Tap a thing (the river's edge, a fallen log, the fire ring) to walk up to it and see what you can do with it. You can't win any more by pressing one button over and over.
@@ -14,9 +20,11 @@ Play it here: https://claude.ai/artifact/CeSyczAQN8DmkVMw2rAKZM
 
 ## Art
 
-The game uses drawn stand-in art for now. The painted pictures will replace it.
-
-The image prompts are in `docs/art-requests/`. Read `README.md` there first, then start with batch 1. Make `01-camp.png` first, using the Thareia meadow painting (`walk-top-meadow.png`) as the style reference, and check you like it before doing the rest. Name each image exactly as its prompt says and send them back. Big, high-resolution images are fine; they get shrunk for the game.
+Only the backgrounds are pictures. The camp painting is in (`art/places/01-camp.webp`; the original is in
+`art/originals/`). The other eight places and five backgrounds are in `docs/art-requests/`: attach `01-camp.png` as
+the style reference for each, name each image exactly as its prompt says, and send them back. Big, high-resolution
+images are fine; they get shrunk for the game. The game still uses its drawn stand-in art for places that don't have a
+painting yet.
 
 ## Files
 
@@ -26,6 +34,8 @@ The image prompts are in `docs/art-requests/`. Read `README.md` there first, the
 | `versions/` | Older versions, kept as they were. |
 | `docs/design.md` | The plan: places, quests, seasons, difficulty, skill moments. |
 | `docs/art-requests/` | Image prompts, in batches. |
+| `art/` | The paintings: compressed for the game in `places/`, as they came in `originals/`. |
+| `living/` | The living world: the painting with everything else made in code. Its demo is the camp. |
 | `tools/` | Test players (see below). |
 
 ## Checking a change (for whoever works on it next)
@@ -37,3 +47,10 @@ node tools/phone-check.mjs                               # plays the first quest
 ```
 
 `phone-check` saves screenshots to `shots/`.
+
+For the living camp:
+
+```
+node tools/build-living.mjs      # builds living/Stranded_Living_Camp.html
+node tools/living-check.mjs      # plays it on a phone-sized screen; must end with "all good"
+```
