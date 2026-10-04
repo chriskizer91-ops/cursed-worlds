@@ -10,7 +10,8 @@ import {load} from './engine.mjs';
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const GAMES = +opt('games', 48), MAX_DAYS = +opt('days', 365), VERBOSE = args.includes('--verbose');
-const SMART = args.includes('--smart'), QUESTS = args.includes('--quests');
+const SMART = args.includes('--smart'), QUESTS = args.includes('--quests'), MATE = args.includes('--mate');
+const MSTAT = {days: 0, games: 0, eaten: 0, tally: {}};   // what the partners did in the two-person games
 const QSTAT = {};   // quest id -> {done: games that finished it, days: total day it was finished on, stuck: games that ended on it}
 const FILE = opt('file'), TRACE = opt('trace'), TRIAL = args.includes('--trial'), LEVELS = (opt('levels', '') || '').split(',').filter(Boolean);
 
@@ -211,6 +212,7 @@ function play(seed, start, party, diff){
     const cur = E.quests(s).current; if (cur){ const Q = QSTAT[cur.id] = QSTAT[cur.id] || {done: 0, days: 0, stuck: 0}; Q.stuck++; }
   }
   if (moves >= 40000) problem('a game ran 40,000 moves without ending', tag);
+  if (s.mate){ MSTAT.games++; MSTAT.days += (s.t - s.t0) / 24; MSTAT.eaten += s.stats.kcal; for (const k in s.mate.tally || {}) MSTAT.tally[k] = (MSTAT.tally[k] || 0) + s.mate.tally[k]; }
   return {s, tag, errs, moves, food};
 }
 
@@ -246,6 +248,10 @@ for (const k in SEASONS){ const S = SEASONS[k]; if (!S.days) continue;
 if (QUESTS && D.QUESTS){
   console.log('  quests (games that finished it, average day finished, games that ended while on it):');
   for (const q of D.QUESTS){ const Q = QSTAT[q.id]; if (!Q) continue; console.log('   ', (q.side ? '(side) ' : 'ch' + q.ch + ' ') + q.title.padEnd(24), String(Q.done).padStart(4), Q.done ? ('day ' + Math.round(Q.days / Q.done)).padStart(9) : '         ', Q.stuck ? '  ended on it: ' + Q.stuck : ''); }
+}
+if (MATE && MSTAT.games){
+  const T = MSTAT.tally, d = MSTAT.days;
+  console.log('  the partner, per day: ' + Object.keys(T).filter(k => k !== 'kcal').map(k => k + ' ' + (T[k] / d).toFixed(2)).join(', ') + '; food he brought ' + Math.round((T.kcal || 0) / d) + ' Cal/day, of ' + Math.round(MSTAT.eaten / d) + ' Cal/day eaten by the two');
 }
 if (!problems.size){ console.log('\nall good'); process.exit(0); }
 console.log('\nProblems:');

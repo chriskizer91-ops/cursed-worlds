@@ -108,6 +108,12 @@ h1,h2,h3,p{margin:0}
 .stage[data-view="scene"] .mapwrap{display:none}
 .stage[data-view="map"] #scene{display:none}
 .stage-bar{display:flex;align-items:center;gap:12px;padding:9px 0 0}
+.mateline{display:block;width:100%;text-align:left;margin:5px 0 0;padding:6px 9px;font-size:14.5px;line-height:1.35;color:var(--ink-2);background:var(--paper-2);border:1px solid var(--rule);border-radius:2px}
+.mateline b{color:var(--ink);font-weight:700}
+.matenews{margin-top:14px;border-top:1px solid var(--rule);padding-top:10px;font-size:15px}
+.matenews .mh{font-weight:700;color:var(--ink);margin-bottom:2px}
+.matenews p{padding:2px 0}
+.sheet .quote{font-family:var(--font-text);font-size:17px;line-height:1.45;margin:8px 0;padding-left:12px;border-left:3px solid var(--blaze)}
 .stage-bar h2{font-family:var(--font-text);font-weight:500;font-size:26px;line-height:1.1;letter-spacing:-.01em;flex:1;min-width:0}
 .viewseg{display:flex;border:1.5px solid var(--ink);border-radius:2px;flex:none}
 .viewseg button{padding:5px 13px;font-size:15px;font-weight:600;color:var(--ink-2)}
@@ -136,6 +142,9 @@ h1,h2,h3,p{margin:0}
 .wtag.on{opacity:1;transform:none}
 .wsay{position:absolute;left:8px;right:8px;bottom:8px;background:var(--sheet);color:var(--ink);font-size:15px;line-height:1.35;padding:8px 11px;border:2px solid var(--ink);box-shadow:0 0 0 2px var(--sheet);opacity:0;transition:opacity .2s;pointer-events:none}
 .wsay.on{opacity:1}
+.wbub{position:absolute;left:0;top:0;transform:translate(-50%,-100%);max-width:min(240px,70%);background:var(--sheet);color:var(--ink);font-size:14px;line-height:1.3;padding:6px 10px;border:2px solid var(--ink);border-radius:12px;box-shadow:0 2px 0 rgba(0,0,0,.25);opacity:0;transition:opacity .25s;pointer-events:none;z-index:3;text-align:center}
+.wbub::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-6px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.wbub.on{opacity:1}
 .wquest{position:absolute;left:8px;right:70px;top:8px;background:color-mix(in srgb,var(--sheet) 88%,transparent);color:var(--ink);border:2px solid var(--ink);border-left:5px solid var(--blaze);font-size:13.5px;line-height:1.25;padding:5px 8px;max-height:3.3em;overflow:hidden;opacity:0;transition:opacity .25s;pointer-events:none}
 .wquest.on{opacity:1}
 .wm-l button.hint .nm{color:var(--blaze-text);font-weight:700}
@@ -1379,7 +1388,7 @@ function perf(s){
   return p;
 }
 E.perf = perf;
-function yieldM(s){ return perf(s) * (s.P > 1 ? 1.8 : 1) * LV(s).yield * (ACTSK ? perk(s, ACTSK) : 1); }
+function yieldM(s){ return MATE ? LV(s).yield * MATE_YIELD : perf(s) * LV(s).yield * (ACTSK ? perk(s, ACTSK) : 1); }
 
 /* ---------- skills: points for doing things, levels for points ---------- */
 function lvl(s, k){ const p = (s.xp && s.xp.pts[k]) || 0; let L = 1; for (let i = 1; i < D.SKILL_LEVELS.length; i++) if (p >= D.SKILL_LEVELS[i]) L = i + 1; return L; }
@@ -1392,6 +1401,7 @@ const SKILL_OF = [[/^hunt_/, 'hunting'], [/^snare/, 'tracking'], [/^(fish_|spear
 function skillFor(id){ for (const [re, k] of SKILL_OF) if (re.test(id)) return k; return null; }
 // n points in skill k for doing job key. The same job again and again in one day stops teaching you anything.
 function skillUp(s, R, k, n, key){
+  if (MATE) return;   // the partner's work doesn't teach you anything
   if (!k || !D.SKILLS[k] || !(n > 0)) return;
   const d = dayIdx(s.t); if (!s.xp.today || s.xp.today.d !== d) s.xp.today = {d, c: {}};
   const c = s.xp.today.c[key] = (s.xp.today.c[key] || 0) + 1;
@@ -1408,7 +1418,7 @@ function logCatch(s, R, sp, kg, n){
 }
 function dmgM(s){ return LV(s).dmg; }
 function hurt(s, amt, cause){
-  if (s.dead || amt <= 0) return;
+  if (s.dead || amt <= 0 || MATE) return;
   s.body.hp -= amt;
   for (const k in s.dmg) s.dmg[k] *= 0.97;
   s.dmg[cause] = (s.dmg[cause] || 0) + amt;
@@ -1595,6 +1605,7 @@ function cropDay(s, doy){
 
 /* ---------- the clock: everything that happens while time passes ---------- */
 function pass(s, hours, work, R, ctx){
+  if (MATE) return;   // the partner's own job: his time is his, and nothing here happens to you
   ctx = ctx || {};
   let left = hours;
   while (left > 1e-6 && !s.dead){
@@ -1607,6 +1618,7 @@ function pass(s, hours, work, R, ctx){
     stepCamp(s, dt);
     stepNight(s, dt);
     spoilCheck(s);
+    if (s.mate) mateStep(s);
   }
 }
 
@@ -1663,7 +1675,7 @@ function stepNight(s, dt){
   const pn = p => 1 - Math.pow(1 - clamp(p, 0, 0.99), k);
   const m = monthNow(s);
   if (s.trap.set && s.world.flood <= 0 && s.trap.catch.length < 8){
-    let p = (s.trap.bait ? 0.75 : 0.5) * dens(s, 'riverfish') * Math.sqrt(aware(s, 'riverfish')) * LV(s).catch * (s.P > 1 ? 1.6 : 1);
+    let p = (s.trap.bait ? 0.75 : 0.5) * dens(s, 'riverfish') * Math.sqrt(aware(s, 'riverfish')) * LV(s).catch;
     if ([11, 0, 1].indexOf(m) >= 0) p *= 0.45;
     if (chance(s, pn(p))) trapCatch(s);
   }
@@ -1852,6 +1864,7 @@ E.newGame = function(opt){
   }
   if ([10, 11, 0, 1, 2, 3].indexOf(st.m) >= 0 && chance(s, 0.3)){ s.world.bison = ri(s, 2, 5); s.world.bisonId = 1; }
   if ([9, 10, 11, 0, 1, 2].indexOf(st.m) >= 0 && chance(s, 0.15)){ s.world.pigeons = ri(s, 1, 2); s.world.pigeonId = 1; }
+  if (duo){ s.mate = newMate(); mateStep(s); s.mate.news = []; }   // his first plan is in the morning's story instead
   return s;
 };
 
@@ -1863,13 +1876,13 @@ E.intro = function(s){
     'Dagr\'s rules: real-world physics, and survive as long as you can.',
     'Your kit: two wooden crates, two 5-by-5-meter tarps, ' + s.gear.bars + ' ration bars (about 150 Calories each; 15 a day just keeps a person even), two boning knives, a rifle that never runs out (each hunt gives you three shots), and a little fishing kit: line and 8 hooks.',
     'Water is the first problem. The river is a short walk south of the boulders, but untreated water is a gamble.'
-  ];
+  ].concat(s.mate && s.mate.job ? ['Your partner has ideas of his own and works on his own: "' + s.mate.job.say + '" You can follow along and watch, or get on with your own work.'] : []);
 };
 
 /* ---------- results ---------- */
 function snapshot(s){ return {hp: s.body.hp, hyd: s.body.hyd, food: foodPct(s), en: s.body.en, t: s.t}; }
-function newR(title, icon){ return {title, icon, lines: [], gains: [], notes: [], ach: [], quests: [], opened: [], skills: [], catches: [], delta: null}; }
-function errR(text){ return {err: true, title: 'Not yet', icon: '✋', lines: [text], gains: [], notes: [], ach: [], quests: [], opened: [], skills: [], catches: []}; }
+function newR(title, icon){ return {title, icon, lines: [], gains: [], notes: [], ach: [], quests: [], opened: [], skills: [], catches: [], mate: [], delta: null}; }
+function errR(text){ return {err: true, title: 'Not yet', icon: '✋', lines: [text], gains: [], notes: [], ach: [], quests: [], opened: [], skills: [], catches: [], mate: []}; }
 // what you've done, counted, so quests can ask "have you speared a fish?"
 function did(s, k, n){ s.did[k] = (s.did[k] || 0) + (n || 1); }
 function begin(s){ s.flags.soaked = false; }
@@ -1888,6 +1901,7 @@ function checkAch(s, R){
 }
 function finish(s, R, snap){
   if (s.msgs.length){ R.lines = R.lines.concat(s.msgs); s.msgs = []; }
+  R.mate = mateNews(s);
   if (s.pendingNotes.length){ for (const k of s.pendingNotes) if (R.notes.indexOf(k) < 0) R.notes.push(k); s.pendingNotes = []; }
   if (s.pendingAch.length){ for (const k of s.pendingAch) if (R.ach.indexOf(k) < 0) R.ach.push(k); s.pendingAch = []; }
   if (!s.dead){ checkAch(s, R); checkQuests(s, R); }
@@ -2101,14 +2115,15 @@ function cap1(t){ return t.charAt(0).toUpperCase() + t.slice(1); }
 function gatherWood(s, R, key, lo, hi, text){
   pass(s, 1, 'moderate', R); if (s.dead) return;
   if (s.stock[key] < 1){
-    add(s, R, 'wood', s.P > 1 ? 2 : 1);
-    R.lines.push('Everything close by is picked clean. You range far out and come back with ' + (s.P > 1 ? 'two armloads.' : 'a single armload.'));
+    add(s, R, 'wood', 1);
+    R.lines.push('Everything close by is picked clean. You range far out and come back with a single armload.');
     return;
   }
   const n = Math.min(Math.floor(s.stock[key]), Math.max(1, Math.round(rr(s, lo, hi) * yieldM(s))));
   s.stock[key] -= n; add(s, R, 'wood', n); R.lines.push(text);
 }
 function ivyCheck(s, R, p){
+  if (MATE) return;
   if (s.cond.rash <= 0 && chance(s, p * LV(s).ivy)){
     s.cond.rash = rr(s, 96, 168); unlock(s, 'ivy', R);
     R.lines.push('Later your forearms start to itch and blister. Some of those vines were poison ivy. It will take about a week to clear up.');
@@ -2122,7 +2137,6 @@ function fireChance(s){
   if (!s.tools.woodstore){ if (rainNow(s, s.t)) p *= 0.7; else if (rainedEarlierToday(s)) p *= 0.85; }
   if (bowstring(s) === 'cord') p *= 0.9;
   p *= skm() * (1 + 0.03 * (lvl(s, 'fire') - 1));
-  if (s.P > 1) p = 1 - (1 - p) * (1 - p * 0.5);
   return clamp(p, 0.05, 0.95);
 }
 E.fireChance = fireChance;
@@ -2427,7 +2441,7 @@ act({id: 'shake', loc: 'berry', name: 'Shake the mulberry over a tarp', icon: '�
   sub: s => 'About ' + lb(s.crops.mulberry.ripe) + ' of ripe fruit up in the tree. Much faster than picking.',
   run(s, R){
     pass(s, 1, 'light', R); if (s.dead) return;
-    const c = s.crops.mulberry, kg = Math.min(c.ripe * 0.75, 12 * perf(s) * (s.P > 1 ? 1.3 : 1));
+    const c = s.crops.mulberry, kg = Math.min(c.ripe * 0.75, 12 * perf(s));
     c.ripe -= kg; addFood(s, R, 'mulberry', kg);
     R.lines.push('You spread the tarp under the tree and shake the limbs. Mulberries rain down by the hundreds. They spoil in about a day, so eat up or dry them.');
   }});
@@ -2505,7 +2519,7 @@ act({id: 'spear', loc: 'pond', name: 'Spear fish', icon: '🔱', h: 1.5, work: '
     pass(s, 1.5, 'moderate', R, {wading: true}); if (s.dead) return;
     const m = monthNow(s), h = hourOf(s.t);
     const warmMid = m >= 4 && m <= 8 && h > 11 && h < 17;
-    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perk(s, 'fishing') * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * (s.P > 1 ? 1.5 : 1) * LV(s).catch * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1) * skm();
+    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perk(s, 'fishing') * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * LV(s).catch * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1) * skm();
     s.skill.spear++;
     const got = [];
     for (let i = 0; i < 6; i++){
@@ -2528,7 +2542,7 @@ act({id: 'frogs', loc: 'pond', name: 'Gig bullfrogs', icon: '🐸', h: 1.5, work
   sub: () => 'Follow their deep calls along the bank in the dark.',
   run(s, R){
     pass(s, 1.5, 'light', R, {wading: true}); if (s.dead) return;
-    const p = 0.33 * perf(s) * Math.sqrt(dens(s, 'frog')) * aware(s, 'frog') * (s.P > 1 ? 1.5 : 1) * skm();
+    const p = 0.33 * perf(s) * Math.sqrt(dens(s, 'frog')) * aware(s, 'frog') * skm();
     let n = 0;
     for (let i = 0; i < 8; i++) if (chance(s, clamp(p, 0, 0.7)) && harvest(s, 'frog')) n++;
     if (n){ addFood(s, R, 'frog', n * rr(s, 0.08, 0.14)); R.lines.push('Following the jug-o-rum calls, you creep along the bank and gig ' + n + ' bullfrog' + (n > 1 ? 's' : '') + '.'); }
@@ -2576,7 +2590,7 @@ function forage(s, R, loc, hours){
   for (const f of D.FORAGE[loc]){
     if (!inWin(doy, f.from, f.to)) continue;
     if (f.chance){ if (chance(s, f.chance)){ addFood(s, R, f.food, rr(s, f.kg[0], f.kg[1])); if (f.text) extra.push(f.text); got++; } continue; }
-    if (f.water){ const L = f.rate * hours * rr(s, 0.7, 1.2); s.body.hyd = Math.min(100, s.body.hyd + L / HYD_L * 100); if (f.g) unlock(s, f.g, R); extra.push(f.text); continue; }
+    if (f.water){ if (MATE) continue; const L = f.rate * hours * rr(s, 0.7, 1.2); s.body.hyd = Math.min(100, s.body.hyd + L / HYD_L * 100); if (f.g) unlock(s, f.g, R); extra.push(f.text); continue; }
     let kg = f.rate * hours * ym * rr(s, 0.7, 1.25);
     if (f.crop){ const c = s.crops[f.crop]; kg = Math.min(kg, c.ripe * 0.8); c.ripe = Math.max(0, c.ripe - kg); }
     if (kg >= 0.05){ addFood(s, R, f.food, kg); got++; }
@@ -2686,7 +2700,7 @@ function huntRoll(s, loc, bigOnly){
   const tf = twilight(s) ? 1.6 : (h > 11 && h < 15 ? 0.6 : 1);
   const scare = (s.world.scare[loc] || 0) > s.t ? 0.35 : 1;
   const wet = rainNow(s, s.t) ? 0.75 : 1;
-  const base = tf * scare * wet * Math.sqrt(perf(s)) * (s.P > 1 ? 1.35 : 1) * LV(s).hunt * perk(s, 'tracking');
+  const base = tf * scare * wet * Math.sqrt(perf(s)) * LV(s).hunt * perk(s, 'tracking');
   const list = D.HUNT[loc].slice();
   if (s.world.pigeons > 0 && loc !== 'prairie') list.unshift(['pigeon', 0.7]);
   for (const [sp, p0] of list){
@@ -2971,7 +2985,7 @@ function sightings(s, R){
 /* ---------- crafting ---------- */
 const RMAP = {}; D.RECIPES.forEach(r => { RMAP[r.id] = r; });
 function matName(k){ if (k === 'tarp') return 'tarp'; return ((D.MATS[k] || D.GEAR[k] || {}).name || k).toLowerCase(); }
-function recBaseTotal(s, r){ return r2(r.hours * (s.P > 1 ? 0.6 : 1)); }
+function recBaseTotal(s, r){ return r2(r.hours); }
 function benchApplies(s, r){ return !!s.tools.workbench && s.loc === 'camp' && r.special !== 'firepot' && r.special !== 'leach'; }
 const recSkill = r => r.group === 'Shelter' || r.group === 'Camp' ? 'building' : 'crafting';
 function recTotal(s, r){ return r2(recBaseTotal(s, r) * (benchApplies(s, r) ? 0.8 : 1) * Math.max(0.75, 1 - 0.03 * (lvl(s, recSkill(r)) - 1))); }
@@ -3079,7 +3093,7 @@ function complete(s, R, r){
   }
   if (r.special === 'leach'){
     const lots = s.food.filter(f => f.key === 'acornraw');
-    let kg = 0; const cap = 1.5 * (s.P > 1 ? 1.8 : 1);
+    let kg = 0; const cap = 1.5;
     for (const f of lots){
       const take = Math.min(f.kg, cap - kg); if (take <= 0) break;
       const fr = take / f.kg; kg += take;
@@ -3386,6 +3400,9 @@ function adviceGoals(s){
   if (s.shelter >= 1 && (!s.found.spring || !s.found.trail)) goal('Nobody has ever mapped these woods. Explore deeper in the Oak Woods and see what\'s out there.', {go: 'oak', act: 'explore_oak'});
   if (s.shelter >= 1 && !s.found.osage) goal('The Creek Bottom runs on for miles. Explore downstream.', {go: 'creek', act: 'explore_creek'});
   if (isEvening(s) && s.loc === 'camp' && !isDark(s)) goal('The light is going, and nothing is worth a long walk now. Rest at camp until dark.', {act: 'rest'});
+  // what the partner is already out getting, you needn't (unless it's all there is to do)
+  const M = s.mate && s.mate.job, busy = M && M.at !== 'camp' && s.t < M.t2 ? (M.k === 'wood' ? /^wood[A-Z]$/ : M.k === 'water' ? /^fill_/ : null) : null;
+  if (busy){ const F = G.filter(g => !(g.act && busy.test(g.act))); if (F.length) return F; }
   return G;
 }
 // A piece of advice: what to do and why (text), and when a step brings its own words, how (how).
@@ -3727,6 +3744,8 @@ E.load = function(str){
     if (s.xp.today != null && !(object(s.xp.today) && num(s.xp.today.d) && object(s.xp.today.c))) s.xp.today = null;
     if (!object(s.catch) || Object.keys(s.catch).some(k => !(D.FISH[k] || D.GAME[k]) || !object(s.catch[k]) || !num(s.catch[k].n) || !num(s.catch[k].kg) || !num(s.catch[k].d))) s.catch = {};
     if (s.pending && s.pending.type === 'hunt' && !(Number.isInteger(s.pending.n) && s.pending.n >= 1 && s.pending.n <= 12)) s.pending.n = 1;
+    // the partner: saves from before he picked his own jobs get him fresh, and so does anything broken
+    if (s.P > 1){ if (!mateOK(s.mate)) s.mate = newMate(); } else delete s.mate;
     if (s.opt.diff === 'real') s.opt.diff = 'hard';   // the old "Real" level is today's Hard
     if (!D.LEVELS[s.opt.diff]) s.opt.diff = 'medium';
     return s;
@@ -3737,6 +3756,193 @@ E.skills = function(s){
   return Object.keys(D.SKILLS).map(k => { const L = lvl(s, k), p = (s.xp && s.xp.pts[k]) || 0, next = D.SKILL_LEVELS[L] == null ? null : D.SKILL_LEVELS[L], from = D.SKILL_LEVELS[L - 1];
     return {k, name: D.SKILLS[k].name, icon: D.SKILLS[k].icon, lvl: L, title: D.SKILL_TITLES[L - 1], pts: p, from, next, frac: next == null ? 1 : (p - from) / (next - from)}; });
 };
+/* ---------- the partner: a helper with a mind of his own ----------
+   In the two-person game the partner picks his own jobs from what camp needs, says so, and goes. His day runs on the
+   game clock: so long on the trail, so long at the job, so long back. Whatever you're doing, the game knows where he
+   is. What he brings back lands in camp when he gets back. He works at a steady pace, by day, and sleeps at camp; he
+   eats and drinks when you do. (His jobs are the same jobs you do, worked out with MATE on: no time passes for you.) */
+let MATE = false;
+// one person alone, carrying what one person can carry, with a long walk each way: about this much of what you'd get
+const MATE_YIELD = 0.6;
+const newMate = () => ({job: null, news: [], lastK: null, n: 0});
+function mateOK(M){
+  const o = x => !!x && typeof x === 'object' && !Array.isArray(x), num = x => typeof x === 'number' && Number.isFinite(x);
+  if (!o(M) || !Array.isArray(M.news) || M.news.some(e => !o(e) || typeof e.text !== 'string')) return false;
+  if (M.job == null) return true;
+  const j = M.job;
+  return o(j) && typeof j.k === 'string' && typeof j.say === 'string' && Object.prototype.hasOwnProperty.call(D.LOCS, j.at) && ['t0', 't1', 't2', 't3'].every(k => num(j[k])) && j.t0 <= j.t1 && j.t1 <= j.t2 && j.t2 <= j.t3 &&
+    (j.act == null || Object.prototype.hasOwnProperty.call(AMAP, j.act)) && (j.id == null || Object.prototype.hasOwnProperty.call(RMAP, j.id));
+}
+const placeTo = k => k === 'camp' ? 'camp' : 'the ' + D.LOCS[k].name.replace(/^The /, '');
+function mateMins(a, b){ if (a === b) return 0; const A = D.LOCS[a], B = D.LOCS[b]; return Math.max(10, Math.round(Math.hypot(A.x - B.x, A.y - B.y) * 0.28 / 5) * 5); }
+// the nearest water, though clean water is worth a longer walk
+function mateWater(s){
+  const L = [{act: 'fill_river', at: 'river'}, {act: 'fill_pond', at: 'pond'}];
+  if (s.tools.seep) L.push({act: 'fill_seep', at: 'river', clean: 0.5});
+  if (s.found.spring) L.push({act: 'fill_spring', at: 'spring', clean: 1});
+  const cost = o => mateMins('camp', o.at) - (o.clean || 0) * 30;
+  return L.sort((a, b) => cost(a) - cost(b))[0];
+}
+// where to go for firewood: the nearest stand with some left
+function mateWood(s){
+  const L = [{act: 'woodO', at: 'oak', key: 'woodO'}, {act: 'woodC', at: 'cedar', key: 'woodC'}, {act: 'woodK', at: 'creek', key: 'woodK'}].filter(o => s.stock[o.key] >= 3);
+  return L.sort((a, b) => mateMins('camp', a.at) - mateMins('camp', b.at))[0] || {act: 'woodO', at: 'oak'};
+}
+// a material the next thing to build is short of, and where he can get it
+const MATE_MAT = {poles: ['poles', 'cedar'], bark: ['bark', 'cedar'], grass: ['grass', 'prairie'], stones: ['stones', 'prairie'], clay: ['clay', 'river'], cane: ['cane', 'river'], vines: ['vines', 'cedar'], yucca: ['yucca', 'prairie'], cord: ['yucca', 'prairie'], fiber: ['yucca', 'prairie'], grubs: ['grubs', 'cedar']};
+function mateNeed(s){
+  const ids = [];
+  if (s.pin) ids.push(s.pin);
+  const next = D.RECIPES.find(r => r.shelter === s.shelter + 1); if (next) ids.push(next.id);
+  for (const id of ids){
+    const r = RMAP[id]; if (!r || !r.need || s.proj[id] || recipeBuilt(s, id)) continue;
+    for (const m in r.need){
+      const M = MATE_MAT[m]; if (!M || (s.inv[m] || 0) >= r.need[m]) continue;
+      if ((m === 'cord' || m === 'fiber') && (s.inv.yucca || 0) + (s.inv.fiber || 0) >= 2) continue;   // he brings the leaves; you make the cord
+      const a = AMAP[M[0]]; if (a.can && a.can(Object.assign({}, s, {loc: M[1]})) !== true) continue;
+      return {m, act: M[0], at: M[1], r};
+    }
+  }
+  return null;
+}
+function mateJobs(s){
+  const L = [], cap = capacity(s), water = s.water.clean + s.water.raw, wood = s.inv.wood, cold = [10, 11, 0, 1, 2].indexOf(monthNow(s)) >= 0;
+  const kcal = wildKcal(s) + s.gear.bars * D.BAR_KCAL, hungry = clamp(1 - kcal / (2200 * s.P) / 8, 0, 1);
+  const job = (k, at, act, score, say, more) => L.push(Object.assign({k, at, act, score, say}, more || {}));
+  if (cap >= 2 && water < cap * 0.6){ const w = mateWater(s); job('water', w.at, w.act, 30 + 50 * (1 - water / cap), 'We\'re low on water. I\'m taking the bags to ' + placeTo(w.at) + '.'); }
+  if (s.water.raw >= 1 && s.fire.st === 'lit' && (s.tools.pot || (s.tools.bowl && s.inv.stones >= 4)) && s.water.clean < 3 * s.P) job('boil', 'camp', 'boil', 55, 'I\'ll boil the river water so it\'s safe to drink.');
+  if (s.fire.st === 'lit' && s.fire.fuel < 3 && wood >= 1) job('fire', 'camp', 'addwood', 50, 'The fire\'s getting low. I\'ll feed it.');
+  if (wood < 8){ const w = mateWood(s); job('wood', w.at, w.act, 22 + 40 * (1 - wood / 8) + (cold ? 10 : 0), 'We need firewood. I\'m heading to ' + placeTo(w.at) + '.', {reps: 2}); }
+  for (const id in s.proj){ const r = RMAP[id], pj = s.proj[id]; if (r && r.session && pj.total - pj.done > 0.01) job('build', 'camp', null, 36 + (s.pin === id ? 10 : 0), 'I\'ll keep working on the ' + r.name.toLowerCase() + '.', {id, hours: Math.min(2, r2(pj.total - pj.done))}); }
+  const need = mateNeed(s);
+  if (need) job('mats', need.at, need.act, 30, 'The ' + need.r.name.toLowerCase() + ' needs ' + (D.MATS[need.m] ? D.MATS[need.m].name.toLowerCase() : need.m) + '. I\'ll get some at ' + placeTo(need.at) + '.');
+  if (s.snare.set && s.t - (s.snare.at || 0) > 16) job('snares', s.snare.loc, 'snarecheck', 34 + 20 * hungry, 'I\'ll check the snares on ' + placeTo(s.snare.loc) + '.');
+  if (s.trap.set && s.t - (s.trap.at || 0) > 14) job('trap', 'river', 'trapcheck', 32 + 20 * hungry, 'I\'ll check the fish trap at the river.');
+  if (ripeList(s).length) job('food', 'berry', 'pick', 22 + 34 * hungry, 'Berries are ripe. I\'m going to pick some.', {reps: 2});
+  if (s.crops.pecan.ripe > 0.3) job('food', 'creek', 'pecans', 24 + 34 * hungry, 'Pecans are falling. I\'ll gather some at the creek.');
+  const fp = ['oak', 'prairie', 'creek'].map(k => ({k, n: forageNames(s, k).length})).filter(o => o.n).sort((a, b) => b.n - a.n)[0];
+  if (fp) job('food', fp.k, 'forage_' + fp.k, 16 + 34 * hungry + 3 * fp.n, 'I\'m going to look for food in ' + placeTo(fp.k) + '.');
+  job('food', 'pond', 'cattail_pond', 12 + 30 * hungry, 'I\'ll dig cattail roots at the pond. Not exciting, but it\'s food.');
+  if (s.gear.hooks >= 2){ const at = mateMins('camp', 'pond') <= mateMins('camp', 'river') ? 'pond' : 'river'; job('fish', at, 'fish_' + at, 18 + 34 * hungry, 'I\'m going fishing at ' + placeTo(at) + '.', {reps: 2}); }
+  return L;
+}
+// his next job, starting at t0: the most needed one he can finish and get back from before dark; at night, sleep
+function mateChoose(s, t0){
+  const M = s.mate, m = monthNow(s), rise = D.SUNRISE[m], set = D.SUNSET[m], h = hourOf(t0);
+  const at = (k, act, say, hours, more) => Object.assign({k, act, at: 'camp', say, t0, t1: t0, t2: t0 + hours, t3: t0 + hours}, more || {});
+  let j = null;
+  if (h >= set + 1 || h < rise){
+    const di = Math.floor(t0 / 24), wake = (h < rise ? di : di + 1) * 24 + rise + 0.25;
+    j = at('sleep', null, 'I\'m turning in. Night.', Math.max(0.25, wake - t0));
+  } else {
+    const L = mateJobs(s).map(o => Object.assign(o, {score: o.score + rr(s, 0, 10) - (o.k === M.lastK ? 10 : 0)})).sort((a, b) => b.score - a.score);
+    for (const o of L){
+      const a = o.act ? AMAP[o.act] : null, work = r2(o.k === 'build' ? o.hours : (actHours(s, a) || 0.5) * (o.reps || 1) + (o.k === 'water' ? 0.25 : 0));
+      const go = mateMins('camp', o.at) / 60, end = t0 + go * 2 + work;
+      if (o.at !== 'camp' && end > Math.floor(t0 / 24) * 24 + set - 0.2) continue;   // he wouldn't be back before dark
+      if (o.at === 'camp' && h >= set - 0.5 && o.k !== 'fire' && o.k !== 'boil') continue;
+      j = Object.assign({k: o.k, act: o.act || null, at: o.at, say: o.say, reps: o.reps || 1, t0, t1: t0 + go, t2: t0 + go + work, t3: end}, o.id ? {id: o.id} : {});
+      break;
+    }
+    if (!j){
+      const evening = h >= set - 1;
+      if (evening && s.fire.st === 'lit' && s.inv.wood >= 2 && s.fire.fuel < 11) j = at('fire', 'stock', 'I\'ll stock the fire for the night.', 0.25);
+      else j = at('rest', null, evening ? 'I\'ll sit by the fire a while.' : 'Nothing pressing. I\'ll rest by the fire a bit.', evening ? 0.5 : 1);
+    }
+  }
+  j.t0 = r2(j.t0); j.t1 = r2(j.t1); j.t2 = r2(j.t2); j.t3 = r2(j.t3);
+  M.job = j; M.lastK = j.k; M.n++;
+  const quiet = j.k === 'rest' && M.news.length && M.news[M.news.length - 1].k === 'rest';
+  if (!quiet) mateSay(s, {t: t0, k: j.k === 'rest' ? 'rest' : 'go', say: j.say, text: 'Your partner: "' + j.say + (j.at !== 'camp' ? ' Back around ' + clock(hourOf(j.t3)) + '.' : '') + '"'});
+}
+function mateSay(s, e){ const N = s.mate.news; N.push(e); if (N.length > 8) N.splice(0, N.length - 8); }
+// a job's work, done as the game's own job would be: in his place, at his pace, with nothing happening to you
+function mateRun(s, id, reps, place){
+  const a = AMAP[id], R = newR(a.name, a.icon), keep = {SK, PLAY, ACTSK, loc: s.loc};
+  MATE = true; SK = 0.5; PLAY = null; ACTSK = null; s.loc = place;
+  try {
+    for (let i = 0; i < reps; i++){ if (a.show && !a.show(s)) break; if (a.can && a.can(s) !== true) break; a.run(s, R); }
+  } catch (e){ if (typeof console !== 'undefined') console.error(e); }
+  finally { MATE = false; SK = keep.SK; PLAY = keep.PLAY; ACTSK = keep.ACTSK; s.loc = keep.loc; }
+  return R;
+}
+function mateBuild(s, j){
+  const r = RMAP[j.id], pj = s.proj[j.id], R = newR(r ? r.name : '', r ? r.icon : '');
+  if (!r || !pj) return R;
+  const h = Math.min(j.t2 - j.t1, pj.total - pj.done); pj.done = r2(pj.done + h);
+  if (pj.done >= pj.total - 0.01){ delete s.proj[j.id]; MATE = true; try { complete(s, R, r); } finally { MATE = false; } R.built = true; }
+  else R.pct = Math.round(pj.done / pj.total * 100);
+  return R;
+}
+// what he got done, in plain words
+function mateTell(s, j, R, b){
+  const bits = [];
+  const dw = s.inv.wood - b.inv.wood; if (dw > 0) bits.push(dw + (dw === 1 ? ' armload' : ' armloads') + ' of firewood');
+  for (const k in s.inv){ if (k === 'wood') continue; const d = s.inv[k] - (b.inv[k] || 0); if (d > 0 && D.MATS[k]) bits.push(d + ' ' + D.MATS[k].name.toLowerCase()); }
+  const foods = {}; for (const g of R.gains) if (g.food){ foods[g.food] = (foods[g.food] || 0) + g.kg; }
+  for (const k in foods) bits.push(lb(foods[k]) + ' of ' + D.FOODS[k].name.toLowerCase());
+  const dr = r2(s.water.raw - b.raw), dc = r2(s.water.clean - b.clean);
+  if (j.k === 'water' && dr > 0.05) bits.push(dr.toFixed(1) + ' liters of untreated water (boil it before you drink it)');
+  if (j.k === 'water' && dc > 0.05) bits.push(dc.toFixed(1) + ' liters of clean water');
+  const from = placeTo(j.at);
+  if (j.k === 'boil') return dc > 0.05 ? 'Your partner boiled ' + dc.toFixed(1) + ' liters of water. It\'s safe to drink now.' : 'Your partner went to boil water, but it couldn\'t be done.';
+  if (j.k === 'fire') return s.fire.fuel > b.fuel ? 'Your partner fed the fire. About ' + Math.round(s.fire.fuel) + ' hours of fuel now.' : 'Your partner found the fire already dead.';
+  if (j.k === 'build') return R.built ? 'Your partner finished the ' + RMAP[j.id].name.toLowerCase() + '! ' + (R.lines[R.lines.length - 1] || '') : R.pct != null ? 'Your partner worked on the ' + RMAP[j.id].name.toLowerCase() + '. It\'s about ' + R.pct + '% done.' : 'Your partner went to work on a project, but someone already finished it.';
+  if (bits.length) return 'Your partner is back from ' + from + ' with ' + (bits.length > 1 ? bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1] : bits[0]) + '.';
+  const why = R.lines.find(l => /empty|nothing|full|slim|picked clean|not a bite|nibbles|no /i.test(l));
+  return 'Your partner is back from ' + from + ' empty-handed.' + (why ? ' ' + why : '');
+}
+function mateDeliver(s, j){
+  if (j.k === 'sleep' || j.k === 'rest') return;
+  const b = {inv: Object.assign({}, s.inv), raw: s.water.raw, clean: s.water.clean, fuel: s.fire.fuel};
+  const R = j.k === 'build' ? mateBuild(s, j) : j.act ? mateRun(s, j.act, j.reps || 1, j.at) : null;
+  if (!R) return;
+  // a tally of what he does, for the robot players' report (tools/autoplay.mjs --mate)
+  const T = s.mate.tally || (s.mate.tally = {}); T[j.k] = (T[j.k] || 0) + 1; T.kcal = (T.kcal || 0) + R.gains.reduce((a, g) => a + (g.food ? g.kcal : 0), 0);
+  mateSay(s, {t: j.t3, k: 'back', text: mateTell(s, j, R, b)});
+  if (R.ach.length) for (const k of R.ach) if (s.pendingAch.indexOf(k) < 0) s.pendingAch.push(k);
+}
+// the clock has moved: finish what he was doing, and pick what's next
+function mateStep(s){
+  const M = s.mate; if (!M || s.dead || MATE) return;
+  for (let guard = 0; guard < 8; guard++){
+    if (!M.job){ mateChoose(s, s.t); continue; }
+    if (s.t + 1e-6 < M.job.t3) break;
+    const j = M.job; M.job = null;
+    mateDeliver(s, j);
+    const t0 = Math.max(j.t3, s.t - 6);
+    if (j.at !== 'camp' && j.k !== 'sleep'){ M.job = {k: 'rest', act: null, at: 'camp', say: 'Back. I need a drink and a sit-down.', t0: r2(t0), t1: r2(t0), t2: r2(t0 + 1), t3: r2(t0 + 1)}; M.lastK = j.k; continue; }
+    mateChoose(s, t0);   // a long night or a long job of yours: he doesn't fall more than 6 hours behind
+  }
+}
+function mateNews(s){ if (!s.mate || !s.mate.news.length) return []; const N = s.mate.news.map(e => ({k: e.k, text: e.text, say: e.say || ''})); s.mate.news = []; return N; }
+// where he is right now, and what he's doing, for the walk and the screen
+E.mate = function(s, tNow){
+  const M = s.mate; if (!M || !M.job) return null;
+  const j = M.job, t = tNow != null ? Math.max(s.t, tNow) : s.t;
+  let doing, from = null, to = null, frac = 0;
+  if (j.at === 'camp') doing = j.k === 'sleep' ? 'sleep' : j.k === 'rest' ? 'rest' : 'work';
+  else if (t < j.t1){ doing = 'walk'; from = 'camp'; to = j.at; frac = clamp((t - j.t0) / Math.max(0.01, j.t1 - j.t0), 0, 1); }
+  else if (t < j.t2) doing = 'work';
+  else { doing = 'walk'; from = j.at; to = 'camp'; frac = clamp((t - j.t2) / Math.max(0.01, j.t3 - j.t2), 0, 1); }
+  const loc = doing === 'walk' ? (frac < 0.5 ? from : to) : j.at, what = {water: 'for water', wood: 'for firewood', food: 'for food', fish: 'to fish', snares: 'to check the snares', trap: 'to check the fish trap', mats: 'for building things'}[j.k] || '';
+  const back = clock(hourOf(j.t3));
+  const line = doing === 'sleep' ? 'Asleep by the fire.' : doing === 'rest' ? 'Resting at camp.' :
+    doing === 'walk' ? (to === 'camp' ? 'Walking back to camp from ' + placeTo(from) + ', due around ' + back + '.' : 'Walking to ' + placeTo(to) + ' ' + what + '. Back around ' + back + '.') :
+    j.at === 'camp' ? (j.k === 'build' && RMAP[j.id] ? 'Working on the ' + RMAP[j.id].name.toLowerCase() + ' at camp.' : j.k === 'boil' ? 'Boiling water at camp.' : 'Tending the fire at camp.') :
+    'At ' + placeTo(j.at) + ' ' + what + '. Back around ' + back + '.';
+  return {doing, k: j.k, act: j.act, id: j.id || null, at: j.at, from, to, frac, loc, say: j.say, back, line, t0: j.t0};
+};
+// time passing while you walk about (the two-person game's clock runs while you're out in the world)
+E.tick = function(s, mins){
+  if (!s || s.dead || s.pending || !(mins > 0)) return null;
+  begin(s);
+  pass(s, mins / 60, 'light', null);
+  const out = {lines: s.msgs.slice(), mate: mateNews(s), dead: !!s.dead};
+  s.msgs = [];
+  return out;
+};
+
 E.catchLog = function(s){
   const one = (sp, kind, X) => { const c = s.catch[sp]; return {sp, kind, name: X.name ? cap1(X.name) : sp, sci: X.sci || '', fact: X.fact || '', legend: !!X.legend, where: X.where ? Object.keys(X.where) : null, n: c ? c.n : 0, kg: c ? c.kg : 0, day: c ? c.d : 0}; };
   return {fish: Object.keys(D.FISH).map(k => one(k, 'fish', D.FISH[k])), game: Object.keys(D.GAME).filter(k => k !== 'pigeon' && k !== 'raccoon').map(k => one(k, 'game', D.GAME[k]))};
@@ -5828,17 +6034,17 @@ function wbeastStep(b, now, dt){
 /* ---------- mounting: the canvas, the pad, and the keys ---------- */
 function wmount(wrap, hooks){
   WV.hooks = hooks || {};
-  wrap.innerHTML = '<div class="world" tabindex="0" role="application" aria-roledescription="map" aria-label="Where you are, seen from above. Walk with the arrow keys or WASD, or tap where you want to go. Tap a thing, or press Z or Enter, to use it."><canvas aria-hidden="true"></canvas><div class="wtag" aria-hidden="true"></div><div class="wquest" aria-live="polite"></div><div class="wsay" aria-live="polite"></div><button type="button" class="wfield">Map</button><div class="wmenu" role="menu" hidden></div></div><div class="wpad"><div class="dpad" role="group" aria-label="Walk"><span></span><button type="button" data-d="up" aria-label="Walk north">▲</button><span></span><button type="button" data-d="left" aria-label="Walk west">◀</button><span class="dc"></span><button type="button" data-d="right" aria-label="Walk east">▶</button><span></span><button type="button" data-d="down" aria-label="Walk south">▼</button><span></span></div><div class="wmid"><b class="wplace"></b><span>A: use what you face</span></div><div class="ab"><button type="button" class="b" data-k="b" aria-label="B: stop">B</button><button type="button" class="a" data-k="a" aria-label="A: use what you face">A</button></div><p class="whint">Walk with the arrow keys or WASD, or click where you want to go. Click a thing, or press Z or Enter, to use it.</p></div>';
+  wrap.innerHTML = '<div class="world" tabindex="0" role="application" aria-roledescription="map" aria-label="Where you are, seen from above. Walk with the arrow keys or WASD, or tap where you want to go. Tap a thing, or press Z or Enter, to use it."><canvas aria-hidden="true"></canvas><div class="wtag" aria-hidden="true"></div><div class="wquest" aria-live="polite"></div><div class="wsay" aria-live="polite"></div><div class="wbub" aria-hidden="true"></div><button type="button" class="wfield">Map</button><div class="wmenu" role="menu" hidden></div></div><div class="wpad"><div class="dpad" role="group" aria-label="Walk"><span></span><button type="button" data-d="up" aria-label="Walk north">▲</button><span></span><button type="button" data-d="left" aria-label="Walk west">◀</button><span class="dc"></span><button type="button" data-d="right" aria-label="Walk east">▶</button><span></span><button type="button" data-d="down" aria-label="Walk south">▼</button><span></span></div><div class="wmid"><b class="wplace"></b><span>A: use what you face</span></div><div class="ab"><button type="button" class="b" data-k="b" aria-label="B: stop">B</button><button type="button" class="a" data-k="a" aria-label="A: use what you face">A</button></div><p class="whint">Walk with the arrow keys or WASD, or click where you want to go. Click a thing, or press Z or Enter, to use it.</p></div>';
   const pad = wrap.querySelector('.wpad'), box = wrap.querySelector('.world');
   WV.box = box; WV.cv = box.querySelector('canvas'); WV.ctx = WV.cv.getContext('2d', {willReadFrequently: !!root.__gb});
-  WV.tag = box.querySelector('.wtag'); WV.say = box.querySelector('.wsay'); WV.menu = box.querySelector('.wmenu'); WV.qline = box.querySelector('.wquest'); WV.pad = pad; WV.Z = null; WV.menuOpen = false;
+  WV.tag = box.querySelector('.wtag'); WV.say = box.querySelector('.wsay'); WV.bub = box.querySelector('.wbub'); WV.menu = box.querySelector('.wmenu'); WV.qline = box.querySelector('.wquest'); WV.pad = pad; WV.Z = null; WV.menuOpen = false;
   lvMount(box);
   if (WV.ro) WV.ro.disconnect(); if (WV.io) WV.io.disconnect();
   if (root.ResizeObserver){ WV.ro = new ResizeObserver(() => { WV.Z = null; wkick(); }); WV.ro.observe(box); }
   if (root.IntersectionObserver){ WV.io = new IntersectionObserver(es => { for (const e of es) WV.vis = e.isIntersecting; wkick(); }); WV.io.observe(box); }
   const onDown = e => {
     box.focus({preventScroll: true});
-    if (LV.shown && LV.S){ e.preventDefault(); const q = lvTile(e.clientX, e.clientY); wtap(q[0], q[1]); return; }
+    if (LV.shown && LV.S){ e.preventDefault(); if (lvMateHit(e.clientX, e.clientY) && wcan() && WV.hooks.mate){ WV.hooks.mate(); return; } const q = lvTile(e.clientX, e.clientY); wtap(q[0], q[1]); return; }
     const Z = WV.Z; if (!Z) return; e.preventDefault();
     const r = WV.cv.getBoundingClientRect(), ax = (e.clientX - r.left) / r.width * Z.W + WV.cam[0], ay = (e.clientY - r.top) / r.height * Z.H + WV.cam[1];
     wtap(Math.floor(ax / WT), Math.floor(ay / WT), ay);
@@ -6010,6 +6216,7 @@ function wtap(tx, ty){
   if (!wcan() || !WV.pos) return;
   const P = WV.pos, s = WV.S;
   if (tx === P.x && ty === P.y && !WV.moving){ wA(); return; }
+  if (wmateHit(tx, ty) && WV.hooks.mate){ WV.hooks.mate(); return; }
   WV.dest = null;
   const sid = wspotAt(tx, ty), exit = WV.map.exits.find(e => Math.abs(e.x - tx) + Math.abs(e.y - ty) <= 1 && (!e.hidden || wfound(s)));
   const ok = (x, y) => wopen(WV.map, x, y, s) && !WV.beasts.some(b => b.x === x && b.y === y);
@@ -6024,6 +6231,52 @@ function wtap(tx, ty){
   if (!path || path.length > 120) return;
   if (!path.length){ if (sid) wuse(tx, ty); return; }
   WV.path = path; WV.auto = !!sid; WV.bump = sid ? {x: tx, y: ty} : (ok(tx, ty) ? null : {x: tx, y: ty}); WV.held = null; wkick();
+}
+/* ---------- the partner, where his own day has taken him ----------
+   The engine keeps his day (E.mate): walking out, at a job, walking back, at camp. Here that becomes a square of
+   ground in the place you're looking at: on the trail between camp and the way out toward his job, at the thing he's
+   working (the river's edge, the oaks), or by the fire. If his day has him somewhere else, he isn't here. */
+const MATE_CAMP = {build: 'work', boil: 'ring', fire: 'ring', rest: 'ring', sleep: 'boulders'};
+function wmateSpot(m, k){
+  const M = WV.map, id = k === 'camp' && m.at === 'camp' ? MATE_CAMP[m.k] || 'ring' : Object.keys(M.spots).find(i => (M.spots[i].acts || []).indexOf(m.act) >= 0);
+  const S = id && M.spots[id], t = S && S.tiles && S.tiles.find(q => wopen(M, q[0], q[1], WV.S));
+  if (t){ const th = S.tiles.find(q => !wopen(M, q[0], q[1], WV.S)), dx = th ? th[0] - t[0] : 0, dy = th ? th[1] - t[1] : 1;
+    return {x: t[0], y: t[1], dir: Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy < 0 ? 'up' : 'down')}; }
+  return {x: M.hub[0], y: M.hub[1]};
+}
+function wmatePos(){
+  const s = WV.S; if (!s || s.P < 2 || !WV.map || !root.Engine || !root.Engine.mate) return null;
+  const m = root.Engine.mate(s, s.t + (WV.hooks.ahead ? WV.hooks.ahead() : 0)); if (!m) return null;   // (between ticks of the clock, smoothly)
+  const k = WV.map.k;
+  if (m.doing === 'walk'){
+    if (m.from !== k && m.to !== k) return null;
+    const leaving = m.from === k, f = leaving ? m.frac * 2 : m.frac * 2 - 1;
+    if (f < 0 || f > 1) return null;   // out on the trail, between here and there
+    const other = leaving ? m.to : m.from, hop = wnextHop(k, other), ex = WV.map.exits.find(e => e.to === hop);
+    if (!ex) return null;
+    const spot = k === 'camp' ? {x: WV.map.hub[0], y: WV.map.hub[1]} : wmateSpot(m, k), key = k + '|' + spot.x + ',' + spot.y + '|' + ex.x + ',' + ex.y;
+    if (!WV.mpath || WV.mpath.key !== key){ const P = wroute(WV.map, s, spot.x, spot.y, ex.x, ex.y, (x, y) => wopen(WV.map, x, y, s)); WV.mpath = {key, P: P ? [{x: spot.x, y: spot.y}].concat(P) : [{x: spot.x, y: spot.y}, {x: ex.x, y: ex.y}]}; }
+    const P = WV.mpath.P, u = (leaving ? f : 1 - f) * (P.length - 1), i = Math.min(P.length - 2, Math.floor(u)), e = u - i, a = P[i], b = P[i + 1] || a;
+    const dx = (b.x - a.x) * (leaving ? 1 : -1), dy = (b.y - a.y) * (leaving ? 1 : -1);
+    return {x: lerp(a.x, b.x, e), y: lerp(a.y, b.y, e), dir: Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'), move: null, m};
+  }
+  if (m.loc !== k) return null;
+  const sp = wmateSpot(m, k);
+  let move = m.doing === 'sleep' ? 'sleep' : m.doing === 'rest' ? 'sit' : 'work';
+  if (m.doing === 'work' && m.act) for (const [re, mv] of LV_MOVES) if (re.test(m.act)){ move = mv; break; }
+  if (m.k === 'build') move = 'work';
+  // never on top of you
+  if (WV.pos && Math.round(sp.x) === WV.pos.x && Math.round(sp.y) === WV.pos.y) sp.x += wopen(WV.map, sp.x + 1, sp.y, s) ? 1 : -1;
+  return {x: sp.x, y: sp.y, dir: sp.dir || 'down', move, m};
+}
+// a tap on the partner: ask what he's doing
+function wmateHit(tx, ty){ const p = wmatePos(); if (!p) return false; const dx = tx - p.x, dy = ty - p.y; return Math.abs(dx) <= 1 && dy >= -3 && dy <= 0.5; }   // his feet up to his cap
+// what he says, in a bubble over his head when he's here, or under the picture when he isn't drawn alive
+function wmateSay(text){
+  const p = wmatePos(); if (!p) return false;
+  if (LV.shown && WV.bub){ WV.bub.textContent = text; WV.bub.classList.add('on'); clearTimeout(WV.bubT); WV.bubT = setTimeout(() => WV.bub && WV.bub.classList.remove('on'), 5200); wkick(); }
+  else wsay('Your partner: "' + text + '"');
+  return true;
 }
 function wspotAt(x, y){ if (x < 0 || y < 0 || x >= WW || y >= WH) return null; return WV.map.spotAt[y * WW + x] || null; }
 function wlook(x, y){
@@ -6144,8 +6397,8 @@ function wdraw(now){
   const frame = WV.moving && WV.t > 0.2 && WV.t < 0.8 ? 1 + (WV.steps & 1) : 0;
   const you = wsp('p:' + WV.pos.dir + frame + 'y', [20, 26, 10, 23], g => wPerson(g, WV.pos.dir, frame, 'shirt', true));
   L.push({x: pp.x, y: pp.y, sp: you, sh: [5, 1.6]}); walkers.push([pp.x, pp.y]);
-  if (WV.F.party > 1 && WV.hist.length > 1){ const a = WV.hist[1], b = WV.hist[0], e = WV.moving ? WV.t : 0, x = (lerp(a.x, b.x, e) + 0.5) * WT, y = (lerp(a.y, b.y, e) + 1) * WT - 3;
-    const dir = b.x > a.x ? 'right' : b.x < a.x ? 'left' : b.y > a.y ? 'down' : b.y < a.y ? 'up' : WV.pos.dir, pf = WV.moving && WV.t > 0.2 && WV.t < 0.8 ? 1 + ((WV.steps + 1) & 1) : 0;
+  const mp = WV.F.party > 1 ? wmatePos() : null;
+  if (mp){ const x = (mp.x + 0.5) * WT, y = (mp.y + 1) * WT - 3, dir = mp.dir, pf = mp.m.doing === 'walk' ? 1 + (Math.floor(performance.now() / 260) & 1) : 0;
     L.push({x, y: y - 0.01, sp: wsp('p:' + dir + pf + 'q', [20, 26, 10, 23], g => wPerson(g, dir, pf, 'shirt2', false)), sh: [5, 1.6]}); walkers.push([x, y]); }
   L.sort((a, b) => a.y - b.y);
   for (const d of L) if (d.sh){ const S2 = wshadow(d.sh[0], d.sh[1]); c.drawImage(S2, Math.round(d.x + 2 - S2.width / 2 - cx), Math.round(d.y - S2.height / 2 - cy)); }
@@ -6438,9 +6691,15 @@ function lvDraw(now){
   const fe = s.feels != null ? s.feels : (WV.h && WV.h.feels), nearFire = s.loc === 'camp' && F.fire === 'lit';
   LV.hero.state.cold = fe != null && fe < 40 && !nearFire ? clamp((42 - fe) / 20, 0, 1) : 0;
   LV.hero.animate(dt, t, lvFollow(LV.hero, 'pos', hx, hy, WV.pos.dir, dt));
-  const two = F.party > 1 && WV.hist.length > 1; LV.partner.root.visible = two;
-  if (two){ const a = WV.hist[1], b = WV.hist[0]; LV.partner.animate(dt, t, lvFollow(LV.partner, 'ppos', lerp(a.x, b.x, e), lerp(a.y, b.y, e), WV.pos.dir, dt)); LV.partner.state.cold = LV.hero.state.cold; }
-  else LV.ppos = null;
+  const mp = F.party > 1 ? wmatePos() : null, two = !!mp; LV.partner.root.visible = two;
+  if (two){
+    if (LV.pmove !== mp.move){ LV.pmove = mp.move; if (mp.move && LV.partner.MOVES[mp.move] && LV.partner.MOVES[mp.move].hold) LV.partner.hold(mp.move); else { LV.partner.hold(null); LV.pplay = 0; } }
+    if (mp.move && LV.partner.MOVES[mp.move] && !LV.partner.MOVES[mp.move].hold && t > (LV.pplay || 0)){ LV.partner.play(mp.move); LV.pplay = t + 3; }
+    LV.partner.carry(mp.m.doing === 'walk' && mp.m.to === 'camp' && mp.m.k === 'wood' ? 'wood' : null);
+    LV.partner.animate(dt, t, lvFollow(LV.partner, 'ppos', mp.x, mp.y, mp.dir, dt)); LV.partner.state.cold = mp.move === 'sleep' ? 0 : LV.hero.state.cold;
+    if (WV.bub && WV.bub.classList.contains('on')){ const w = LV.partner.root.position.clone(); w.y += 2.1; const q = S.toPaint(w), vv = S.view; WV.bub.style.transform = `translate(${((q[0] - (vv.cx - vv.w / 2)) / vv.w * LV.cssW).toFixed(1)}px, ${((q[1] - (vv.cy - vv.h / 2)) / vv.h * LV.cssH).toFixed(1)}px) translate(-50%, -100%)`; }
+  }
+  else { LV.ppos = null; LV.pmove = undefined; if (WV.bub) WV.bub.classList.remove('on'); }
   // the camp, the things set out, the animals, the life of the place
   LV.camp.root.visible = s.loc === 'camp';
   if (s.loc === 'camp') { lvCamp(); LV.camp.update(t, dt); } else S.glow(0, 0, 0, 0, 0);
@@ -6456,13 +6715,20 @@ function lvDraw(now){
   LV.fadeEl.style.opacity = WV.fade > 0 ? WV.fade.toFixed(3) : 0;
   return true;
 }
+// a tap on the partner himself, in the living picture: anywhere from his boots to his cap
+function lvMateHit(cx, cy){
+  if (!LV.partner || !LV.partner.root.visible || !LV.ppos) return false;
+  const S = LV.S, v = S.view, r = LV.cv.getBoundingClientRect(), at = y => { const w = LV.partner.root.position.clone(); w.y = y; const q = S.toPaint(w); return [r.left + (q[0] - (v.cx - v.w / 2)) / v.w * r.width, r.top + (q[1] - (v.cy - v.h / 2)) / v.h * r.height]; };
+  const foot = at(0), head = at(1.85), half = Math.max(16, (foot[1] - head[1]) * 0.32);
+  return cx > foot[0] - half && cx < foot[0] + half && cy > head[1] - 6 && cy < foot[1] + 8;
+}
 // a tap on the living picture, as the square of ground it means: a tap on a tree or a rock means where it stands
 function lvTile(cx, cy){ const [px, py] = LV.S.paintAt(cx, cy), g = LV.S.groundAt(px, py); return [Math.floor(g[0] / 32), Math.floor(g[1] / 32)]; }
 // where a square of ground is on the screen (for the phone test)
 function lvClient(x, y){ const S = LV.S, p = S.toPaint(lvW(x, y)), v = S.view, r = LV.cv.getBoundingClientRect(); return {cx: r.left + (p[0] - (v.cx - v.w / 2)) / v.w * r.width, cy: r.top + (p[1] - (v.cy - v.h / 2)) / v.h * r.height}; }
 
 root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), goTo: k => { if (PLACES[k]) wgo(k); }, closeMenu: () => { if (WV.menuOpen) wmenuClose(); }, places: PLACES, map: k => wmap(k), _v: WV,
-  living: () => !!LV.shown, client: (x, y) => LV.shown ? lvClient(x, y) : null, scene: wscene, _lv: LV};
+  living: () => !!LV.shown, client: (x, y) => LV.shown ? lvClient(x, y) : null, scene: wscene, mateSay: wmateSay, matePos: () => { const p = wmatePos(); return p && {x: p.x, y: p.y, move: p.move, doing: p.m.doing}; }, _lv: LV};
 function wsetgb(on){ root.__gb = !!on; WV.Z = null; VIEWS.forEach(v => { if (v.S) v.draw(performance.now()); }); wkick(); }
 
 root.Scene = {show, light, dayRibbon};
@@ -6935,7 +7201,7 @@ function titleScreen(){
 <p class="by">The Clearing. A survival game. Rules by Dagr.</p>
 <p class="lede">You wake up in a clearing in North Texas, in a world where people never existed. You have two crates, two tarps, a box of ration bars, two knives, fishing hooks, and a rifle that never runs out of rounds. Real plants, real animals, real weather. Walk the land, learn it, and survive as long as you can.</p>
 <div class="optset"><p>When do you arrive?</p>${choice('start', Object.keys(D.STARTS).map(k => [k, D.STARTS[k].label, D.STARTS[k].sub]))}</div>
-<div class="optset"><p>Who's out there?</p>${choice('party', [['solo', 'Just you', 'Every job is yours'], ['duo', 'You and a partner', 'Two sets of hands, two mouths to feed']])}</div>
+<div class="optset"><p>Who's out there?</p>${choice('party', [['solo', 'Just you', 'Every job is yours'], ['duo', 'You and a partner', 'He picks his own jobs. Two mouths to feed']])}</div>
 ${opt.party === 'duo' ? `<div class="optset"><p>Ration bars</p>${choice('rations', [['each', '100 each', 'As in Dagr\'s game'], ['shared', '100 to share', 'Harder: half the food']])}</div>` : ''}
 <div class="optset"><p>How hard?</p>${choice('diff', D.LEVEL_ORDER.map(k => [k, D.LEVELS[k].name, D.LEVELS[k].sub]))}</div>
 <div class="startbtns">
@@ -6969,6 +7235,7 @@ function startGame(s, fresh){
 <section class="stage" id="stage" data-view="${view}" aria-label="Where you are">
 <div class="stage-art"><div id="scene"></div><div class="mapwrap" id="mapwrap"></div></div>
 <div class="stage-bar"><h2 id="placename"></h2><div class="viewseg" role="group" aria-label="Show"><button type="button" data-view="map">Walk</button><button type="button" data-view="scene">Look</button></div></div>
+<button type="button" class="mateline" id="mateline" data-mate hidden></button>
 </section>
 <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 <section class="panel" id="panel"></section>
@@ -6981,6 +7248,16 @@ function startGame(s, fresh){
 }
 function render(){
   if (!S) return;
+  const h = renderHud();
+  showScene(h);
+  $('#placename').textContent = D.LOCS[S.loc].name;
+  renderView();
+  renderMap(h);
+  renderTabs();
+  renderPanel();
+  renderMate();
+}
+function renderHud(){
   const h = E.hud(S);
   $('#when').textContent = 'Day ' + h.day + ', ' + h.time;
   // a rainy day isn't always raining: show clouds between showers, and say whether more is coming
@@ -6990,13 +7267,59 @@ function render(){
   renderDaylight(h);
   renderVitals(h);
   $('#chips').innerHTML = h.chips.map(c => `<span class="chip ${c.tone}">${esc(c.label)}</span>`).join('');
-  showScene(h);
-  $('#placename').textContent = D.LOCS[S.loc].name;
-  renderView();
-  renderMap(h);
-  renderTabs();
-  renderPanel();
+  return h;
 }
+// what the partner is up to, in one line you can tap
+function renderMate(){
+  const el = $('#mateline'); if (!el) return;
+  const m = S && S.P > 1 && !S.dead ? E.mate(S) : null;
+  el.hidden = !m; if (!m) return;
+  el.innerHTML = '🧔 <b>Your partner:</b> ' + esc(m.line);
+}
+function mateSheet(){
+  const m = E.mate(S); if (!m) return;
+  openSheet(`<div class="sh-head"><span class="ic">🧔</span><h2>Your partner</h2></div><p class="story">${esc(m.line)}</p><p class="quote">"${esc(m.say)}"</p>
+<p class="note">Your partner decides for himself what camp needs most: water, firewood, food, materials, or help with what you're building. Whatever he brings back goes straight into camp. Go after him and you'll find him on the trail or at the job. While you're out walking, the clock runs: one second is one minute.</p><div class="foot"><button type="button" class="btn hot" data-close>OK</button></div>`);
+}
+
+/* ---------- the two-person game's clock ----------
+   With a partner, the clock also runs while you're out in the world: one real second is one game minute. That's how
+   he can set off and you can follow. It stops whenever a card, a menu or a hunting or fishing game is open, when
+   you're on another tab, and when the game is out of sight. */
+let clockAcc = 0, clockLast = 0, clockN = 0;
+function clockRuns(){
+  return !!S && S.P > 1 && !S.dead && !S.pending && tab === 'here' && !document.hidden && !!$('#game') && !$('#scrim') &&
+    !document.getElementById('skill') && !document.getElementById('hunt') && !document.getElementById('fishing') && !(window.World && World._v && World._v.menuOpen);
+}
+function clockStep(){
+  const now = performance.now(), dt = clockLast ? Math.min(1, (now - clockLast) / 1000) : 0; clockLast = now;
+  if (!clockRuns()) return;
+  clockAcc += dt;
+  if (clockAcc < 1) return;
+  const mins = Math.floor(clockAcc); clockAcc -= mins;
+  if (!clockN && window.World && World.mateSay){ const m = E.mate(S); if (m && m.doing !== 'sleep') World.mateSay(m.say); }   // what he's up to, the first time you see him
+  const out = E.tick(S, mins); if (!out) return;
+  clockN++;
+  if (out.dead){
+    handle({title: 'Out in the wild', icon: '🌲', lines: out.lines, gains: [], notes: [], ach: [], quests: [], opened: [], skills: [], catches: [], mate: out.mate, delta: null, t0: S.t, t1: S.t});
+    return;
+  }
+  const h = renderHud(); renderMap(h); renderMate();
+  if (clockN % 15 === 0){ showScene(h); if (tab === 'here') renderPanel(); }
+  if (clockN % 20 === 0) autosave();
+  for (const l of out.lines) toastLater(l);
+  for (const n of out.mate) mateNewsShow(n);
+}
+setInterval(clockStep, 250);
+// what he says shows over his head when he's here; otherwise word reaches you in a note
+function mateNewsShow(n){
+  const here = window.World && World.mateSay && n.say && World.mateSay(n.say);
+  if (n.k === 'rest') return;
+  if (!here || n.k === 'back') toastLater(n.text);
+}
+const toastQ = [];
+function toastLater(text){ toastQ.push(text); if (toastQ.length === 1) toastNext(); }
+function toastNext(){ if (!toastQ.length) return; toast(toastQ[0]); setTimeout(() => { toastQ.shift(); toastNext(); }, 3000); }
 function renderDaylight(h){
   const box = $('#daylight'), rise = h.sunrise, set = h.sunset, hr = h.hour;
   const track = box.querySelector('.track'), dot = box.querySelector('.dot');
@@ -7026,7 +7349,10 @@ function worldHooks(){
     actions: () => E.actions(S).map(a => ({id: a.id, icon: a.icon, name: a.name, dur: a.id === 'sleep' ? 'Until dawn' : durLabel(a.h), ok: a.ok, sub: a.sub, why: a.why})),
     recipes: () => E.recipes(S).map(r => Object.assign({}, r, {dur: recipeTime(r)})),
     field: () => fieldMapSheet(),
-    saved(){ if (S && !S.dead) autosave(); }
+    saved(){ if (S && !S.dead) autosave(); },
+    // (a tap on him comes in on the finger going down; open his card once the tap's click is over, or it would close it)
+    mate(){ if (!S || S.P < 2) return; let tm = 0; const open = () => { document.removeEventListener('click', open, true); clearTimeout(tm); mateSheet(); }; document.addEventListener('click', open, true); tm = setTimeout(open, 600); },
+    ahead: () => clockRuns() ? Math.min(1, clockAcc) / 60 : 0
   };
 }
 function fieldMapSheet(){
@@ -7457,6 +7783,8 @@ function showResult(R){
     h += '<div class="news">' + caught + (R.opened || []).map(id => `<p>New side quest: <b>${esc(E.quest(S, id).title)}</b>. See the Journal.</p>`).join('') + R.notes.map(k => `<p>New in your field guide: <b>${esc(D.GUIDE[k].name)}</b></p>`).join('') +
       R.ach.map(k => `<p>🏅 Badge earned: <b>${esc(D.ACH[k].name)}</b></p>`).join('') + '</div>';
   }
+  const mn = (R.mate || []).filter(n => n.k !== 'rest');
+  if (mn.length) h += '<div class="matenews"><p class="mh">🧔 Meanwhile</p>' + mn.map(n => `<p>${esc(n.text)}</p>`).join('') + '</div>';
   if (S.dead) h += deathBlock();
   else if (S.pending) h += encounterBlock();
   else h += '<div class="foot"><button type="button" class="btn hot" data-close>Continue</button></div>';
@@ -7474,7 +7802,7 @@ function handle(R, quiet){
   else showResult(R);
 }
 function introSheet(){
-  openSheet(`<div class="sh-head"><span class="ic">🌄</span><h2>Day 1</h2></div><div class="story">${E.intro(S).map(l => `<p>${esc(l)}</p>`).join('')}</div>${(() => { const q = E.quests(S).current; return q ? `<div class="qdone"><p class="qd-h">Your first quest: <b>${esc(q.title)}</b></p><p>${esc(q.story)}</p></div>` : ''; })()}<p class="note">Tap the ground to walk, and tap a thing to use it. The orange marker shows where your quest leads. The clock only moves when you do something.</p><div class="foot"><button type="button" class="btn hot" data-close>Look around</button></div>`);
+  openSheet(`<div class="sh-head"><span class="ic">🌄</span><h2>Day 1</h2></div><div class="story">${E.intro(S).map(l => `<p>${esc(l)}</p>`).join('')}</div>${(() => { const q = E.quests(S).current; return q ? `<div class="qdone"><p class="qd-h">Your first quest: <b>${esc(q.title)}</b></p><p>${esc(q.story)}</p></div>` : ''; })()}<p class="note">Tap the ground to walk, and tap a thing to use it. The orange marker shows where your quest leads. ${S.P > 1 ? 'Your partner works on his own; tap him to hear what he\'s doing. While you\'re out walking the clock runs: one second is one minute.' : 'The clock only moves when you do something.'}</p><div class="foot"><button type="button" class="btn hot" data-close>Look around</button></div>`);
 }
 function menuSheet(){
   const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -7493,7 +7821,8 @@ function helpSheet(){
   openSheet(`<div class="sh-head"><span class="ic">📖</span><h2>How to play</h2></div><div class="help">
 <p><b>Walk.</b> Tap the ground and you walk there, or use the D-pad or the arrow keys. Each place has trails at its edges; walk off the end of one to go to the next place. The Map button shows the whole clearing, and you can tap a place on it to walk there.</p>
 <p><b>Use things.</b> Tap a thing (a cedar, the fire ring, the river's edge) and you walk up to it and see what you can do with it. Or face it and press A. Press A with nothing in front of you to rest, sleep, or make small things from your pack.</p>
-<p><b>Everything takes time.</b> Each job shows how long it takes, and the clock only moves when you do something. Walking around inside a place is free; the trip between places costs time, water and energy.</p>
+<p><b>Everything takes time.</b> Each job shows how long it takes. Playing alone, the clock only moves when you do something, and walking around inside a place is free. With a partner, the clock also runs while you're out walking: one second is one minute. The trip between places costs time, water and energy either way.</p>
+<p><b>Your partner.</b> In the two-person game your partner works on his own. He decides what camp needs (water, firewood, food, materials, help with what you're building), says so, and goes. Tap him, or the line under the place name, to hear what he's doing. Follow him if you like: you'll find him on the trail or at the job.</p>
 <p><b>Follow the quests, or don't.</b> The quest card says what to do, where, and how, and the orange marker on the map shows the way. You can follow a different quest from the Journal. Thirst, nightfall and exhaustion always cut in line.</p>
 <p><b>Skill moments.</b> Starting a fire, spearing fish, shooting, picking berries and killing a snake are done with your hands. Do them well and the odds go your way.</p>
 <p><b>Water comes first.</b> You lose several liters a day, twice that in the summer heat. River and pond water can make you sick. Boiled water, rain, and springs are safe.</p>
@@ -7592,7 +7921,7 @@ function doCraft(id){
   handle(result);
 }
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-follow],[data-act],[data-go],[data-eat],[data-bars],[data-drink],[data-craft],[data-choose],[data-close],[data-confirm],[data-tab],[data-j],[data-loc],[data-m],[data-opt],[data-view],[data-crecipe],[data-cpin],[data-cgroup],[data-cback]');
+  const b = e.target.closest('[data-mate],[data-follow],[data-act],[data-go],[data-eat],[data-bars],[data-drink],[data-craft],[data-choose],[data-close],[data-confirm],[data-tab],[data-j],[data-loc],[data-m],[data-opt],[data-view],[data-crecipe],[data-cpin],[data-cgroup],[data-cback]');
   if (!b){
     if (sel && S && !e.target.closest('.callout')){ sel = null; renderMap(); }
     return;
@@ -7621,6 +7950,7 @@ document.addEventListener('click', e => {
   }
   if ('close' in d){ closeSheet(); if (S) render(); return; }
   if (!S) return;
+  if ('mate' in d) return mateSheet();
   if (d.view){ view = d.view; store.set(KEY.view, view); sel = null; renderView(); renderMap(); return; }
   if (d.tab){ closeSheet(true); sheetReturnFocus = null; if (d.jq) jtab = 'quests'; setTab(d.tab); return; }
   if (d.follow){ if (E.follow(S, d.follow)){ autosave(); render(); toast(S.quest.follow ? 'The quest card will follow this quest.' : 'Back to the main quest.'); } return; }

@@ -253,6 +253,21 @@ making every minute count and giving a kid things to chase. Items marked *propos
 
 ### The partner is a helper with a mind of its own
 
+**Built October 4, 2026.** How it works now:
+- Every time he finishes something, he looks at what camp needs and picks the most needed job he can finish and get
+  back from before dark: water when the containers run low, boiling it when there's untreated water and a fire,
+  feeding a fire that's burning low, firewood when there's little left, materials the next shelter (or the project
+  you're following) is short of, work on a project you've started, checking the snares or the fish trap, and food
+  (berries, pecans, foraging, cattail roots, fishing), more so the hungrier camp gets. He doesn't do the same thing
+  twice running if something else is close. At night he sleeps at camp.
+- He says what he'll do ("We need firewood. I'm heading to the Oak Woods. Back around 10:30 AM."), in a bubble over
+  his head if you're there, or in a note if you're not. When he gets back, the next result says what he brought.
+- He does the same jobs you do, by the same rules, but as one person alone with a long walk each way he brings back
+  about 60% of what you would, and he rests an hour after each trip. With that, the robot players last about as long
+  in the two-person game as alone (117 days against 114), where before the partner's help couldn't keep up with a
+  second mouth (79 days). His old bonuses on your work (more from foraging, faster building, a better fire) are gone:
+  his help is now his own work.
+
 In the two-person game the partner works on their own. They decide what camp needs (water, wood, food), say so
 ("I'm going to the river for water"), and go. You can follow and watch them do it, or not.
 

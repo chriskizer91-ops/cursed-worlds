@@ -10,6 +10,14 @@ light from dawn to night, the weather and the seasons. The camp and the Cedar St
 paintings; the other places are turned toward the season in code. If a phone can't do 3D, the game falls back to its
 own pixel drawing on top of the painting. The camp on its own, to play with: https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT
 
+**Your partner is a helper (October 4, 2026).** In the two-person game your partner works on his own. He looks at
+what camp needs (water, firewood, food, materials for what you're building, a fire that's burning low), says what
+he'll do in a bubble over his head, and goes. His day runs on the game clock, so if you follow him you'll find him on
+the trail or at the job, working. Tap him, or the line under the place name, to hear what he's doing. Whatever he
+brings back goes straight into camp, and your next result says so. At night he sleeps by the fire. In the
+two-person game the clock also runs while you're out walking: one second is one minute (it stops whenever a card or
+menu is open).
+
 **Hunting and fishing (October 4, 2026)** are games of their own now:
 
 - **Hunting.** When you find an animal and pick Shoot, you look out over that place and the animal comes out of the
@@ -69,6 +77,8 @@ node tools/autoplay.mjs --trial                          # how each season goes 
 node tools/build-game.mjs                                # builds Stranded.html
 node tools/phone-check.mjs                               # plays the first quests in Stranded.html on a phone screen; "all good"
 node tools/minigames-check.mjs                           # plays practice, an hour of fishing and a hunt in Stranded.html; "all good"
+node tools/partner-check.mjs                             # the two-person game: follows the partner to his job; "all good"
+node tools/autoplay.mjs --mate                           # what the partner does each day, and how long two people last
 node tools/places-check.mjs                              # every painted place: its spots and ways out can be reached; "all good"
 node tools/living-tour.mjs                               # screenshots of every place, the seasons and night; "all good"
 node tools/trace-check.mjs camp                          # draws one place's trace over its painting, to check by eye

@@ -73,7 +73,7 @@ await shot('04-river', 1200);
 // tap the water's edge: walk up to it and get its menu
 const edge = await page.evaluate(() => World._v.map.spots.edge.tiles[0]);
 await tapToward(edge[0], edge[1]);
-check(await until(() => World._v.menuOpen, 20000), 'tapping the water\'s edge opens its menu');
+check(await until(() => World._v.menuOpen, 45000), 'tapping the water\'s edge opens its menu');
 await shot('05-edge-menu');
 await page.click('.wmenu [data-wi="0"]');
 await page.waitForTimeout(400);
@@ -89,7 +89,7 @@ await page.waitForTimeout(400);
 await closeSheets();
 const ring = await page.evaluate(() => World._v.map.spots.ring.tiles[0]);
 await tapToward(ring[0], ring[1]);
-check(await until(() => World._v.menuOpen, 20000), 'tapping the fire ring opens its menu');
+check(await until(() => World._v.menuOpen, 45000), 'tapping the fire ring opens its menu');   // (a dozen squares' walk: slow where 3D is drawn without a graphics chip)
 await page.click('.wmenu [data-wi="0"]');
 check(await until(() => !!document.getElementById('skill'), 3000), 'starting a fire opens the bow-drill skill moment');
 await shot('07-bow-drill');

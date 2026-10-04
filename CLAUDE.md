@@ -29,7 +29,10 @@ Games Chris builds from what his son Dagr describes. Each game gets its own fold
   three.js r128, the envoi living-battlefield technique). Ask Chris only for background paintings.
 - Each painting is traced to the game (`living/traces/`); check a trace with `tools/trace-check.mjs` and the living
   page with `tools/living-check.mjs`, which must end with "all good".
-- The robot players (`tools/autoplay.mjs`), the phone test (`tools/phone-check.mjs`) and the hunting and fishing
-  test (`tools/minigames-check.mjs`) must all end with "all good" before a push.
+- The robot players (`tools/autoplay.mjs`), the phone test (`tools/phone-check.mjs`), the hunting and fishing
+  test (`tools/minigames-check.mjs`) and the partner test (`tools/partner-check.mjs`) must all end with "all good"
+  before a push.
+- In the two-person game the partner picks his own jobs (`s.mate` in the engine). His work is measured with
+  `tools/autoplay.mjs --mate`; keep the two-person game close to the one-person game in days survived.
 - Hunting and fishing are games of their own (`living/hunt.js`, `living/fishing.js`). Their balance is measured
   against the engine's own dice, which the robot players use; keep a careful player near those odds.
