@@ -13,6 +13,10 @@
 //     chunky storybook figure with a big round head, short legs, big shining eyes that blink by squashing, flat warm
 //     colours from that game's palette, three-step cel shading with a cool rim of light, and an ink outline that moves
 //     with the skin. Squashes and stretches. Meant for a plain renderer (no tone mapping), like wren-3d's.
+//     With opts.shade 'soft', the same cartoon is lit the way a 3D cartoon film lights its characters, to stand in a
+//     realistic place: soft, velvety shading that the place's sun or moon falls on, light carried round into the shade,
+//     glossy eyes that still sparkle in the dark, and no ink line (opts.ink puts one back). Meant for a renderer with
+//     ACES tone mapping or envoi's cinema pass, like the envoi style.
 //
 // Units are metres, y is up, the animal faces +z with its feet at y = 0, its left side is +x (Henry's whole horn).
 //   const z = makeZebuHD('henry', {style: 'storybook', detail: 1});   detail 0.4 to 1
@@ -78,9 +82,9 @@
   }
   // the storybook eye: a big dark eye with a warm glow low down and two catchlights toward the front, as Wren's are
   // painted (wren-3d src/wren-model.js); u runs toward the animal's nose, v up
-  let EYE_SB = null;
-  function eyeTexture(iris) {
-    if (EYE_SB) return EYE_SB;
+  const EYE_SB = {};
+  function eyeTexture(iris, kind) {
+    if (EYE_SB[kind || 'flat']) return EYE_SB[kind || 'flat'];
     const c = cvs(256, 256), g = c.getContext('2d');
     g.fillStyle = '#1d1b2c'; g.fillRect(0, 0, 256, 256);
     const ir = new THREE.Color(iris), css = (k) => `rgb(${Math.round(ir.r * 255 * k)},${Math.round(ir.g * 255 * k)},${Math.round(ir.b * 255 * k)})`;
@@ -90,17 +94,25 @@
     g.fillStyle = 'rgba(255,255,255,0.96)'; g.beginPath(); g.ellipse(170, 78, 34, 30, -0.4, 0, TAU); g.fill();
     g.beginPath(); g.ellipse(92, 186, 13, 11, 0, 0, TAU); g.fill();
     g.fillStyle = 'rgba(255,255,255,0.35)'; g.beginPath(); g.ellipse(126, 214, 40, 10, 0, 0, PI); g.fill();
-    EYE_SB = new THREE.CanvasTexture(c); return EYE_SB;
+    const t = new THREE.CanvasTexture(c);
+    if (kind === 'lit') t.encoding = THREE.sRGBEncoding;
+    if (kind === 'sparkle') {
+      // the catchlights alone, to glow a little, so the eyes still shine in the dark
+      g.fillStyle = '#000'; g.fillRect(0, 0, 256, 256); g.fillStyle = '#fff';
+      g.beginPath(); g.ellipse(170, 78, 34, 30, -0.4, 0, TAU); g.fill(); g.beginPath(); g.ellipse(92, 186, 13, 11, 0, 0, TAU); g.fill();
+      t.needsUpdate = true; t.encoding = THREE.sRGBEncoding;
+    }
+    EYE_SB[kind || 'flat'] = t; return t;
   }
 
   function makeZebuHD(key, opts) {
     opts = opts || {};
     if (!root.makeZebuMoves) throw new Error('zebu-hd.js needs zebu-moves.js loaded first');
-    const SB = opts.style === 'storybook', style = SB ? 'storybook' : 'envoi';
+    const SB = opts.style === 'storybook', style = SB ? 'storybook' : 'envoi', SOFT = SB && opts.shade === 'soft';
     const LOOKS = root.ZEBU_LOOKS || {}, SBL = (root.ZEBU_STORYBOOK || {})[typeof key === 'string' ? key : ''] || {};
     const look = Object.assign({}, LOOKS.henry, typeof key === 'string' ? LOOKS[key] : key || {}, SB ? SBL : {});
     const DET = cl(opts.detail == null ? 1 : opts.detail, 0.3, 1.5), Q = (n, m) => Math.max(m || 3, Math.round(n * DET));
-    const LIN = opts.linear == null ? !SB : !!opts.linear;
+    const LIN = opts.linear == null ? !SB || SOFT : !!opts.linear;
     const COL = hex => { const c = new THREE.Color(hex); if (LIN) c.convertSRGBToLinear(); return c; };
     const TX = SB ? null : textures(DET < 0.6 ? 256 : 512);
 
@@ -271,7 +283,8 @@
     const cCoat = COL(look.coat), cBelly = COL(look.belly), cMuzzle = COL(look.muzzle), cSkin = COL(look.earIn), cHoof = COL(look.hoof), cTuft = COL(look.tuft);
     const isWhite = (new THREE.Color(look.coat).r + new THREE.Color(look.coat).g + new THREE.Color(look.coat).b) > 2.0;
     // Henry's neck, hump and shoulders are grey (Chris's photos); the storybook paints it in the game's cool shadow colour
-    const cShade = COL(SB ? (look.grey || look.shade) : isWhite ? 0xa8a49d : look.shade);
+    // (lit softly, the storybook's grey is a plain warm grey: its cool one turned lilac under the sky's light)
+    const cShade = COL(SOFT ? 0xcac3b8 : SB ? (look.grey || look.shade) : isWhite ? 0xa8a49d : look.shade);
     const cSpot = COL(look.spots ? look.spots.color : 0), tmp = new THREE.Color(), tmp2 = new THREE.Color();
     function coat(p) {
       const x = p.x, y = p.y, z = p.z;
@@ -675,7 +688,16 @@
     // the storybook's cel shading: three hard steps and a cool rim of light (wren-3d's ramp and rim)
     const ramp = (() => { const t = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255, 196, 196, 196, 255, 242, 242, 242, 255]), 3, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
     const toon = (o) => { const m = new THREE.MeshToonMaterial(Object.assign({vertexColors: true, gradientMap: ramp, skinning: true}, o)); m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vec3(.62, .71, 1.) * .16 * smoothstep(.55, .85, 1. - abs(dot(normal, normalize(vViewPosition))));'); }; m.customProgramCacheKey = () => 'zebusb-rim'; return m; };
-    const MATS = SB ? {
+    const MATS = SOFT ? {
+      // the cartoon lit by a real place: velvet on the coat, light carried round into the shade, glossy eyes that sparkle
+      coat: patch(new THREE.MeshPhysicalMaterial({vertexColors: true, roughness: 0.72, metalness: 0, sheen: new THREE.Color(0x4a4a4a), skinning: true}), {soft: [0.62, 0.42, 0.34], key: 'sbcoat'}),
+      horn: patch(new THREE.MeshStandardMaterial({vertexColors: true, roughness: 0.5, skinning: true}), {key: 'sbhorn'}),
+      hoof: patch(new THREE.MeshStandardMaterial({vertexColors: true, roughness: 0.45, skinning: true}), {key: 'sbhoof'}),
+      tongue: patch(new THREE.MeshPhysicalMaterial({vertexColors: true, roughness: 0.45, clearcoat: 0.6, clearcoatRoughness: 0.3, skinning: true}), {soft: [0.5, 0.18, 0.15], key: 'sbtongue'}),
+      mouth: patch(new THREE.MeshStandardMaterial({vertexColors: true, roughness: 0.5, skinning: true}), {key: 'sbmouth'}),
+      eyeSB: new THREE.MeshPhysicalMaterial({map: eyeTexture(look.iris || 0x3d2c2a, 'lit'), emissiveMap: eyeTexture(0, 'sparkle'), emissive: new THREE.Color(1, 1, 1), emissiveIntensity: 0.55, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.04, skinning: true}),
+      shine: new THREE.MeshStandardMaterial({color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.35, roughness: 0.25, skinning: true})
+    } : SB ? {
       coat: toon(), horn: toon(), hoof: toon(), tongue: toon(),
       mouth: new THREE.MeshBasicMaterial({vertexColors: true, skinning: true}),
       eyeSB: new THREE.MeshBasicMaterial({map: eyeTexture(look.iris || 0x3d2c2a), skinning: true}),
@@ -693,12 +715,13 @@
     };
     // the ink outline: the skin drawn again, a little fatter and inside out, in the game's ink, moving with the bones
     const ink = SB ? new THREE.ShaderMaterial({
-      uniforms: {uInk: {value: opts.ink == null ? 0.011 : opts.ink}, uC: {value: new THREE.Color(0x1d1b2c)}}, side: THREE.BackSide, skinning: true,
+      uniforms: {uInk: {value: opts.ink == null ? 0.011 : opts.ink}, uC: {value: COL(0x1d1b2c)}}, side: THREE.BackSide, skinning: true,
       vertexShader: ['#include <common>', '#include <skinning_pars_vertex>', 'attribute vec3 inkn;', 'uniform float uInk;', 'void main() {', '#include <skinbase_vertex>',
         'vec3 objectNormal = inkn;', '#include <skinnormal_vertex>', 'vec3 transformed = vec3(position);', '#include <skinning_vertex>',
         'transformed += normalize(objectNormal) * uInk;', '#include <project_vertex>', '}'].join('\n'),
       fragmentShader: 'uniform vec3 uC; void main() { gl_FragColor = vec4(uC, 1.); }'
     }) : null;
+    const INKING = SB && (!SOFT || opts.ink > 0);
     const INKED = new Set(['coat', 'horn', 'hoof', 'tongue']);
 
     // ---------- bind everything to the skeleton ----------
@@ -733,7 +756,7 @@
       const m = new THREE.SkinnedMesh(g, MATS[name]); m.frustumCulled = false; m.castShadow = !['cornea', 'eyeSB', 'shine', 'mouth'].includes(name); m.receiveShadow = name === 'coat';
       if (name === 'cornea') m.renderOrder = 2;
       R.add(m); m.bind(skeleton); meshes.push(m); TRIS += P.idx.length / 3;
-      if (SB && INKED.has(name)) {
+      if (INKING && INKED.has(name)) {
         // normals that agree wherever two points meet, so the line doesn't split at seams
         const map = new Map(), out = new Float32Array(pos.length), key = i => Math.round(pos[i * 3] * 1e4) + ',' + Math.round(pos[i * 3 + 1] * 1e4) + ',' + Math.round(pos[i * 3 + 2] * 1e4);
         for (let i = 0; i < pos.length / 3; i++) { const k = key(i), a = map.get(k) || [0, 0, 0]; a[0] += nor[i * 3]; a[1] += nor[i * 3 + 1]; a[2] += nor[i * 3 + 2]; map.set(k, a); }

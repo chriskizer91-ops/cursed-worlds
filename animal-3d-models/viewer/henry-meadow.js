@@ -17,7 +17,7 @@
 // Its colors are the Colossus page's own as they look on screen, taken back through envoi's film curve (cinema.js: exposure,
 // then an ACES curve), so they come out the same after it.
 // three.js r128 (global THREE). Defines makeHenryMeadow(renderer, scene, opts).
-// opts: { time: 'night' | 'dusk', pathR (the cattle trail's radius; 3.2), seed }
+// opts: { time: 'day' | 'dusk' | 'night', pathR (the cattle trail's radius; 3.2), seed }
 // Returns { time, night, exposure, aperture, bloom, rays, vignette (the film camera's settings for the hour), discDir (where
 //   the moon or the sun is), lightDir (where its light comes from), key (that light), dust (a color for dust),
 //   update(dt, t, henry, camPos), ring(x, z, s) (a push through the grass and the mist, from a landing), stats, dispose() }.
@@ -33,7 +33,8 @@
     const cvs = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
     const V3 = (x, y, z) => new THREE.Vector3(x || 0, y || 0, z || 0), V4 = () => new THREE.Vector4(0, 0, 0, 0), COL = h => new THREE.Color(h);
     const rgb = (r, g, b, a) => 'rgba(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ',' + (a === undefined ? 1 : a) + ')';
-    const NIGHT = opts.time !== 'dusk', pathR = opts.pathR || 3.2, GL2 = renderer.capabilities.isWebGL2;
+    const TIME = ['day', 'dusk', 'night'].includes(opts.time) ? opts.time : 'night', NIGHT = TIME === 'night', DAY = TIME === 'day';
+    const pathR = opts.pathR || 3.2, GL2 = renderer.capabilities.isWebGL2;
     const owned = [], own = o => { owned.push(o); return o; };
     const tex = (c, rx, ry, data) => { const t = own(new THREE.CanvasTexture(c)); if (!data) t.encoding = THREE.sRGBEncoding; if (rx) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry || rx); } t.anisotropy = 4; return t; };
     // mipmaps that keep their cover: each smaller level is drawn from the one before with its alpha raised, so grass and
@@ -48,7 +49,7 @@
       t.mipmaps = m; t.generateMipmaps = false; return t;
     };
 
-    // ---------- the hour: the Colossus page's night, or dusk on the ranch ----------
+    // ---------- the hour: the Colossus page's night, dusk on the ranch, or a sunny afternoon ----------
     // Colors written as hex are as they should look on screen; the lights are in linear light.
     const LIN = h => COL(h).convertSRGBToLinear(), LINV = a => new THREE.Color(a[0], a[1], a[2]);
     const P = NIGHT ? {
@@ -56,6 +57,11 @@
       mist: '#4a4268', bank: '#3e3760', dust: '#5a5468', ground: 0x5a6650, grass: 0xd2dcc2, bark: 0x7a706a, leaf: 0x5c6a66,
       hs: LIN('#756aa8'), hg: LIN('#33262f'), hi: 1.1, lc: LIN('#b8c0ff'), li: .62, fc: LIN('#ffdcc0'), fi: .34,
       exposure: 1.6, fog: [26, 190], stars: 1, cloud: .18, discR: .046, discEl: .16, lightEl: .62, flies: 1, sun: 0, mistA: .36, aperture: .06, envGain: .45, bloom: .3, rays: .22, vignette: .28,
+    } : DAY ? {
+      top: '#3f78c0', mid: '#7fa9d8', hor: '#cfdde3', haze: '#b9c7cc', hill: '#7e8f8c', disc: '#fff4dc', cloudC: '#f2f4f6', tree: '#3e5631', deep: '#2c3f24', rim: '#e0eaa8', lit: '#8aa858', litK: 1,
+      mist: '#dde4e2', bank: '#d4dcdc', bankA: .06, feetMist: .2, dust: '#b3a07c', ground: 0x96a060, grass: 0xe2e8c4, bark: [1.6, 1.4, 1.2], leaf: [2.4, 2.7, 1.9],
+      hs: LIN('#b8d2ee'), hg: LIN('#6e5c3c'), hi: .95, lc: LIN('#fff0d8'), li: 1.9, fc: LIN('#ffe6cc'), fi: .2,
+      exposure: .95, fog: [70, 450], stars: 0, cloud: .32, discR: .03, discEl: .9, lightEl: .9, flies: 0, sun: 1, mistA: .04, aperture: .2, envGain: 1, bloom: .3, rays: .1, vignette: .22,
     } : {
       top: '#1a2350', mid: '#5b4f7c', hor: '#e8a46a', haze: '#8c6c68', hill: '#4e3a46', disc: '#ffcf96', tree: '#241c20', deep: '#3e2c30', rim: '#ffb27a', lit: '#5a4440',
       mist: '#a8847a', bank: '#9c7a72', dust: '#8a6a50', ground: 0x8a8a62, grass: 0xe6dcc0, bark: 0xa0928a, leaf: 0xb0a890,
@@ -235,10 +241,10 @@
     // ---------- the sky: the hour's gradient, the moon (or the sun) with its halo, stars, low hills, clouds drifting ----------
     const SKYU = Object.assign({
       uDisc: {value: DISC}, uTop: {value: SC(P.top)}, uMid: {value: SC(P.mid)}, uHor: {value: SC(P.hor)}, uHaze: {value: SC(P.haze)}, uHill: {value: SC(P.hill)}, uMoonC: {value: SC(P.disc)},
-      uStars: {value: P.stars}, uCloud: {value: P.cloud}, uSun: {value: P.sun}, uDiscR: {value: P.discR}, uGain: {value: 1},
+      uStars: {value: P.stars}, uCloud: {value: P.cloud}, uSun: {value: P.sun}, uDiscR: {value: P.discR}, uGain: {value: 1}, uCloudC: {value: SC(P.cloudC || P.haze).multiplyScalar(P.cloudC ? 1 : 1.1)},
     }, AIRU, EXPU);
     const SKYFS = [
-      'uniform vec3 uDisc, uTop, uMid, uHor, uHaze, uHill, uMoonC; uniform float uStars, uCloud, uSun, uDiscR, uGain; varying vec3 vD;',
+      'uniform vec3 uDisc, uTop, uMid, uHor, uHaze, uHill, uMoonC, uCloudC; uniform float uStars, uCloud, uSun, uDiscR, uGain; varying vec3 vD;',
       AIR, UNFILM,
       'float ridge3(float x){ float s = 0., a = .55, f = 1.; for (int i = 0; i < 3; i++) { s += a * (1. - abs(mn(vec2(x * f, float(i) * 7.3)) * 2. - 1.)); f *= 2.07; a *= .5; } return s + .12; }',
       'void main(){',
@@ -264,7 +270,7 @@
       // clouds drifting over the moon, lit round it; how many there are is the hour's
       ' vec2 cu = d.xz / max(.06, d.y + .18) * 1.6 - uFlow.xy * .008;',
       ' float n = mf(cu * .42) * .62 + mf(cu * 1.25 + 4.) * .38, cov = smoothstep(1. - uCloud, 1.16 - uCloud, n) * smoothstep(-.03, .1, y);',
-      ' vec3 cc = uHaze * 1.1 * (.75 + .5 * n) + uMoonC * (pow(m, 6.) * .45 + pow(m, 30.) * .6) * (1.15 - n) * (1. + uSun);',
+      ' vec3 cc = uCloudC * (.75 + .5 * n) + uMoonC * (pow(m, 6.) * .45 + pow(m, 30.) * .6) * (1.15 - n) * (1. + uSun);',
       ' c = mix(c, cc, cov * .95);',
       ' c = mix(c, uHaze, smoothstep(0., -.03, y));',
       ' vec3 o = unfilm(c);',
@@ -291,7 +297,7 @@
     // ---------- the ground: turf, worn to bare earth along the cattle's trail and trampled round the hay ----------
     const groundM = own(new THREE.MeshStandardMaterial({map: groundTex, roughness: .96, color: LIN(P.ground), envMapIntensity: .3}));
     groundM.onBeforeCompile = sh => {
-      Object.assign(sh.uniforms, AIRU, {uPathR: {value: pathR}, uDirt: {value: LIN(NIGHT ? '#6a6050' : '#8a7458')}});
+      Object.assign(sh.uniforms, AIRU, {uPathR: {value: pathR}, uDirt: {value: LIN(NIGHT ? '#6a6050' : DAY ? '#a08a66' : '#8a7458')}});
       sh.vertexShader = 'varying vec2 vGp;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vGp = (modelMatrix * vec4(position, 1.)).xz;');
       sh.fragmentShader = 'varying vec2 vGp; uniform float uPathR; uniform vec3 uDirt;\n' + AIR + CSH + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n' +
         ' { float gr = length(vGp), n = mn(vGp * .9), tr = exp(-pow((gr - uPathR) / .42, 2.)) * (.8 + .5 * mn(vGp * 2.3)), hay = 1. - smoothstep(1.4, 3.6, length(vGp / vec2(1.6, 1.9)));\n' +
@@ -380,7 +386,7 @@
     // their feet
     const forestU = Object.assign({
       uMap: {value: treeTex}, uTree: {value: SC(P.tree)}, uDeep: {value: SC(P.deep)}, uRim: {value: SC(P.rim)}, uLit: {value: SC(P.lit)}, uHazeC: {value: SC(P.haze)}, uMist: {value: SC(P.mist)},
-      uMoonD: {value: LIGHT}, uHazeN: {value: NIGHT ? 55 : 50}, uHazeF: {value: NIGHT ? 250 : 220},
+      uMoonD: {value: LIGHT}, uHazeN: {value: NIGHT ? 55 : DAY ? 40 : 50}, uHazeF: {value: NIGHT ? 250 : DAY ? 320 : 220}, uLitK: {value: P.litK || .5}, uFeet: {value: P.feetMist == null ? .62 : P.feetMist},
     }, EXPU);
     let nTrees = 0;
     const forest = (() => {
@@ -416,15 +422,15 @@
           ' vec3 m = normalize(uMoonD); vM2 = normalize(vec2(dot(m.xz, sd) * (aD.y > .5 ? -1. : 1.), m.y + .35)); vBack = max(0., dot(-toC, normalize(m.xz)));',
           ' gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.); }'].join('\n'),
         fragmentShader: [
-          'uniform sampler2D uMap; uniform vec3 uTree, uDeep, uRim, uLit, uHazeC, uMist; uniform float uHazeN, uHazeF;', UNFILM,
+          'uniform sampler2D uMap; uniform vec3 uTree, uDeep, uRim, uLit, uHazeC, uMist; uniform float uHazeN, uHazeF, uLitK, uFeet;', UNFILM,
           'varying vec2 vUv; varying vec4 vCell; varying float vShade; varying float vDist; varying float vY; varying vec2 vM2; varying float vBack;',
           'void main(){ vec2 uv = vCell.xy + vUv * vCell.zw; vec4 t = texture2D(uMap, uv); if (t.a < .3) discard;',
           ' vec2 o = vM2 * vCell.zw * .005; float a2 = texture2D(uMap, uv + o).a, a3 = texture2D(uMap, uv + o * 2.2).a;',
           ' float rim = clamp(t.a - (a2 * .6 + a3 * .4), 0., 1.) * smoothstep(.15, .6, vUv.y) * .55 * (.3 + .7 * vBack);',
           ' float far = smoothstep(40., 170., vDist);',
-          ' vec3 c = mix(uDeep, uTree, t.r) * vShade * (1. - .35 * far) + uLit * t.r * t.r * (1. - vBack) * .5 * (1. - .6 * far) + uRim * rim * (1.3 - far * .9);',
+          ' vec3 c = mix(uDeep, uTree, t.r) * vShade * (1. - .35 * far) + uLit * t.r * t.r * (1. - vBack) * uLitK * (1. - .6 * far) + uRim * rim * (1.3 - far * .9);',
           ' c = mix(c, uHazeC * 1.05, smoothstep(uHazeN, uHazeF, vDist) * .75);',
-          ' c = mix(c, uMist, (1. - smoothstep(0., 4.5, vY)) * .62);',
+          ' c = mix(c, uMist, (1. - smoothstep(0., 4.5, vY)) * uFeet);',
           ' float a = clamp((t.a - .5) / max(fwidth(t.a), .001) + .5, 0., 1.);',
           ' gl_FragColor = linearToOutputTexel(vec4(unfilm(c), a)); }'].join('\n'),
       }));
@@ -498,8 +504,9 @@
         m.customProgramCacheKey = () => 'hm-tree-' + name;
         return m;
       };
-      const trunks = new THREE.Mesh(mk(tP, tN, tU, tT, tI), airy(own(new THREE.MeshLambertMaterial({map: barkTex, color: LIN(P.bark)})), 'bark'));
-      const leafM = own(new THREE.MeshLambertMaterial({map: leafTex, alphaTest: .45, side: THREE.DoubleSide, vertexColors: true, color: LIN(P.leaf)})); if (GL2) leafM.alphaToCoverage = true;
+      const CK = c => (Array.isArray(c) ? LINV(c) : LIN(c));
+      const trunks = new THREE.Mesh(mk(tP, tN, tU, tT, tI), airy(own(new THREE.MeshLambertMaterial({map: barkTex, color: CK(P.bark)})), 'bark'));
+      const leafM = own(new THREE.MeshLambertMaterial({map: leafTex, alphaTest: .45, side: THREE.DoubleSide, vertexColors: true, color: CK(P.leaf)})); if (GL2) leafM.alphaToCoverage = true;
       const crowns = new THREE.Mesh(mk(cP, cN, cU, cT, cI, cC), airy(leafM, 'leaf'));
       trunks.frustumCulled = crowns.frustumCulled = false; scene.add(trunks, crowns);
     }
@@ -509,10 +516,10 @@
     const MIST = {uC: {value: SC(P.mist)}, uA: {value: P.mistA}};
     {
       const M = own(new THREE.ShaderMaterial({
-        uniforms: Object.assign({uC: {value: SC(P.bank)}, uMap: {value: mistTex}}, EXPU), transparent: true, depthWrite: false, fog: false, side: THREE.BackSide,
+        uniforms: Object.assign({uC: {value: SC(P.bank)}, uMap: {value: mistTex}, uA: {value: P.bankA == null ? .32 : P.bankA}}, EXPU), transparent: true, depthWrite: false, fog: false, side: THREE.BackSide,
         vertexShader: 'varying vec2 vUv;\nvoid main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-        fragmentShader: 'uniform vec3 uC; uniform sampler2D uMap; varying vec2 vUv;\n' + UNFILM +
-          'void main(){ float n = texture2D(uMap, vUv * vec2(24., .6)).r * 2.2; float a = smoothstep(0., .25, vUv.y) * (1. - smoothstep(.35, 1., vUv.y)); gl_FragColor = linearToOutputTexel(vec4(unfilm(uC), a * min(1., n) * .32)); }',
+        fragmentShader: 'uniform vec3 uC; uniform sampler2D uMap; uniform float uA; varying vec2 vUv;\n' + UNFILM +
+          'void main(){ float n = texture2D(uMap, vUv * vec2(24., .6)).r * 2.2; float a = smoothstep(0., .25, vUv.y) * (1. - smoothstep(.35, 1., vUv.y)); gl_FragColor = linearToOutputTexel(vec4(unfilm(uC), a * min(1., n) * uA)); }',
       }));
       for (const [r, h] of [[50, 9], [72, 13]]) { const g = own(new THREE.CylinderGeometry(r, r, h, 72, 1, true)), m = new THREE.Mesh(g, M); m.position.y = h * .3; m.renderOrder = 3; m.frustumCulled = false; scene.add(m); }
     }
@@ -552,7 +559,7 @@
     {
       const env = new THREE.Scene();
       env.add(new THREE.Mesh(skyG, skyM), new THREE.Mesh(forest.geometry, forest.material));
-      const g = new THREE.Mesh(new THREE.CircleGeometry(300, 32), new THREE.MeshBasicMaterial({color: UNF(NIGHT ? '#1c1a24' : '#5a4a3c')})); g.rotation.x = -PI / 2; g.position.y = -1.4; env.add(g);
+      const g = new THREE.Mesh(new THREE.CircleGeometry(300, 32), new THREE.MeshBasicMaterial({color: UNF(NIGHT ? '#1c1a24' : DAY ? '#6c6e4c' : '#5a4a3c')})); g.rotation.x = -PI / 2; g.position.y = -1.4; env.add(g);
       SKYU.uGain.value = P.envGain; const pm = new THREE.PMREMGenerator(renderer), rt = own(pm.fromScene(env, .04, .1, 1000)); scene.environment = rt.texture; pm.dispose(); SKYU.uGain.value = 1; g.geometry.dispose(); g.material.dispose();
     }
 
@@ -593,7 +600,7 @@
       for (const m of grassMeshes) scene.remove(m);
     }
     return {
-      time: NIGHT ? 'night' : 'dusk', night: NIGHT, exposure: E, aperture: P.aperture, bloom: P.bloom, rays: P.rays, vignette: P.vignette, discDir: DISC, lightDir: LIGHT, key, dust: UNF(P.dust), update, ring, dispose,
+      time: TIME, night: NIGHT, exposure: E, aperture: P.aperture, bloom: P.bloom, rays: P.rays, vignette: P.vignette, discDir: DISC, lightDir: LIGHT, key, dust: UNF(P.dust), update, ring, dispose,
       stats: {tufts: nTufts, trees: nTrees, grassChunks: grassMeshes.length},
     };
   }

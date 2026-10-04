@@ -1,7 +1,7 @@
-// Henry in Motion's check. On a phone-sized screen it builds both looks and plays every move and every state, tries the
-// envoi pasture at night and at dusk, then uses the page the way a person would: tapping its buttons, dragging round
-// Henry, scrolling closer and patting him. It saves a contact sheet of what it saw for each look, and ends with
-// "all good" when everything worked and the page threw no errors.
+// Henry in Motion's check. On a phone-sized screen it builds both Henrys (the cartoon and the realistic one) in the
+// pasture and plays every move and every state, tries the pasture by day, at dusk and at night, then uses the page the
+// way a person would: tapping its buttons, dragging round Henry, scrolling closer and patting him. It saves a contact
+// sheet of what it saw for each Henry, and ends with "all good" when everything worked and the page threw no errors.
 //   node animal-3d-models/tools/build-viewer.mjs --page henry-motion
 //   node animal-3d-models/tools/henry-motion-check.mjs [--file animal-3d-models/Henry_In_Motion.html] [--out animal-3d-models/shots/motion]
 import path from 'node:path';
@@ -37,15 +37,17 @@ async function sheet(name, items) {
 
 // ---------- 1. every move and state in each look, stepped in time (the page's ?test mode) ----------
 const SIZE = {width: 390, height: 844};
-for (const look of ['storybook', 'envoi']) {
+for (const look of ['cartoon', 'realistic']) {
   console.log(look + ':');
   const page = await browser.newPage({viewport: SIZE, deviceScaleFactor: 1}); watch(page, look);
-  await page.goto(url + '?test' + (look === 'envoi' ? '&envoi' : ''));
+  await page.goto(url + '?test' + (look === 'realistic' ? '&realistic' : ''));
   await page.waitForFunction(() => window.READY || window.ERR, null, {timeout: 180000});
   check(!(await page.evaluate(() => window.ERR)), `${look}: the page built Henry with no error`);
   const shots = [], snap = async label => shots.push({label, png: await page.screenshot()});
   const H = (fn, arg) => page.evaluate(fn, arg);
-  check(await H(() => HM.henry.tris) > 100000, `${look}: Henry has more than 100,000 triangles`);
+  // the realistic Henry is full detail; the cartoon is smooth and needs fewer
+  const tris = await H(() => HM.henry.tris), need = look === 'realistic' ? 100000 : 50000;
+  check(tris > need, `${look}: Henry has ${Math.round(tris).toLocaleString('en')} triangles (more than ${need.toLocaleString('en')})`);
   await H(() => HM.step(1));
   const cost = await H(() => HM.frame()); console.log(`  one frame: ${cost.calls} draws, ${Math.round(cost.tris / 1000)}k triangles`);
   check(cost.calls < 160, `${look}: a frame takes fewer than 160 draws`);
@@ -79,18 +81,18 @@ for (const look of ['storybook', 'envoi']) {
   await H(() => { HM.go('look'); HM.step(1.2); }); await snap('look at me');
   await H(() => { HM.go('face'); HM.step(2.5); }); check(await H(() => HM.view.face), `${look}: close up comes in to his face`); await snap('close up');
   await H(() => { HM.go('face'); HM.step(1); });
-  // the envoi pasture: drawn as the Colossus meadow draws its own, at night and at dusk, with nothing left behind on a switch
-  if (look === 'envoi') {
-    const st = await H(() => HM.place.meadow.stats);
-    check(st.tufts > 8000 && st.trees > 600, `envoi: the pasture has its grass (${st.tufts} tufts) and its trees (${st.trees})`);
-    const mem0 = await H(() => HM.memory());
-    await H(() => HM.setTime('dusk')); await page.waitForFunction(() => HM.ready && HM.time === 'dusk', null, {timeout: 120000}); await H(() => HM.step(1));
-    check(await H(() => HM.place.time) === 'dusk', 'envoi: dusk comes');
-    await snap('dusk');
-    await H(() => HM.setTime('night')); await page.waitForFunction(() => HM.ready && HM.time === 'night', null, {timeout: 120000}); await H(() => HM.step(1));
-    const mem1 = await H(() => HM.memory());
-    check(mem1.textures <= mem0.textures && mem1.geometries <= mem0.geometries, `envoi: night to dusk and back leaves nothing behind (${mem0.textures} pictures before, ${mem1.textures} after)`);
+  // the pasture: drawn as the Colossus meadow draws its own, by day, at dusk and at night, with nothing left behind on a switch
+  const st = await H(() => HM.place.meadow.stats);
+  check(st.tufts > 8000 && st.trees > 600, `${look}: the pasture has its grass (${st.tufts} tufts) and its trees (${st.trees})`);
+  check(await H(() => HM.time) === 'day', `${look}: it starts by day`);
+  const mem0 = await H(() => HM.memory());
+  for (const t of ['dusk', 'night', 'day']) {
+    await H(t => HM.setTime(t), t); await page.waitForFunction(t => HM.ready && HM.time === t, t, {timeout: 120000}); await H(() => HM.step(1));
+    check(await H(() => HM.place.time) === t, `${look}: ${t} comes`);
+    if (t !== 'day') await snap(t);
   }
+  const mem1 = await H(() => HM.memory());
+  check(mem1.textures <= mem0.textures && mem1.geometries <= mem0.geometries, `${look}: day to dusk to night and back leaves nothing behind (${mem0.textures} pictures before, ${mem1.textures} after)`);
   await sheet(`${look}-moves`, shots);
   await page.close();
 }
@@ -105,10 +107,11 @@ for (const look of ['storybook', 'envoi']) {
   const shots = [], snap = async label => shots.push({label, png: await page.screenshot({scale: 'css'})});
   const status = () => page.evaluate(() => document.getElementById('status').textContent);
   const until = async (fn, ms = 90000, arg) => { for (let t = 0; t < ms; t += 200) { if (await page.evaluate(fn, arg)) return true; await page.waitForTimeout(200); } return false; };
-  check(await until(() => HM.ready), 'the page starts in the storybook look');
-  // every button's name fits it
-  const cut = await page.evaluate(() => [...document.querySelectorAll('#moves button')].filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent));
+  check(await until(() => HM.ready && HM.look === 'cartoon' && HM.time === 'day'), 'the page starts with the cartoon Henry, by day');
+  // every button's name fits it, and the top row fits across the screen
+  const cut = await page.evaluate(() => [...document.querySelectorAll('#moves button, #top button')].filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent));
   check(!cut.length, 'every button shows its whole name' + (cut.length ? ' (cut short: ' + cut.join(', ') + ')' : ''));
+  check(await page.evaluate(() => [...document.querySelectorAll('#top button')].every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; })), 'the buttons at the top fit across the screen');
   await page.getByRole('button', {name: 'Moo'}).tap();
   check(await until(() => document.getElementById('status').textContent.includes('mooing')), 'tapping Moo makes him moo');
   await page.waitForTimeout(700); await snap('moo');
@@ -130,21 +133,21 @@ for (const look of ['storybook', 'envoi']) {
   await page.touchscreen.tap(head.x, head.y);
   check(await until(() => HM.view.lookAtMe > 0, 10000), 'patting his head makes him look at you');
   await page.waitForTimeout(500); await snap('patted');
-  // the envoi look, and its hour
-  await page.getByRole('button', {name: 'Envoi'}).tap();
-  check(await until(() => HM.ready && HM.style === 'envoi', 120000), 'tapping Envoi changes the look');
-  check(await page.locator('#timeBtn').isVisible(), 'envoi shows the time of day');
-  await page.waitForTimeout(1500); await snap('envoi');
+  // the time of day, then the realistic Henry
+  check((await page.locator('#timeBtn').textContent()) === 'Day', 'the time button says Day');
   await page.locator('#timeBtn').tap();
-  check(await until(() => HM.ready && HM.time === 'dusk', 120000), 'tapping Night brings dusk');
+  check(await until(() => HM.ready && HM.time === 'dusk', 120000), 'tapping Day brings dusk');
   check((await page.locator('#timeBtn').textContent()) === 'Dusk', 'the time button then says Dusk');
   await page.waitForTimeout(1500); await snap('dusk');
+  await page.getByRole('button', {name: 'Realistic'}).tap();
+  check(await until(() => HM.ready && HM.look === 'realistic', 120000), 'tapping Realistic shows the realistic Henry');
+  check(await page.evaluate(() => HM.time) === 'dusk', 'he stays at dusk');
+  await page.waitForTimeout(1500); await snap('realistic');
   await page.getByRole('button', {name: 'Lie down'}).tap();
   check(await until(() => HM.henry.state === 'lie', 240000), 'tapping Lie down lays him down');
   await page.waitForTimeout(800); await snap('lying');
-  await page.getByRole('button', {name: 'Storybook'}).tap();
-  check(await until(() => HM.ready && HM.style === 'storybook', 120000), 'tapping Storybook goes back');
-  check(!(await page.locator('#timeBtn').isVisible()), 'the storybook has no time of day');
+  await page.getByRole('button', {name: 'Cartoon'}).tap();
+  check(await until(() => HM.ready && HM.look === 'cartoon', 120000), 'tapping Cartoon goes back');
   console.log('  status at the end: ' + await status());
   await sheet('by-hand', shots);
   await page.close();

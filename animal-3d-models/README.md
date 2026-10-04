@@ -13,11 +13,11 @@ way Stranded makes its animals: rounded parts on joints, coloured flat like a ca
   - `makeZebuStorybook` and `makeZebu` in `zebu.js`: the lighter storybook and ranch-game looks, light enough for a
     whole herd.
 - `viewer/` has two Henry pages:
-  - **Henry in Motion** (`henry-motion.html`): Henry in both full-detail styles, with a button for everything he does, a
-    camera that walks round with him, and his sounds made in code. The storybook style stands him on a round page of
-    meadow. The envoi style stands him in a pasture at night under a big moon, or at dusk (the button at the top
-    changes it), drawn the way envoi's *Colossus in the Meadow* draws its wild meadow (`henry-meadow.js`), and filmed
-    through envoi's own film camera (`cinema.js`, copied from envoi).
+  - **Henry in Motion** (`henry-motion.html`): Henry as a cute cartoon (the default) or realistic, with a button for
+    everything he does, a camera that walks round with him, and his sounds made in code. Both stand in the ranch pasture,
+    by day, at dusk or at night under a big moon (the button at the top changes it), drawn the way envoi's *Colossus in
+    the Meadow* draws its wild meadow (`henry-meadow.js`), and filmed through envoi's own film camera (`cinema.js`, copied
+    from envoi). The cartoon is the storybook Henry lit softly, the way a 3D cartoon film lights its characters.
   - **Henry Three Ways** (`henry.html`): full detail, storybook and the ranch game, to turn by hand.
   - `tools/build-viewer.mjs --page henry-motion` (or `--page henry`) makes either page one file that works offline
     (`Henry_In_Motion.html`, `Henry_Three_Ways.html`).
@@ -35,8 +35,8 @@ node animal-3d-models/tools/turnaround.mjs --look henry --model hd --poses stand
 node animal-3d-models/tools/turnaround.mjs --look tan-cow                                    # the ranch game look
 ```
 
-- `henry-motion-check.mjs` plays every move and state in both styles, tries night and dusk, then taps the buttons,
-  drags round Henry and pats him like a person would. It makes a contact sheet of each look (`shots/motion/`).
+- `henry-motion-check.mjs` plays every move and state with both Henrys, tries day, dusk and night, then taps the
+  buttons, drags round Henry and pats him like a person would. It makes a contact sheet of each Henry (`shots/motion/`).
 - `turnaround.mjs` photographs an animal from every side and in each pose, to check against its character sheet.
 - `solve-pose.mjs` works out the joint angles for a pose that touches the ground (lying down, kneeling, grazing) from
   where the joints should rest: `node animal-3d-models/tools/solve-pose.mjs animal-3d-models/tools/poses/lie.json`.

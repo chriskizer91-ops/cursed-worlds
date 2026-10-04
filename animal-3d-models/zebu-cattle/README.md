@@ -29,7 +29,9 @@ Each animal comes in three looks (see [the guide](../HOW-TO-MAKE-3D-MODELS.md)):
   the folds of the dewlap and the fine upright wrinkles down his neck; hair painted into the coat so it catches the
   light; dark moist eyes under a glossy cornea, with lids that blink; his whole left horn and his broken right one;
   split hooves; a tail switch of single hairs. About 140,000 triangles. `makeZebuHD('henry', {style: 'storybook'})` is
-  the same Henry in What the Map Forgot's proportions and colours, with painted eyes and an ink outline.
+  the same Henry in What the Map Forgot's proportions and colours, with painted eyes and an ink outline; with
+  `shade: 'soft'` he is lit like a 3D cartoon film's character instead, to stand in a realistic place. That cartoon is
+  the Henry Chris liked best.
 - **Storybook**, `makeZebuStorybook('henry')` in `zebu.js`: What the Map Forgot's look. A big round head, short legs,
   big shining eyes, flat warm colours and an ink outline.
 - **Ranch game**, `makeZebu('henry')` in `zebu.js`: the cartoon the ranch map uses for the whole herd.
@@ -48,5 +50,6 @@ stretch and lick the nose.
 
 - `henry/model-full-detail.jpg`: the full-detail Henry from the sides and the front, grazing and lying.
 - `henry/model-storybook.jpg`: the full-detail Henry in the storybook style: standing, grazing, lying and asleep.
+- `henry/model-cartoon.jpg`: the cartoon Henry in the pasture by day, from six sides (the one Chris liked best).
 - `henry/model-turnaround.png`: the ranch game's Henry from every side.
 - `herd-lineup.png`: the whole herd side by side, in the ranch game's look.

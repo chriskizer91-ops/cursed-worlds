@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Henry in Motion</title>
 <style>
-/* Henry in Motion: Henry fills the screen; the look on top, what he does at the bottom.
-   Each look dresses the page its own way: the storybook in What the Map Forgot's paper and ink, envoi in its night-blue glass. */
+/* Henry in Motion: Henry fills the screen; which Henry and the time of day on top, what he does at the bottom.
+   Each Henry dresses the page its own way: the cartoon in What the Map Forgot's paper and ink, the realistic one in envoi's night-blue glass. */
 :root {
   --panel: #f4efe2; --panel-2: #e9e1cd; --ink: #1d1b2c; --ink-dim: #5a5466; --edge: #1d1b2c; --edge-w: 3px; --accent: #e8b248; --accent-ink: #1d1b2c;
   --shadow: 0 3px 0 rgba(29, 27, 44, 0.9); --radius: 14px; --page: #e9e6d6;
@@ -30,7 +30,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; pointer-events: auto; }
 .seg button { border: 0; background: none; padding: 7px 14px; border-radius: 999px; font-family: var(--title); font-weight: 700; font-size: 15px; letter-spacing: 0.01em; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-.chip { pointer-events: auto; border-radius: 999px; padding: 8px 13px; font-size: 13px; }
+.chip { pointer-events: auto; border-radius: 999px; padding: 8px 13px; font-size: 13px; white-space: nowrap; }
 .chip[aria-pressed="false"] { opacity: 0.7; }
 #status { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 62px); transform: translateX(-50%); padding: 5px 13px; border-radius: 999px; font-family: var(--title); font-size: 15px; white-space: nowrap; pointer-events: none; }
 #hint { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 98px); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); text-align: center; font-size: 12.5px; color: var(--ink-dim); pointer-events: none; transition: opacity 0.8s; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4); }
@@ -45,18 +45,19 @@ body[data-style="storybook"] #moves button { border-width: 2px; box-shadow: 0 2p
 #busy { position: fixed; inset: 0; display: grid; place-items: center; background: var(--page); font-family: var(--title); font-size: 19px; color: var(--ink); }
 #busy[hidden] { display: none; }
 @media (min-width: 700px) { #moves { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
-@media (max-width: 360px) { #moves button { font-size: 12px; } .seg button { padding: 7px 10px; font-size: 14px; } }
+@media (max-width: 440px) { #top { gap: 6px; padding-left: 10px; padding-right: 10px; } .seg button { padding: 7px 11px; font-size: 14px; } .chip { padding: 8px 10px; } }
+@media (max-width: 360px) { #moves button { font-size: 12px; } .seg button { padding: 7px 8px; font-size: 13px; } .chip { padding: 7px 8px; font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { #hint, #moves button { transition: none; } }
 </style>
 </head>
 <body data-style="storybook">
-<canvas id="view" aria-label="Henry, the white Zebu bull, in 3D"></canvas>
+<canvas id="view" aria-label="Henry, the white Zebu bull, in 3D, in the pasture"></canvas>
 <header id="top">
-  <div class="seg" role="group" aria-label="Look">
-    <button id="lookSB" data-look="storybook" aria-pressed="true">Storybook</button><button id="lookEV" data-look="envoi" aria-pressed="false">Envoi</button>
+  <div class="seg" role="group" aria-label="Which Henry">
+    <button id="lookCartoon" data-look="cartoon" aria-pressed="true">Cartoon</button><button id="lookReal" data-look="realistic" aria-pressed="false">Realistic</button>
   </div>
   <div class="grow"></div>
-  <button id="timeBtn" class="chip" hidden aria-label="Time of day">Night</button>
+  <button id="timeBtn" class="chip" aria-label="Time of day">Day</button>
   <button id="soundBtn" class="chip" aria-pressed="true">Sound on</button>
 </header>
 <div id="status" aria-live="polite">Henry is standing</div>

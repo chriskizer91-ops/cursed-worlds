@@ -1,5 +1,6 @@
-// henry-motion.js: Henry in Motion. Henry in two looks (the storybook look of What the Map Forgot, and envoi's cinematic
-// look), with a button for everything he does, a camera that follows him round, and his sounds, all made in code.
+// henry-motion.js: Henry in Motion. Henry as a cartoon (the storybook model, lit softly like a 3D cartoon film) or realistic
+// (envoi's style), standing in the ranch pasture by day, at dusk or at night, with a button for everything he does, a
+// camera that follows him round, and his sounds, all made in code.
 // Needs three.js r128, cinema.js, zebu.js, zebu-moves.js, zebu-hd.js, henry-meadow.js and henry-scenes.js.
 //
 // Opened with ?test, it doesn't run by itself: window.HM lets a check build either look, step time, play moves and take
@@ -13,45 +14,48 @@
   const canvas = $('view');
   const renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'});
   const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 400);
-  let style = /[?&#]envoi\b/.test(location.search + location.hash) ? 'envoi' : 'storybook', place = null, henry = null, building = false, clock = 0;
-  let time = /[?&#]dusk\b/.test(location.search + location.hash) ? 'dusk' : 'night';   // the envoi look's hour
+  const Q = location.search + location.hash;
+  let look = /[?&#](realistic|envoi)\b/.test(Q) ? 'realistic' : 'cartoon', place = null, henry = null, building = false, clock = 0;
+  let time = /[?&#]dusk\b/.test(Q) ? 'dusk' : /[?&#]night\b/.test(Q) ? 'night' : 'day';   // the pasture's hour
+  const TIMES = ['day', 'dusk', 'night'], TIME_NAME = {day: 'Day', dusk: 'Dusk', night: 'Night'};
+  const toon = () => look === 'cartoon';
 
   // ---------- Henry's walk: round and round the trail ----------
   const H = {phi: 0, x: 0, z: 3.2, h: PI / 2, speed: 0, gait: null};
-  const GAIT = {walk: () => (style === 'storybook' ? 0.8 : 1.0), trot: () => (style === 'storybook' ? 1.95 : 2.4)};
+  const GAIT = {walk: () => (toon() ? 0.8 : 1.0), trot: () => (toon() ? 1.95 : 2.4)};
   // ---------- the camera: it goes round with him; drag to change where you stand ----------
   const view = {off: -0.9, pitch: 0.2, zoom: 1, face: false, yaw: 0, aim: new THREE.Vector3(0, 0.8, 3.2), lookAtMe: 0};
 
-  function build(st) {
+  function build(lk) {
     building = true; $('busy').hidden = false;
     return new Promise(res => setTimeout(() => {
       if (place) { place.dispose(); place = null; }
       if (henry) disposeDeep(henry.root);
-      style = st; document.body.dataset.style = st;
-      $('lookSB').setAttribute('aria-pressed', String(st === 'storybook')); $('lookEV').setAttribute('aria-pressed', String(st === 'envoi'));
-      $('hopBtn').textContent = st === 'storybook' ? 'Hop' : 'Buck'; $('hopBtn').dataset.go = st === 'storybook' ? 'hop' : 'buck';
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, st === 'envoi' ? 1.5 : 2));
-      place = makeHenryScene(renderer, st, {time});
-      henry = makeZebuHD('henry', {style: st, detail: st === 'envoi' ? 1 : 0.9});
+      look = lk; document.body.dataset.style = toon() ? 'storybook' : 'envoi';   // the buttons dress like the storybook for the cartoon
+      $('lookCartoon').setAttribute('aria-pressed', String(toon())); $('lookReal').setAttribute('aria-pressed', String(!toon()));
+      $('hopBtn').textContent = toon() ? 'Hop' : 'Buck'; $('hopBtn').dataset.go = toon() ? 'hop' : 'buck';
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+      place = makeHenryScene(renderer, {time, cartoon: toon()});
+      henry = toon() ? makeZebuHD('henry', {style: 'storybook', shade: 'soft', detail: 0.9}) : makeZebuHD('henry', {style: 'envoi', detail: 1});
       place.scene.add(henry.root);
       H.gait = null; H.speed = 0; placeHenry(); henry.pose('stand');
       view.zoom = 1; view.yaw = H.h + view.off; view.aim.set(H.x, 0.8, H.z);
-      view.pitch = st === 'envoi' ? 0.07 : 0.2;   // envoi stands lower, so the trees, the sky and the moon show behind him
-      resize(); building = false; $('busy').hidden = true; status(); sound.ambient(st); timeChip();
+      view.pitch = 0.08;   // the camera stands low, so the trees and the sky show behind him
+      resize(); building = false; $('busy').hidden = true; status(); sound.ambient(time); timeChip();
       res();
     }, 30));
   }
-  // the envoi look's hour: night under the moon, or dusk; only the pasture is drawn again, Henry stays as he is
+  // the pasture's hour: a sunny day, dusk, or night under the moon; only the pasture is drawn again, Henry stays as he is
   function setTime(t) {
-    if (building || style !== 'envoi' || t === time) return Promise.resolve();
-    building = true; $('busy').textContent = t === 'dusk' ? 'The sun is going down…' : 'The moon is coming up…'; $('busy').hidden = false;
+    if (building || t === time || !TIMES.includes(t)) return Promise.resolve();
+    building = true; $('busy').textContent = t === 'day' ? 'The sun is coming up…' : t === 'dusk' ? 'The sun is going down…' : 'The moon is coming up…'; $('busy').hidden = false;
     return new Promise(res => setTimeout(() => {
       time = t; place.scene.remove(henry.root); place.dispose();
-      place = makeHenryScene(renderer, style, {time}); place.scene.add(henry.root);
-      building = false; $('busy').hidden = true; $('busy').textContent = 'Drawing Henry…'; timeChip(); res();
+      place = makeHenryScene(renderer, {time, cartoon: toon()}); place.scene.add(henry.root);
+      building = false; $('busy').hidden = true; $('busy').textContent = 'Drawing Henry…'; timeChip(); sound.ambient(time); res();
     }, 30));
   }
-  function timeChip() { const b = $('timeBtn'); b.hidden = style !== 'envoi'; b.textContent = time === 'dusk' ? 'Dusk' : 'Night'; b.setAttribute('aria-label', 'Time of day: ' + b.textContent + '. Tap to change'); }
+  function timeChip() { const b = $('timeBtn'); b.textContent = TIME_NAME[time]; b.setAttribute('aria-label', 'Time of day: ' + b.textContent + '. Tap to change'); }
   // let go of a model's shapes, materials and pictures
   function disposeDeep(obj) {
     const mats = new Set();
@@ -73,8 +77,8 @@
     hideHint(); status();
   }
   for (const b of document.querySelectorAll('[data-go]')) b.addEventListener('click', () => go(b.dataset.go));
-  for (const b of document.querySelectorAll('[data-look]')) b.addEventListener('click', () => { if (b.dataset.look !== style && !building) build(b.dataset.look); });
-  $('timeBtn').addEventListener('click', () => setTime(time === 'dusk' ? 'night' : 'dusk'));
+  for (const b of document.querySelectorAll('[data-look]')) b.addEventListener('click', () => { if (b.dataset.look !== look && !building) build(b.dataset.look); });
+  $('timeBtn').addEventListener('click', () => setTime(TIMES[(TIMES.indexOf(time) + 1) % TIMES.length]));
   $('soundBtn').addEventListener('click', () => { sound.toggle(); $('soundBtn').setAttribute('aria-pressed', String(sound.on)); $('soundBtn').textContent = sound.on ? 'Sound on' : 'Sound off'; });
   const WORDS = {stand: 'standing', graze: 'grazing', lie: 'lying down', sleep: 'asleep', 'lying-down': 'lying down', 'getting-up': 'getting up'};
   const DOING = {moo: 'mooing', shake: 'shaking off the flies', swat: 'swatting a fly', paw: 'pawing the ground', toss: 'tossing his horn', buck: 'bucking', hop: 'hopping', stretch: 'stretching', lick: 'licking his nose'};
@@ -132,13 +136,13 @@
       if (window.HM) { HM.log.push(e.type); if (HM.log.length > 400) HM.log.shift(); }
       if (e.type === 'moo') { sound.moo(e.dur || 1.4); const m = henry.anchor('mouth', new THREE.Vector3()); place.bubble('Moooo!', henry.anchor('poll', new THREE.Vector3()).lerp(m, 0.3).add(new THREE.Vector3(0, 0.45, 0))); setTimeout(() => place && henry && place.breath(henry.anchor('mouth', new THREE.Vector3()), new THREE.Vector3(Math.sin(H.h), 0.15, Math.cos(H.h))), 300); }
       else if (e.type === 'snort') { sound.snort(); place.breath(henry.anchor('mouth', new THREE.Vector3()), new THREE.Vector3(Math.sin(H.h), -0.2, Math.cos(H.h))); }
-      else if (e.type === 'step') { sound.step(H.gait === 'trot' ? 1 : 0.5); if (style === 'envoi' && (H.gait === 'trot' || Math.random() < 0.35)) place.puff(e.pos, 'step'); }
+      else if (e.type === 'step') { sound.step(H.gait === 'trot' ? 1 : 0.5); if (H.gait === 'trot' || Math.random() < 0.35) place.puff(e.pos, 'step'); }
       else if (e.type === 'dust') { place.puff(e.pos, 'dust'); sound.scrape(); place.ring(e.pos, 0.18); }
       else if (e.type === 'thump') { sound.thump(); place.ring(henry.root.position, 0.35); }
       else if (e.type === 'tear') sound.tear();
-      else if (e.type === 'land') { sound.land(style); place.ring(henry.root.position, 0.9); }
+      else if (e.type === 'land') { sound.land(look); place.ring(henry.root.position, 0.9); }
     }
-    if (henry.state === 'sleep' && style === 'storybook') { zzzT -= dt; if (zzzT < 0) { zzzT = 1.7; place.zzz(henry.anchor('poll', new THREE.Vector3()).add(new THREE.Vector3(0.1, 0.25, 0))); } }
+    if (henry.state === 'sleep' && toon()) { zzzT -= dt; if (zzzT < 0) { zzzT = 1.7; place.zzz(henry.anchor('poll', new THREE.Vector3()).add(new THREE.Vector3(0.1, 0.25, 0))); } }
     if (henry.state === 'sleep') sound.snore(clock);
     // the camera follows round with him, and down to him when he lies
     view.lookAtMe = Math.max(0, view.lookAtMe - dt);
@@ -146,11 +150,11 @@
     // aim a little ahead of the middle of his body (his head reaches further forward than his tail goes back), and ahead
     // of where he is by as much as the camera trails him when he walks, so he stays in the frame
     const ahead = 0.22 + H.speed / 3;
-    const target = view.face ? henry.anchor('head', tv) : tv.set(H.x + Math.sin(H.h) * ahead, lerp(style === 'storybook' ? 0.72 : 0.85, 0.5, lying), H.z + Math.cos(H.h) * ahead);
+    const target = view.face ? henry.anchor('head', tv) : tv.set(H.x + Math.sin(H.h) * ahead, lerp(toon() ? 0.72 : 0.85, 0.5, lying), H.z + Math.cos(H.h) * ahead);
     view.aim.lerp(target, Math.min(1, dt * 3));
     let yaw = H.h + view.off + H.speed / place.pathR / 2.5, dy = ((yaw - view.yaw + PI) % TAU + TAU) % TAU - PI; view.yaw += dy * Math.min(1, dt * 2.5);
     // stand back just far enough that all of him fits the narrower way of the screen
-    const vh = camera.fov * PI / 360, half = Math.min(vh, Math.atan(Math.tan(vh) * camera.aspect)), R = view.face ? 0.42 : style === 'storybook' ? 1.08 : 1.25;
+    const vh = camera.fov * PI / 360, half = Math.min(vh, Math.atan(Math.tan(vh) * camera.aspect)), R = view.face ? 0.42 : toon() ? 1.08 : 1.25;
     const d = view.zoom * R / Math.sin(half) * 1.08;
     camera.position.set(view.aim.x + Math.sin(view.yaw) * Math.cos(view.pitch) * d, view.aim.y + Math.sin(view.pitch) * d, view.aim.z + Math.cos(view.yaw) * Math.cos(view.pitch) * d);
     camera.position.y = Math.max(0.25, camera.position.y);
@@ -183,7 +187,7 @@
         const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
         ctx = new AC(); master = ctx.createGain(); master.gain.value = 0.8; master.connect(ctx.destination);
         noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-        ambient(style);
+        ambient(time);
       }
       if (ctx.state === 'suspended') ctx.resume();
       return ctx;
@@ -191,9 +195,9 @@
     const noise = () => { const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true; return s; };
     function env(g, t, a, peak, dur, rel) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + Math.max(a, dur)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + rel); }
     // a moo: two buzzing voices through the shapes of a cow's throat, starting closed ("mm") and opening ("oo"), the pitch
-    // rising and falling; the storybook's is higher and rounder
+    // rising and falling; the cartoon's is higher and rounder
     function moo(dur) {
-      if (!wake()) return; const t = ctx.currentTime + 0.02, sb = style === 'storybook', f0 = sb ? 150 : 92;
+      if (!wake()) return; const t = ctx.currentTime + 0.02, sb = toon(), f0 = sb ? 150 : 92;
       const out = ctx.createGain(); env(out, t, 0.14, sb ? 0.5 : 0.65, dur, 0.35); out.connect(master);
       const mouth = ctx.createBiquadFilter(); mouth.type = 'lowpass'; mouth.Q.value = 1.2; mouth.frequency.setValueAtTime(280, t); mouth.frequency.linearRampToValueAtTime(sb ? 2400 : 1700, t + 0.4); mouth.frequency.linearRampToValueAtTime(sb ? 1500 : 900, t + dur); mouth.connect(out);
       for (const [f, q, g] of [[sb ? 820 : 700, 5, 1], [sb ? 1350 : 1150, 6, 0.55], [sb ? 2900 : 2500, 8, 0.15]]) { const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; const bg = ctx.createGain(); bg.gain.value = g * 3; bp.connect(bg); bg.connect(mouth); fm.push(bp); }
@@ -215,19 +219,19 @@
     function thump() { if (!wake()) return; thud(ctx.currentTime + 0.01, 70, 35, 0.35, 0.5); }
     function scrape() { if (!wake()) return; const t = ctx.currentTime + 0.01, n = noise(), f = ctx.createBiquadFilter(), g = ctx.createGain(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 0.6; env(g, t, 0.03, 0.35, 0.15, 0.2); n.connect(f); f.connect(g); g.connect(master); n.start(t); n.stop(t + 0.5); }
     function tear() { if (!wake()) return; let t = ctx.currentTime + 0.01; for (let i = 0; i < 3; i++) { const n = noise(), f = ctx.createBiquadFilter(), g = ctx.createGain(); f.type = 'highpass'; f.frequency.value = 1800; env(g, t, 0.004, 0.12, 0.02, 0.04); n.connect(f); f.connect(g); g.connect(master); n.start(t); n.stop(t + 0.1); t += 0.05 + Math.random() * 0.03; } }
-    function land(st) { if (!wake()) return; const t = ctx.currentTime + 0.01; if (st === 'storybook') { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(520, t + 0.09); o.frequency.exponentialRampToValueAtTime(180, t + 0.32); env(g, t, 0.01, 0.35, 0.05, 0.3); o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.45); } thud(t, 80, 40, 0.25, 0.4); }
-    function hum() { if (!wake()) return; const t = ctx.currentTime + 0.01, o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(style === 'storybook' ? 160 : 100, t); o.frequency.linearRampToValueAtTime(style === 'storybook' ? 180 : 110, t + 0.25); f.type = 'lowpass'; f.frequency.value = 420; env(g, t, 0.06, 0.3, 0.3, 0.25); o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + 0.7); }
+    function land(st) { if (!wake()) return; const t = ctx.currentTime + 0.01; if (st === 'cartoon') { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(520, t + 0.09); o.frequency.exponentialRampToValueAtTime(180, t + 0.32); env(g, t, 0.01, 0.35, 0.05, 0.3); o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.45); } thud(t, 80, 40, 0.25, 0.4); }
+    function hum() { if (!wake()) return; const t = ctx.currentTime + 0.01, o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(toon() ? 160 : 100, t); o.frequency.linearRampToValueAtTime(toon() ? 180 : 110, t + 0.25); f.type = 'lowpass'; f.frequency.value = 420; env(g, t, 0.06, 0.3, 0.3, 0.25); o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + 0.7); }
     function snore(t) { if (!ctx || !on) return; if (t < snoreT) return; snoreT = t + 3.6; const at = ctx.currentTime + 0.01, n = noise(), f = ctx.createBiquadFilter(), g = ctx.createGain(); f.type = 'lowpass'; f.frequency.value = 380; env(g, at, 0.6, 0.12, 0.9, 0.8); n.connect(f); f.connect(g); g.connect(master); n.start(at); n.stop(at + 2.5); }
-    // the evening outside: crickets and a breeze at dusk; birds in the storybook's daytime
+    // the pasture's sounds: a breeze, birds by day, crickets at dusk and at night
     function ambient(st) {
       if (amb) { clearInterval(amb.timer); try { amb.wind.stop(); } catch (e) { /* already stopped */ } amb = null; }
       if (!ctx) return;
-      const wind = noise(), wf = ctx.createBiquadFilter(), wg = ctx.createGain(); wf.type = 'lowpass'; wf.frequency.value = st === 'envoi' ? 380 : 600; wg.gain.value = st === 'envoi' ? 0.05 : 0.025; wind.connect(wf); wf.connect(wg); wg.connect(master); wind.start();
+      const wind = noise(), wf = ctx.createBiquadFilter(), wg = ctx.createGain(); wf.type = 'lowpass'; wf.frequency.value = st !== 'day' ? 380 : 600; wg.gain.value = st !== 'day' ? 0.05 : 0.025; wind.connect(wf); wf.connect(wg); wg.connect(master); wind.start();
       const timer = setInterval(() => {
         if (!on || ctx.state !== 'running') return;
         const t = ctx.currentTime + 0.05;
-        wg.gain.setTargetAtTime((st === 'envoi' ? 0.04 : 0.02) * (0.6 + 0.8 * Math.random()), t, 1.5);
-        if (st === 'envoi') { for (let c = 0; c < 2; c++) { if (Math.random() < 0.6) { const f = 4300 + c * 600 + Math.random() * 200; let tt = t + Math.random() * 0.4; for (let i = 0; i < 3; i++) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f; env(g, tt, 0.004, 0.025, 0.02, 0.03); o.connect(g); g.connect(master); o.start(tt); o.stop(tt + 0.08); tt += 0.07; } } } }
+        wg.gain.setTargetAtTime((st !== 'day' ? 0.04 : 0.02) * (0.6 + 0.8 * Math.random()), t, 1.5);
+        if (st !== 'day') { for (let c = 0; c < 2; c++) { if (Math.random() < 0.6) { const f = 4300 + c * 600 + Math.random() * 200; let tt = t + Math.random() * 0.4; for (let i = 0; i < 3; i++) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f; env(g, tt, 0.004, 0.025, 0.02, 0.03); o.connect(g); g.connect(master); o.start(tt); o.stop(tt + 0.08); tt += 0.07; } } } }
         else if (Math.random() < 0.18) { let tt = t; for (let i = 0; i < 2 + (Math.random() * 3 | 0); i++) { const o = ctx.createOscillator(), g = ctx.createGain(), f = 2600 + Math.random() * 900; o.frequency.setValueAtTime(f, tt); o.frequency.exponentialRampToValueAtTime(f * 1.35, tt + 0.08); env(g, tt, 0.01, 0.05, 0.03, 0.06); o.connect(g); g.connect(master); o.start(tt); o.stop(tt + 0.15); tt += 0.12; } }
       }, 700);
       amb = {timer, wind};
@@ -238,7 +242,7 @@
 
   // ---------- for the checks ----------
   window.HM = {
-    log: [], build, setTime, get time() { return time; }, get ready() { return !!(henry && place && !building); }, get style() { return style; }, get henry() { return henry; }, get place() { return place; }, camera, view, H,
+    log: [], build, setTime, get time() { return time; }, get ready() { return !!(henry && place && !building); }, get look() { return look; }, get style() { return look; }, get henry() { return henry; }, get place() { return place; }, camera, view, H,
     go, pat,
     // move time on by `seconds`, 30 frames a second, then draw
     step(seconds, fps) { fps = fps || 30; const n = Math.max(1, Math.round(seconds * fps)); for (let i = 0; i < n; i++) tick(1 / fps); draw(1 / fps); return henry.state; },
@@ -248,6 +252,6 @@
     frame() { const I = renderer.info; I.autoReset = false; I.reset(); const t0 = performance.now(); draw(1 / 30); renderer.getContext().finish(); const ms = performance.now() - t0; const r = {calls: I.render.calls, tris: I.render.triangles, ms: Math.round(ms)}; I.autoReset = true; return r; }
   };
   setTimeout(() => $('hint').classList.add('gone'), 9000);
-  build(style).then(() => { window.READY = true; if (!TEST) requestAnimationFrame(t => { last = t; frame(t); }); });
+  build(look).then(() => { window.READY = true; if (!TEST) requestAnimationFrame(t => { last = t; frame(t); }); });
   window.addEventListener('error', e => { window.ERR = String(e.message || e); });
 })();

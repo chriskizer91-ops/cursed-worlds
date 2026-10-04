@@ -105,6 +105,11 @@ alike. The first part is for Chris; the second part is the checklist for whoever
 - **Storybook at full detail** (`makeZebuHD(look, {style: 'storybook'})`): the full-detail body squeezed to storybook
   proportions as it is bound to its skeleton (shorter legs, a shorter, rounder body, a head half as big again), painted
   eyes that blink, and the same ink outline, so it moves like the envoi one.
+- **A cartoon in a real place** (`makeZebuHD(look, {style: 'storybook', shade: 'soft'})`): the same storybook animal lit
+  the way a 3D cartoon film lights its characters, so it can stand in a realistic scene like the pasture: velvety
+  physical materials that the scene's sun or moon falls on, light carried round into the shade, glossy painted eyes whose
+  catchlights still glow in the dark, and no ink line. Its colours are converted to linear light like the envoi style's.
+  This is the Henry that Henry in Motion shows first (Chris found the realistic one creepy).
 - **Storybook** (What the Map Forgot's `wren-3d`): flat warm colours from that game's palette (ink `#1d1b2c`, paper
   `#f4efe2`), three-step cel shading (ramp 120, 200, 255), a cool rim of light, and an ink outline that follows
   averaged normals so it doesn't split at seams. Proportions are chunky: a bigger, rounder head, shorter legs, a wider
