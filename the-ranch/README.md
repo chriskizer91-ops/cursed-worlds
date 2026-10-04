@@ -42,3 +42,7 @@ The street address on the satellite picture is covered, because this repository 
   to how the real ranch looks.
 - `reference/barn-sheet.png`: the barn (corrugated metal, rusty) from the front, both sides, the back and the top, with its fences and gates.
 - `reference/barn-background.png`: a painting of the barn and corrals with the sun going down behind the trees.
+- `reference/sky-tiles/`: the ranch from above in six pieces, closer up (Chris, October 4, 2026).
+  `six-tiles-together.png` shows how they fit. `straight-down/` are the six pieces of the cartoon map, larger
+  (they line up with it exactly). `detailed/` are richer repaintings of the pieces, two or more tries each,
+  for the close-up places.
