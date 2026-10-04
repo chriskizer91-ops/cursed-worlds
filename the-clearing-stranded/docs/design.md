@@ -245,3 +245,72 @@ They have no do-it button either.
 | Kill a snake with the plank or a pole | Strike when it pulls back | Kill it or get bitten |
 
 Doing nothing in a skill moment counts as an average try, so nobody gets stuck.
+
+## Part two: a game a kid plays for hours
+
+Decided by Chris on October 4, 2026, after the living world went in. The game stays hard and real; this is about
+making every minute count and giving a kid things to chase. Items marked *proposal* are mine and wait on Chris and Dagr.
+
+### The partner is a helper with a mind of its own
+
+In the two-person game the partner works on their own. They decide what camp needs (water, wood, food), say so
+("I'm going to the river for water"), and go. You can follow and watch them do it, or not.
+
+- When the partner is out of sight they don't vanish. Their trip runs on the game clock: so long on the trail,
+  so long at the job, so long back. Wherever you go, the game works out where they'd be right then. If you set
+  off after them for the river, you find them on the trail or filling water at the river, not back at camp.
+- For "wait until they've left, then chase them" to work, the clock has to keep moving slowly while you walk
+  about, not only when you do a job. *Proposal:* one real second is one game minute while you walk, so a day of
+  walking about is 24 real minutes; jobs and trips still jump the clock as they do now.
+- Two jobs now happen at once, so the engine has to let the partner's work run beside yours.
+
+### Hunting is a target game; fishing is a fishing game
+
+- **Hunting:** a short target game. Usually a rabbit or a bird (turkey, quail, dove, duck); now and then a deer;
+  very rarely the big ones. *Note:* there are no moose this far south; the rare big ones would be a bison or an elk.
+  The rifle never runs out of rounds, but each hunt gives you three shots. A shot still scares the animals
+  out of that place for a while.
+- **Fishing:** a fishing game: cast, wait for a bite, reel against the line's strain. Different fish by place,
+  season and hour, from sunfish to channel catfish and bass, up to the legend: a seven-foot alligator gar.
+  Every catch goes in a catch log.
+- **Practice:** the menu gets a practice range and a practice pond, to play the two games on their own.
+
+### Doing one thing a lot builds something you can see
+
+- Huts aren't one each. With enough wood you build another, and another, on the open ground round the boulders.
+- Any job you keep doing turns into something lasting. *Proposal:* the camp has building plots, and each skill
+  has things to build. Wood gives woodpiles, more huts, a palisade and a lodge. Fishing gives fish weirs and a
+  smokehouse. Hunting gives a hide-tanning frame and a hide tent.
+- **Skill points:** every job earns points in its skill: "+1 Exploring", "+1 Hunting". Points become levels, and
+  levels unlock real tricks.
+  - Skills: exploring, hunting, fishing, foraging, building, fire, tracking, crafting.
+  - Doing the same job again in one day earns less, so mashing one button still doesn't pay.
+
+### Kept from the brainstorm
+
+- **Secret places** beyond the nine, found by exploring. Each needs a background painting from Chris.
+- **Legends:** big rare animals with a hunt in steps.
+- **A rival:** the raccoon who raids camp.
+- **A wolf pup** that grows up beside you.
+
+### A starting kit that buys time to learn, then runs out
+
+*Proposal*, in place of two crates, two big tarps, 100 ration bars, two knives and 50 rounds:
+
+| Item | Why | How it runs out |
+|---|---|---|
+| Rifle | Hunting, as above | Never: three shots a hunt |
+| One good knife | Everything | Doesn't |
+| A box of 10 matches | Fire on the first nights | Gone after ten; by then you need the bow drill |
+| 50 feet of cord | Shelter and snares early | Used up; then you twist your own from plants |
+| One tarp | The first lean-to | Wears out over the months |
+| A plastic water bottle | Carrying water | Can't go on a fire, so you still need a way to boil |
+| A small fishing kit: hooks, line, sinkers | Fishing from day one | Hooks get lost to big fish and snags |
+| A small first-aid kit | Cuts, a sprain | A few uses |
+| Three days of food | Time to learn to find food | Three days |
+
+### Still to ask
+
+- Fish and animal pictures for the catch log: Dagr's rule is that only backgrounds are pictures, so by that rule
+  they would be made in code like everything else.
+- The partner: the model sheet shows a bearded man. Keep him, or should the helper be a woman?
