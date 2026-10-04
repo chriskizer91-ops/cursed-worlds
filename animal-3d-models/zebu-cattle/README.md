@@ -3,14 +3,17 @@
 The Zebu herd Chris looks after on a ranch in Bardwell, Texas. Each animal has its own folder with
 its character sheet. Henry also has real photos and notes.
 
-| Animal | Coat | Horns | Sheet says |
+**Names:** Henry is the only real name. The names on the other character sheets (Sage, Shadow,
+Cinnamon, Speckle) were made up by the AI that drew them, so the folders are named by how each cow
+looks until we know their real names. The "Whitey" sheet turned out to be Henry, so it's in his folder.
+
+| Folder | Coat | Horns | Name on the sheet |
 |---|---|---|---|
-| [Henry](henry/) | white | left horn whole, right horn broken off | (painted sheet, see his notes) |
-| [Sage](sage/) | solid tan | long, upright, sweeping | gentle |
-| [Shadow](shadow/) | solid black | moderate, curved | calm, always where the shade is |
-| [Cinnamon](cinnamon/) | rich red-brown | short, curved | calm |
-| [Whitey](whitey/) | white / pale cream | uneven | gentle |
-| [Speckle](speckle/) | tan and white speckled | long, curved | gentle |
+| [henry](henry/) | white bull | left horn whole, right horn broken off | Whitey (pixel sheet) |
+| [tan-cow](tan-cow/) | solid tan | long, upright, sweeping | Sage |
+| [black-cow](black-cow/) | solid black | moderate, curved | Shadow |
+| [red-brown-cow](red-brown-cow/) | rich red-brown | short, curved | Cinnamon |
+| [speckled-cow](speckled-cow/) | tan and white speckled | long, curved | Speckle |
 
 `herd-photos/` has real photos of the herd together.
 

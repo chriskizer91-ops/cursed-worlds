@@ -11,10 +11,13 @@ dewlap), long droopy ears, dark nose, dark hooves, and a black tuft at the end o
 - When his head points left (you see his left side), the whole horn is in front and the stump is behind it.
 - When his head points right (you see his right side), the stump is in front and the whole horn is behind it.
 
-## The character sheet
+## The character sheets
 
-`character-sheet.png` has 16 poses. Chris checked it: **7, 10, 11 and 12 are wrong**. They show the
-broken horn on the wrong side, so don't copy them. The rest (1 to 6, 8, 9 and 13 to 16) are fine to use.
+- `painted-character-sheet.png` has 16 poses. Chris checked it: **7, 10, 11 and 12 are wrong**. They show
+  the broken horn on the wrong side, so don't copy them. The rest (1 to 6, 8, 9 and 13 to 16) are fine to use.
+- `pixel-character-sheet.png` is the AI's pixel drawing of Henry (it named him "Whitey"). Its front, both
+  sides, back and top all put the broken horn on his right. Its close-ups label the horns by the side
+  you see them on when he faces you, so its "HORN (LEFT)" is the broken one.
 
 ## Real photos
 
