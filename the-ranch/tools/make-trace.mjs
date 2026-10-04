@@ -3,6 +3,12 @@
 // places, buildings, fences and the edge of the pasture are written below by hand, in map pixels of the 1024 x 1536 map
 // (x across from the left, y down from the top), measured off reference/ranch-from-the-sky.png.
 //   node the-ranch/tools/make-trace.mjs        then check it with   node the-ranch/tools/trace-check.mjs
+//
+// Walking Paths (Chris's map editing tool, building-with-assets- editing-tools/walking-paths) can change it:
+//   node the-ranch/tools/make-trace.mjs --export   writes map/ranch-walking-paths.json from what is written below
+// Open that file in Walking Paths, move the green walk area, the red blocks and the places (the "look" spots), save the
+// maps file over map/ranch-walking-paths.json, and run make-trace.mjs again. While that file is there it decides where
+// the cattle can walk and where the places are; the painting still decides the trails and the trees.
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -22,7 +28,8 @@ PASTURE.push([20, 1416], [18, 1160], [60, 1128], [105, 1098], [150, 1060], [180,
 const BUILDINGS = [
   ['House', 93, 1290, 56, 54, 6.5, 0x3d4a66, 'house'],
   ['Shed', 163, 1200, 50, 22, 4, 0x8e979e, 'shed'],
-  ['Chicken coop', 183, 1226, 18, 22, 3, 0x9aa3aa, 'coop'],
+  ['Shed', 183, 1226, 18, 22, 3, 0x9aa3aa, 'shed'],
+  ['Chicken coop', 107, 1240, 18, 16, 2.8, 0x9aa3aa, 'coop'],
   ['Feed shed', 190, 1298, 24, 26, 3.5, 0xa9b0b6, 'shed'],
   ['Tack shed', 255, 1295, 30, 28, 3.8, 0x8e979e, 'shed'],
   ['Hay barn', 300, 1294, 36, 34, 4.5, 0xc7a35c, 'haybarn'],
@@ -37,8 +44,8 @@ const POND = {x: 715, y: 1352, rx: 52, ry: 60};
 // the places of the day, in the order Chris works
 const PLACES = {
   hay: {x: 236, y: 1222, label: 'Hay ring'},
-  troughs: {x: 292, y: 1232, label: 'Water troughs'},
-  coop: {x: 184, y: 1252, label: 'Chicken coop'},
+  troughs: {x: 104, y: 1214, label: 'Water troughs'},   // up by the house in the bottom-left corner (Chris)
+  coop: {x: 110, y: 1262, label: 'Chicken coop'},       // by that house too
   pens: {x: 245, y: 1272, label: 'Bull pens'},
   salt: {x: 330, y: 1150, label: 'Salt'},
   fence: {x: 214, y: 520, label: 'Fence line'},
@@ -56,19 +63,35 @@ const FENCES = [
 ];
 
 // ---------- from the painting ----------
+// ---------- or from Walking Paths ----------
+const WPF = path.join(top, 'map', 'ranch-walking-paths.json'), EXPORT = process.argv.includes('--export');
+const circle = (x, y, rx, ry, n) => Array.from({length: n || 12}, (_, i) => [Math.round(x + Math.cos(i / (n || 12) * Math.PI * 2) * rx), Math.round(y + Math.sin(i / (n || 12) * Math.PI * 2) * (ry || rx))]);
+const rect = ([a, b, e, f]) => [[a, b], [e, b], [e, f], [a, f]];
+const BLOCKS = [...YARDS.map(rect), ...BUILDINGS.map(([, x, y, w, d]) => rect([x - w / 2 - 3, y + d * 0.18 - d / 2 - 3, x + w / 2 + 3, y + d * 0.18 + d / 2 + 3])), circle(POND.x, POND.y, POND.rx, POND.ry, 16)];
+let WALK = [PASTURE], WPBLOCK = null;
+if (!EXPORT && fs.existsSync(WPF)) {
+  const wp = JSON.parse(fs.readFileSync(WPF, 'utf8')), m = wp.maps ? Object.values(wp.maps)[0] : Object.values(wp)[0];
+  if (m.size && (m.size[0] !== MW || m.size[1] !== MH)) throw new Error(`ranch-walking-paths.json is for a ${m.size.join(' x ')} map; the ranch map is ${MW} x ${MH}`);
+  WALK = m.walk; WPBLOCK = m.block;
+  for (const sp of m.spots || []) { const k = sp.id || Object.keys(PLACES).find(k => PLACES[k].label === sp.label); if (k && PLACES[k] && sp.at) { PLACES[k].x = sp.at[0]; PLACES[k].y = sp.at[1]; } }
+  console.log(`using Walking Paths: ${WALK.length} walk area(s), ${WPBLOCK.length} block(s), ${(m.spots || []).length} place(s)`);
+}
+
 const raw = execFileSync('convert', [path.join(top, 'map', 'ranch-map.webp'), '-resize', `${MW}x${MH}!`, 'rgb:-'], {maxBuffer: 64e6});
 const px = (x, y) => { const i = (y * MW + x) * 3; return [raw[i], raw[i + 1], raw[i + 2]]; };
 const dirt = ([r, g, b]) => r > 150 && r > g + 18 && b < 135;
 const dark = ([r, g, b]) => r < 82 && g < 112 && g > r;
 const inPoly = (x, y, P) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
 const G = new Array(GW * GH), treeMask = new Uint8Array(GW * GH);
+// with a Walking Paths file, a painted tree only blocks the way where the file still has a block over it
 for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
   let d = 0, k = 0;
   for (let sy = 0; sy < CELL; sy++) for (let sx = 0; sx < CELL; sx++) { const p = px(gx * CELL + sx, gy * CELL + sy); if (dirt(p)) d++; else if (dark(p)) k++; }
   const cx = gx * CELL + 2, cy = gy * CELL + 2, i = gy * GW + gx;
   treeMask[i] = k >= 9 ? 1 : 0;
   let c = k >= 9 ? 'T' : d >= 5 ? 't' : 'g';
-  if (!inPoly(cx, cy, PASTURE)) c = 'o';
+  if (!WALK.some(P => inPoly(cx, cy, P))) c = 'o';
+  else if (WPBLOCK) { if (WPBLOCK.some(P => inPoly(cx, cy, P))) c = c === 'T' ? 'T' : ((cx - POND.x) / POND.rx) ** 2 + ((cy - POND.y) / POND.ry) ** 2 < 1 ? 'w' : 'x'; else if (c === 'T') c = d >= 5 ? 't' : 'g'; }
   else if (YARDS.some(([a, b, e, f]) => cx >= a && cx <= e && cy >= b && cy <= f)) c = 'x';
   else if (BUILDINGS.some(([, x, y, w, d]) => Math.abs(cx - x) <= w / 2 + 3 && Math.abs(cy - (y + d * 0.18)) <= d / 2 + 3)) c = 'x';
   else if (((cx - POND.x) / POND.rx) ** 2 + ((cy - POND.y) / POND.ry) ** 2 < 1) c = 'w';
@@ -94,5 +117,15 @@ for (const i of cand) {
 
 const out = {w: GW, h: GH, cell: CELL, mapW: MW, mapH: MH, grid: G.join(''), trees, places: PLACES, buildings: BUILDINGS, fences: FENCES, pond: POND, pasture: PASTURE, rail: RAIL};
 fs.writeFileSync(path.join(top, 'map', 'trace.js'), '// The ranch map traced by tools/make-trace.mjs. Do not edit by hand: change the tool and run it again.\nwindow.RANCH_TRACE = ' + JSON.stringify(out) + ';\n');
+if (EXPORT) {
+  // the trees inside the pasture become blocks, so they can be moved or taken out in Walking Paths
+  const treeBlocks = trees.filter(([x, y]) => inPoly(x, y, PASTURE)).map(([x, y, r]) => circle(x, y, Math.max(6, r * 0.8), null, 10));
+  const pic = execFileSync('convert', [path.join(top, 'map', 'ranch-map.webp'), '-resize', `${MW}x${MH}!`, '-quality', '80', 'webp:-'], {maxBuffer: 64e6});
+  const map = {name: 'The ranch', src: 'data:image/webp;base64,' + pic.toString('base64'), size: [MW, MH], walker: 8, start: [PLACES.hay.x, PLACES.hay.y + 10],
+    walk: [PASTURE], block: [...BLOCKS, ...treeBlocks], front: [], exits: [], people: [],
+    spots: Object.entries(PLACES).map(([id, p]) => ({kind: 'look', id, label: p.label, note: '', at: [p.x, p.y]}))};
+  fs.writeFileSync(WPF, JSON.stringify({format: 'walking-paths', version: 1, about: 'The ranch map, from the-ranch/tools/make-trace.mjs --export', savedAt: new Date().toISOString(), maps: {ranch: map}}));
+  console.log(`wrote ${path.relative(process.cwd(), WPF)}: ${map.block.length} blocks (${treeBlocks.length} of them trees), ${map.spots.length} places, ${(fs.statSync(WPF).size / 1024).toFixed(0)} KB`);
+}
 const n = c => G.filter(x => x === c).length;
 console.log(`grid ${GW} x ${GH}: ${n('t')} trail, ${n('g')} grass, ${n('T')} tree, ${n('w')} water, ${n('x')} yard, ${n('o')} outside cells; ${trees.length} trees`);

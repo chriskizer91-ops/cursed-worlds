@@ -95,8 +95,8 @@
     // Henry, the white Zebu bull (Chris's photos, October 4, 2026). His right horn is broken off short.
     henry: {
       name: 'Henry', bull: true, size: 1,
-      coat: 0xeceae3, shade: 0xc9c6bf, belly: 0xf2ede2, fold: 0xc4bfb6, knee: 0xb9b5ae,
-      muzzle: 0x3d3936, hoof: 0x2e2a27, tuft: 0x1d1b1a, earIn: 0xdcb3a8, earRim: 0x9e928a, eye: 0x17120f, lid: 0x5a544e,
+      coat: 0xeceae3, shade: 0xbab6ae, belly: 0xf2ede2, fold: 0xc4bfb6, knee: 0xb9b5ae,
+      muzzle: 0x3d3936, hoof: 0x2e2a27, tuft: 0x1d1b1a, earIn: 0xd2b2a8, earRim: 0x9e928a, eye: 0x17120f, lid: 0x5a544e,
       horn: {left: 'whole', right: 'broken'}, hornBase: 0xcda58c, hornMid: 0x6f6258, hornTip: 0x2a2421,
       stump: 0xdba095, stumpSpot: 0x6d4943, stumpTop: 0xead2c8
     },
