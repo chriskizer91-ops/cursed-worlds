@@ -33,3 +33,12 @@ Games Chris builds from what his son Dagr describes. Each game gets its own fold
   test (`tools/minigames-check.mjs`) must all end with "all good" before a push.
 - Hunting and fishing are games of their own (`living/hunt.js`, `living/fishing.js`). Their balance is measured
   against the engine's own dice, which the robot players use; keep a careful player near those odds.
+
+## The ranch (the farm game)
+
+- It is Chris's real job on the Zebu ranch in Bardwell, Texas; `the-ranch/README.md` has his day of work in order.
+- Cartoon, stylized 3D animals in a realistic environment (Chris, October 4, 2026): Henry and the herd are the cartoon
+  models (`makeZebuHD(key, {style: 'storybook', shade: 'soft'})`), and the land, sky, light, trees, buildings and water
+  are drawn realistically, the way envoi's Colossus in the Meadow draws its meadow.
+- Only Henry's name is real; the other cattle go by how they look until Chris knows their names.
+- The ranch check (`the-ranch/tools/ranch-check.mjs`) must end with "all good" before a push.
