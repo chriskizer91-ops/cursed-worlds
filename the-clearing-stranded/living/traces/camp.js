@@ -60,5 +60,7 @@ window.TRACES.camp = {
   ring: [767, 552, 40, 24],     // the fire ring: centre, and its half width and half height
   pocket: [784, 364],           // the sheltered pocket between the boulders
   sites: {ring: [767, 552], wood: [884, 586], rack: [462, 520], rain: [500, 452], bench: [870, 716], cache: [1080, 420], look: [1100, 540],
-    crate: [640, 548], pot: [812, 576], work: [640, 690], hang: [404, 412]}
+    crate: [640, 548], pot: [812, 576], work: [640, 690], hang: [404, 412],
+    // the hut plots: open ground round the boulders, in the order huts go up (each the middle of a hut's floor)
+    hut1: [340, 470], hut2: [575, 785], hut3: [1160, 480], hut4: [905, 800]}
 };

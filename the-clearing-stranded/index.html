@@ -882,7 +882,20 @@ D.RECIPES = [
    desc:'A sheltered firebox with an open smoke outlet. New armloads burn for 6 hours instead of 4. Uses eight stones; keep four extra for boiling water in a bowl.'},
   {id:'lookout', name:'Build a lookout platform', icon:'🔭', group:'Camp', hours:6, session:2, work:'heavy', planks:true,
    need:{poles:6, fiber:3}, flag:'lookout', prereq:[{kind:'recipe',id:'roof',label:'Roofed boulders'},{kind:'recipe',id:'workbench',label:'Workbench'}],
-   desc:'A braced platform at the boulders helps you plan routes and watch game. Exploring takes 1½ hours instead of 2; each animal encounter chance on a hunt is multiplied by 1.25, up to the usual cap. Hunting still takes 2 hours.'}
+   desc:'A braced platform at the boulders helps you plan routes and watch game. Exploring takes 1½ hours instead of 2; each animal encounter chance on a hunt is multiplied by 1.25, up to the usual cap. Hunting still takes 2 hours.'},
+  // huts: one of each, on the open ground round the boulders (the camp's plots), in the order you build them
+  {id:'hutsleep', name:'Build a sleeping hut', icon:'🛖', group:'Huts', hours:8, session:2, work:'heavy', hut:'sleep',
+   need:{poles:10, grass:8, cord:3}, flag:'hutSleep', prereq:[{kind:'recipe',id:'leanto',label:'Lean-to'}],
+   desc:'A round hut of bent poles, thatched thick with grass, with a raised grass bed inside, out of the wind. You sleep better at camp, and cold nights don\'t bite as hard.'},
+  {id:'hutstore', name:'Build a storehouse', icon:'🌽', group:'Huts', hours:8, session:2, work:'heavy', hut:'store',
+   need:{poles:8, grass:6, cord:3, clay:2}, flag:'hutStore', prereq:[{kind:'recipe',id:'leanto',label:'Lean-to'}],
+   desc:'A little thatched house up on four posts, with a ladder you pull up after you. Raccoons, opossums and coyotes can\'t get at the food in it, a bear only rarely, and fresh food keeps a quarter longer.'},
+  {id:'hutsmoke', name:'Build a smokehouse', icon:'🍖', group:'Huts', hours:6, session:2, work:'heavy', hut:'smoke',
+   need:{poles:8, grass:4, clay:4, stones:6}, flag:'hutSmoke', prereq:[{kind:'recipe',id:'rack',label:'Drying rack'}],
+   desc:'A small closed hut over a smoldering pit, chinked with clay. While the fire burns, meat on the rack smokes half again as fast, and rain doesn\'t stop it.'},
+  {id:'hutshop', name:'Build a workshop', icon:'🔨', group:'Huts', hours:8, session:2, work:'heavy', hut:'shop',
+   need:{poles:10, grass:6, cord:4}, flag:'hutShop', prereq:[{kind:'recipe',id:'workbench',label:'Workbench'}],
+   desc:'An open-sided shed with a thatched roof, round the workbench. New projects at camp take 15% less time.'}
 ];
 // Keep dependency data public: the craft screen can show the whole path before it is unlocked.
 const RECIPE_PREREQ = {
@@ -895,7 +908,7 @@ const RECIPE_PREREQ = {
   leach:[{kind:'oneOf',ids:['bowl','firepot'],label:'Wooden bowl or fired clay pot'},{kind:'food',id:'acornraw',label:'Bitter acorns'}]
 };
 for (const r of D.RECIPES) r.prereq = r.prereq || RECIPE_PREREQ[r.id] || [];
-D.GROUPS = ['Tools','Shelter','Water','Food','Hunting','Camp'];
+D.GROUPS = ['Tools','Shelter','Water','Food','Hunting','Camp','Huts'];
 
 // Where each material comes from, so a recipe can point at the place and the job that supplies it.
 D.SOURCES = {
@@ -998,7 +1011,9 @@ D.ACH = {
   pot:{name:'Potter', how:'Fire a clay pot without cracking it'},
   hut:{name:'Four walls', how:'Wall in the boulder shelter'},
   camp1:{name:'Home improvement', how:'Build your first camp upgrade'},
-  camp5:{name:'Homestead', how:'Build all five camp upgrades'}
+  camp5:{name:'Homestead', how:'Build all five camp upgrades'},
+  hut1:{name:'Builder', how:'Build your first hut'},
+  village:{name:'A little village', how:'Build all four huts'}
 };
 
 /* Quests: the survivor's first days and seasons, in chapters. One main quest is followed at a time; side quests open
@@ -1142,6 +1157,10 @@ D.QUESTS = [
    story:'Snares work while you do other things. Set them on the rabbit runs and check them every day, before a coyote does.',
    steps:[{text:'Set your snares', did:'snareset', at:['prairie', 'snareset'], hint:'The Prairie has good rabbit runs.'}, {text:'Bring home a catch', did:'snarecheck+', at:['prairie', 'snarecheck'], hint:'Check the line every day.'}],
    done:'A rabbit, for an hour of work days ago.'},
+  {id:'village', side:true, title:'A little village', when:{shelter:1},
+   story:'There\'s open ground all round the boulders: room for a hut to sleep in, a storehouse, a smokehouse and a workshop. Each one takes a lot of poles and grass, and each one makes camp better for good.',
+   steps:[{text:'Build a sleeping hut', recipe:'hutsleep'}, {text:'Build a storehouse', recipe:'hutstore'}, {text:'Build a smokehouse', recipe:'hutsmoke'}, {text:'Build a workshop', recipe:'hutshop'}],
+   done:'Four huts round the boulders. It looks like somebody lives here.'},
   {id:'lean', side:true, title:'Lean times', when:{flag:'leanWarn'},
    story:'Rabbit and fish are nearly pure protein. Living on them alone makes you sick: the old trappers called it rabbit starvation. Your body needs fat or starch too.',
    steps:[{text:'Eat something fatty or starchy', did:'eatrich', hint:'Pecans, acorn meal, cattail roots, sunflower seeds, raccoon, bear, bison, or ration bars.'}],
@@ -1435,6 +1454,7 @@ function insulation(s, work, ctx){
   if (atCamp && (work === 'sleep' || work === 'rest' || (ctx && ctx.camp))){
     v += [0, 0.3, 0.45, 0.7][s.shelter];
     if (s.tools.bedding && work === 'sleep') v += 0.1;
+    if (s.tools.hutSleep && work === 'sleep') v += 0.15;   // a thick thatched hut out of the wind
   }
   if (s.tools.blanket && (work === 'sleep' || work === 'rest')) v += 0.2;
   if (atCamp){ if (s.fire.st === 'lit') v += 0.25; else if (s.fire.st === 'banked') v += 0.05; }
@@ -1445,7 +1465,7 @@ function coldStress(s, work, ctx){ return Math.max(0, 50 - feels(s, work, ctx)) 
 function sleepQ(s){
   const atCamp = s.loc === 'camp';
   let q = 0.42;
-  if (atCamp){ q += [0, 0.22, 0.33, 0.43][s.shelter]; if (s.tools.bedding) q += 0.1; }
+  if (atCamp){ q += [0, 0.22, 0.33, 0.43][s.shelter]; if (s.tools.bedding) q += 0.1; if (s.tools.hutSleep) q += 0.12; }
   const rain = rainNow(s, s.t);
   if (rain && !(atCamp && s.shelter >= 1)) q -= 0.25;
   const T = tempAt(s, s.t), ins = insulation(s, 'sleep');
@@ -1637,16 +1657,17 @@ function stepCamp(s, dt){
   for (const lot of s.food){
     // Storage slows the food's existing clock; it never refreshes a lot or rescues spoiled food.
     if (cachedFood(s, lot) && lot.exp > s.t - dt) lot.exp += dt * 0.5;
+    if (s.tools.hutStore && !lot.rack && ['fresh','raw','cooked'].indexOf(lot.st) >= 0 && lot.exp > s.t - dt) lot.exp += dt * 0.25;
     if (!lot.rack) continue;
     const r = lot.rack; let prog = 0;
-    if (r.need === 'smoke'){ if (f.st === 'lit' && !(rain && s.shelter < 2)) prog = dt; }
+    if (r.need === 'smoke'){ if (f.st === 'lit' && (s.tools.hutSmoke || !(rain && s.shelter < 2))) prog = dt * (s.tools.hutSmoke ? 1.5 : 1); }
     else {
       const h = hourOf(s.t), m = monthNow(s);
       const sun = !rain && h > D.SUNRISE[m] + 1 && h < D.SUNSET[m] - 1 && s.wx.today.sky !== 'cloudy';
       prog = sun ? dt : (f.st === 'lit' ? dt * 0.5 : 0);
     }
     if (prog > 0){ r.prog += prog; lot.exp += prog * 0.85; }
-    if (rain && s.shelter < 2 && r.prog > 0 && chance(s, 0.1 * dt)) r.prog = Math.max(0, r.prog - 2);
+    if (rain && s.shelter < 2 && !(s.tools.hutSmoke && r.need === 'smoke') && r.prog > 0 && chance(s, 0.1 * dt)) r.prog = Math.max(0, r.prog - 2);
     if (r.prog >= r.req){
       lot.st = r.need === 'smoke' ? 'smoked' : 'dried';
       lot.exp = s.t + (r.need === 'smoke' ? 30 : 60) * 24;
@@ -1719,7 +1740,7 @@ function raidCheck(s, frac){
   const r = rnd(s);
   const who = wolves && r < 0.5 ? 'wolves' : r < 0.45 ? 'raccoon' : r < 0.7 ? 'opossum' : (m >= 4 && m <= 9 && r > 0.92) ? 'bear' : 'coyote';
   const rackLots = lots.filter(f => f.rack), stored = lots.filter(f => !f.rack);
-  const prot = s.tools.hang ? 0.12 : (who !== 'bear' && s.gear.crates > 0) ? 0.35 : 1;
+  const prot = s.tools.hutStore ? (who === 'bear' ? 0.15 : 0.02) : s.tools.hang ? 0.12 : (who !== 'bear' && s.gear.crates > 0) ? 0.35 : 1;
   const pRack = rackLots.length ? p * (s.fire.st === 'lit' ? 0.5 : 1.3) : 0;
   const pStore = stored.length ? p * prot : 0;
   const pAny = 1 - (1 - pRack) * (1 - pStore);
@@ -1828,7 +1849,7 @@ E.newGame = function(opt){
     cond: {wet: 0, inc: 0, sick: 0, venom: 0, venomT: 0, rash: 0, sprain: 0, protein: 0},
     inv: {poles: 0, planks: 0, bark: 0, wood: 0, vines: 0, cord: 0, yucca: 0, fiber: 0, grass: 0, stones: 0, clay: 0, cane: 0, grubs: 0, hides: 0, feathers: 0, stave: 0, arrows: 0},
     gear: {crates: 2, tarp: 50, knives: 2, rounds: 99, laces: 2, hooks: 8, bars: duo && opt.rations !== 'shared' ? 200 : 100},
-    tools: {bowdrill: false, spear: false, fishtrap: false, snares: 0, rack: false, bowl: false, pot: false, bags: 0, rain: false, hang: false, bedding: false, blanket: false, bow: false, club: false, seep: false, workbench: false, woodstore: false, cache: false, hearth: false, lookout: false},
+    tools: {bowdrill: false, spear: false, fishtrap: false, snares: 0, rack: false, bowl: false, pot: false, bags: 0, rain: false, hang: false, bedding: false, blanket: false, bow: false, club: false, seep: false, workbench: false, woodstore: false, cache: false, hearth: false, lookout: false, hutSleep: false, hutStore: false, hutSmoke: false, hutShop: false},
     shelter: 0,
     fire: {st: 'out', fuel: 0, at: 0, wet: false},
     water: {clean: 0, raw: 0, risk: 0},
@@ -1842,12 +1863,12 @@ E.newGame = function(opt){
     visited: {camp: true},
     guide: {}, ach: {},
     world: {dry: 0, flood: 0, bison: 0, bisonId: 0, pigeons: 0, pigeonId: 0, carcass: 0, wolvesAway: 0, scare: {}, mast: 'fair', raidNight: -99},
-    stock: {poles: 45, woodC: 35, woodO: 70, woodK: 70, yucca: 50, stones: 80},
+    stock: {poles: 45, woodC: 35, woodO: 70, woodK: 70, yucca: 50, stones: 80, saplings: 60},
     crops: {}, eco: {}, wx: null,
     day: {kcal: 0, lean: 0}, leanDays: 0,
     stats: {kcal: 0, bars: 0, fish: 0, game: 0, cleanL: 0, rawL: 0, fires: 0},
     flags: {}, msgs: [], pendingNotes: [], pendingAch: [], log: [], pending: null,
-    did: {}, quest: {done: {}, open: {}}, xp: {pts: {}, today: null}, catch: {},
+    did: {}, quest: {done: {}, open: {}}, xp: {pts: {}, today: null}, catch: {}, huts: [],
     dead: false, cause: null, deathT: 0, dmg: {}, startSeason: D.SEASON_OF[st.m]
   };
   s.t = s.t0 = Math.round((D.SUNRISE[st.m] + 0.5) * 4) / 4;
@@ -2313,6 +2334,15 @@ act({id: 'grubs', loc: 'cedar', name: 'Dig for grubs', icon: '🐛', h: 0.5, wor
   run(s, R){ pass(s, 0.5, 'light', R); if (s.dead) return; add(s, R, 'grubs', ri(s, 1, 4)); R.lines.push('You roll logs and flip rocks. Pale, fat grubs curl up in the damp.'); unlock(s, 'grub', R); }});
 
 /* ---------- oak woods, prairie, creek: hunting, snares, foraging, exploring ---------- */
+act({id: 'saplings', loc: 'oak', name: 'Cut oak saplings for poles', icon: '🪵', h: 2, work: 'heavy',
+  can: s => s.stock.saplings < 1 ? 'You\'ve cut every straight sapling near the trail.' : true,
+  sub: s => 'Straight young post oaks, thinned out of the thickets. Heavier than cedar, but fine for huts. ' + stockWord(s.stock.saplings, 60),
+  run(s, R){
+    pass(s, 2, 'heavy', R); if (s.dead) return;
+    const n = Math.min(Math.floor(s.stock.saplings), Math.max(1, Math.round(rr(s, 3, 5) * yieldM(s))));
+    s.stock.saplings -= n; add(s, R, 'poles', n);
+    R.lines.push('You cut straight saplings out of the crowded thickets with a boning knife and a lot of patience, and trim them into poles.');
+  }});
 act({id: 'woodO', loc: 'oak', name: 'Gather oak deadwood', icon: '🔥', h: 1, work: 'moderate',
   sub: s => 'Dense oak burns long and hot. ' + stockWord(s.stock.woodO, 70),
   run(s, R){ gatherWood(s, R, 'woodO', 2.5, 4, 'Heavy oak limbs, dry and gray. They\'ll burn for hours.'); }});
@@ -2988,7 +3018,7 @@ function matName(k){ if (k === 'tarp') return 'tarp'; return ((D.MATS[k] || D.GE
 function recBaseTotal(s, r){ return r2(r.hours); }
 function benchApplies(s, r){ return !!s.tools.workbench && s.loc === 'camp' && r.special !== 'firepot' && r.special !== 'leach'; }
 const recSkill = r => r.group === 'Shelter' || r.group === 'Camp' ? 'building' : 'crafting';
-function recTotal(s, r){ return r2(recBaseTotal(s, r) * (benchApplies(s, r) ? 0.8 : 1) * Math.max(0.75, 1 - 0.03 * (lvl(s, recSkill(r)) - 1))); }
+function recTotal(s, r){ return r2(recBaseTotal(s, r) * (benchApplies(s, r) ? 0.8 : 1) * (s.tools.hutShop && s.loc === 'camp' && !r.anywhere ? 0.85 : 1) * Math.max(0.75, 1 - 0.03 * (lvl(s, recSkill(r)) - 1))); }
 function recipeBuilt(s, id){
   const r = RMAP[id]; if (!r) return false;
   if (r.flag) return !!s.tools[r.flag];
@@ -3081,6 +3111,7 @@ function complete(s, R, r){
   }
   if (r.shelter){ s.shelter = r.shelter; ach(s, R, 'roof'); if (r.shelter >= 3) ach(s, R, 'hut'); }
   if (r.group === 'Camp'){ ach(s, R, 'camp1'); if (campUpgrades(s) >= 5) ach(s, R, 'camp5'); }
+  if (r.hut){ if (s.huts.indexOf(r.hut) < 0) s.huts.push(r.hut); ach(s, R, 'hut1'); if (s.huts.length >= 4) ach(s, R, 'village'); }
   if (r.id === 'bow') ach(s, R, 'bow');
   did(s, 'craft:' + r.id);
   skillUp(s, R, recSkill(r), r.hours >= 3 || r.session ? 2 : 1, 'craft:' + r.id);
@@ -3226,6 +3257,8 @@ E.campInfo = function(s){
   L.push(['⛺', D.SHELTER[s.shelter] + (s.tools.bedding ? ', grass bed' : '') + (s.tools.blanket ? ', hide blanket' : '') + '.']);
   const ups = [['workbench', 'workbench (projects 20% faster)'], ['woodstore', 'wood store (dry tinder in the rain)'], ['cache', 'food cache (fresh food keeps twice as long)'], ['hearth', 'hearth (6 h of fire per armload)'], ['lookout', 'lookout (quicker exploring, more game spotted)']].filter(u => s.tools[u[0]]);
   if (ups.length) L.push(['🛠️', 'Camp upgrades: ' + ups.map(u => u[1]).join(', ') + '.']);
+  const huts = {sleep: 'sleeping hut (better sleep, warmer nights)', store: 'storehouse (food safe from raiders, keeps longer)', smoke: 'smokehouse (faster smoking, even in rain)', shop: 'workshop (projects at camp 15% faster)'};
+  if ((s.huts || []).length) L.push(['🛖', (s.huts.length === 1 ? 'One hut: ' : s.huts.length + ' huts: ') + s.huts.map(k => huts[k]).join(', ') + '.']);
   const cap = capacity(s);
   L.push(['💧', cap ? s.water.clean.toFixed(1) + ' L clean and ' + s.water.raw.toFixed(1) + ' L untreated water. Room for ' + cap + ' L.' : 'No water containers yet.']);
   if (s.trap.set) L.push(['🧺', 'Fish trap set in the river, checked ' + ago(s, s.trap.at) + '.']);
@@ -3397,6 +3430,7 @@ function adviceGoals(s){
   if (s.shelter >= 2 && s.tools.workbench){ const next = ['hearth', 'cache', 'woodstore', 'lookout'].find(k => !s.tools[k]); if (next) goal('Your camp can still grow. Next: ' + RMAP[next].name.charAt(0).toLowerCase() + RMAP[next].name.slice(1) + '.', {recipe: next}); }
   if (s.shelter === 2) goal('Walls of woven cedar and clay would turn the boulders into a real hut.', {recipe: 'walls'});
   if (s.stats.fires > 0 && s.inv.wood < 4){ const w = nearestWood(s); goal('Keep a few armloads of firewood at camp, so the fire never has to go out.', {go: w[0], act: w[1]}); }
+  if (s.shelter >= 2){ const h = nextHut(s); if (h) goal('There\'s room round the boulders for huts. Next: ' + h.name.charAt(0).toLowerCase() + h.name.slice(1) + '.', {recipe: h.id}); }
   if (s.shelter >= 1 && (!s.found.spring || !s.found.trail)) goal('Nobody has ever mapped these woods. Explore deeper in the Oak Woods and see what\'s out there.', {go: 'oak', act: 'explore_oak'});
   if (s.shelter >= 1 && !s.found.osage) goal('The Creek Bottom runs on for miles. Explore downstream.', {go: 'creek', act: 'explore_creek'});
   if (isEvening(s) && s.loc === 'camp' && !isDark(s)) goal('The light is going, and nothing is worth a long walk now. Rest at camp until dark.', {act: 'rest'});
@@ -3617,8 +3651,11 @@ function stringStep(s){
   if (!p || p.wait) return {text: lead};
   return Object.assign({}, p, {text: p.craft ? lead : lead + ' ' + p.text, via: p.via || id});
 }
+// the next hut you could build: not built yet, and everything it waits on is done
+function nextHut(s){ return D.RECIPES.find(r => r.hut && !recipeBuilt(s, r.id) && prerequisiteView(s, r).every(p => p.met)) || null; }
 function sourceOf(s, k){
   if (k === 'wood'){ const w = nearestWood(s); return {loc: w[0], act: w[1], text: AMAP[w[1]].name}; }
+  if (k === 'poles' && s.stock.poles < 4 && (s.stock.saplings || 0) >= 1) return {loc: 'oak', act: 'saplings', text: 'Cut oak saplings for poles', note: 'The cedars are picked over. Usually 3 to 5 poles a trip.'};
   if (k === 'stave' && !s.found.osage) return {loc: 'creek', act: 'explore_creek', text: 'Explore downstream', note: 'Bois d\'arc grows somewhere along the creek. It can take more than one trip to find.'};
   return D.SOURCES[k] || null;
 }
@@ -3735,7 +3772,9 @@ E.load = function(str){
     if (s.log.some(entry => !num(entry.t) || (entry.icon != null && (typeof entry.icon !== 'string' || entry.icon.length > 8)) || entry.lines.some(l => typeof l !== 'string'))) return null;
     if (s.pin != null && !Object.prototype.hasOwnProperty.call(RMAP, s.pin)) delete s.pin;
     if (s.map != null && !(object(s.map) && Number.isInteger(s.map.x) && Number.isInteger(s.map.y) && s.map.x >= 0 && s.map.x < 48 && s.map.y >= 0 && s.map.y < 36)) delete s.map;
-    for (const id of ['workbench','woodstore','cache','hearth','lookout']) if (!(id in s.tools)) s.tools[id] = false;
+    for (const id of ['workbench','woodstore','cache','hearth','lookout','hutSleep','hutStore','hutSmoke','hutShop']) if (!(id in s.tools)) s.tools[id] = false;
+    if (!Array.isArray(s.huts) || s.huts.some(k => ['sleep','store','smoke','shop'].indexOf(k) < 0)) s.huts = ['sleep','store','smoke','shop'].filter(k => s.tools['hut' + k.charAt(0).toUpperCase() + k.slice(1)]);
+    if (!Number.isFinite(s.stock.saplings)) s.stock.saplings = 60;   // saves from before oak saplings
     if (!object(s.did) || Object.keys(s.did).some(k => !num(s.did[k]))) s.did = {};   // saves from before quests
     if (!object(s.quest) || !object(s.quest.done) || !object(s.quest.open)) s.quest = {done: {}, open: {}};
     if (Object.keys(s.quest.done).some(k => !QMAP[k] || !num(s.quest.done[k])) || Object.keys(s.quest.open).some(k => !QMAP[k] || !object(s.quest.open[k]))) s.quest = {done: {}, open: {}};
@@ -3794,6 +3833,7 @@ function mateNeed(s){
   const ids = [];
   if (s.pin) ids.push(s.pin);
   const next = D.RECIPES.find(r => r.shelter === s.shelter + 1); if (next) ids.push(next.id);
+  if (s.shelter >= 2){ const h = nextHut(s); if (h) ids.push(h.id); }
   for (const id of ids){
     const r = RMAP[id]; if (!r || !r.need || s.proj[id] || recipeBuilt(s, id)) continue;
     for (const m in r.need){
@@ -5381,7 +5421,7 @@ const PLACES = {
       ring: {name: 'Fire ring', site: 'ring', acts: ['firestart', 'addwood', 'stock', 'bank', 'uncover', 'cook', 'boil'], makes: ['bowl', 'firepot', 'leach', 'hearth'], say: 'A ring of stones on bare dirt.'},
       crate: {name: 'Your crates', site: 'crate', acts: ['crate'], say: 'Your crates: the only critter-proof box you have.'},
       rack: {name: 'Drying rack', site: 'rack', acts: ['rack'], say: 'Your drying rack.'},
-      work: {name: 'Work ground', site: 'work', open: true, makes: ['rack', 'rain', 'trap', 'arrows', 'workbench', 'woodstore', 'cache', 'lookout'], say: 'Flat open ground: room to build.'},
+      work: {name: 'Work ground', site: 'work', open: true, makes: ['rack', 'rain', 'trap', 'arrows', 'workbench', 'woodstore', 'cache', 'lookout', 'hutsleep', 'hutstore', 'hutsmoke', 'hutshop'], say: 'Flat open ground: room to build. Huts go up on the open ground round the boulders.'},
       hangoak: {name: 'Big post oak', makes: ['hang'], say: 'A big post oak with a high, level limb, far from the trunk: the place for a food hang.'}
     },
     beasts: {rabbit: [32, 20, 46, 30]}},
@@ -5861,6 +5901,12 @@ const WBUILD = {
     g.P([[-15, -27], [15, -27], [13, -33], [-13, -33]], 'plank', {sh: 'dir', nx: 0, ny: -0.8, tex: 'grain', edge: 1}); g.stroke('M-14,-33 L-14,-39 M14,-33 L14,-39 M-14,-38 L14,-38', 0.6, 0.6, 'woodL', {edge: 1});
     g.stroke('M-3,0 L-3,-27 M3,0 L3,-27', 0.5, 0.5, 'woodL', {edge: 1}); for (let y = -4; y > -27; y -= 4) g.L(-3, y, 3, y, 'woodL', 2, 0.5); }},
   bench: {box: [30, 14, 15, 12], sh: [12, 2], paint(g){ g.stroke('M-11,0 L-11,-6 M11,0 L11,-6 M-9,-1 L-9,-6 M9,-1 L9,-6', 0.7, 0.7, 'wood', {edge: 1}); g.P([[-13, -6], [13, -6], [12, -10], [-12, -10]], 'woodL', {sh: 'dir', nx: 0, ny: -0.85, tex: 'grain', edge: 1}); }},
+  hut: {box: [44, 40, 22, 38], sh: [18, 4], paint(g, A, k){
+    if (k === 'sleep'){ g.E(0, -9, 18, 15, 'thatch', {sh: 'ball', tex: 'thatch', edge: 1}); g.E(0, -3, 18.5, 6, 'thatch', {sh: 'dir', nx: 0, ny: 0.6, tex: 'thatch', edge: 1}); g.R(-3.5, -9, 7, 9, 'door', {lv: 0}); g.stroke('M-3,-23 L-5,-28 M0,-24 L0,-29 M3,-23 L5,-28', 0.7, 0.7, 'wood', {edge: 1}); }
+    else if (k === 'store'){ g.stroke('M-11,0 L-11,-12 M11,0 L11,-12 M-8,-2 L-8,-12 M8,-2 L8,-12', 1, 1, 'wood', {edge: 1, tex: 'bark'}); g.R(-12, -24, 24, 12, 'daub', {sh: 'box', tex: 'thatch', edge: 1}); g.P([[-15, -23], [0, -33], [15, -23]], 'thatch', {sh: 'dir', nx: 0, ny: -0.7, tex: 'thatch', edge: 1}); g.R(2, -21, 5, 7, 'door', {lv: 0}); }
+    else if (k === 'smoke'){ g.R(-11, -16, 22, 16, 'daub', {sh: 'box', tex: 'thatch', edge: 1}); g.P([[-14, -15], [0, -29], [14, -15]], 'thatch', {sh: 'dir', nx: 0, ny: -0.7, tex: 'thatch', edge: 1}); g.R(-5, -10, 6, 10, 'door', {lv: 0}); }
+    else { g.stroke('M-17,0 L-17,-22 M17,0 L17,-22 M-14,-4 L-14,-19 M14,-4 L14,-19', 1, 1, 'wood', {edge: 1, tex: 'bark'}); g.P([[-20, -24], [20, -24], [18, -18], [-18, -18]], 'thatch', {sh: 'dir', nx: 0, ny: -0.85, tex: 'thatch', edge: 1}); g.R(-8, -6, 7, 6, 'log', {sh: 'box', edge: 1}); g.R(3, -9, 11, 2, 'woodL', {edge: 1}); }
+  }},
   cache: {box: [20, 18, 10, 16], sh: [7, 2], paint(g){ g.R(-6, -9, 12, 9, 'daub', {sh: 'box', tex: 'thatch', edge: 1}); g.P([[-8, -8], [0, -15], [8, -8]], 'sod', {sh: 'dir', nx: 0, ny: -0.7, tex: 'thatch', edge: 1}); g.R(-2, -5, 4, 5, 'door', {lv: 0}); }},
   crate: {box: [20, 18, 10, 16], sh: [7, 2], paint(g, A, n){ const box = (x, y, s) => { g.R(x - 5 * s, y - 8 * s, 10 * s, 8 * s, 'plank', {sh: 'box', tex: 'grain', edge: 1}); g.R(x - 5 * s, y - 11 * s, 10 * s, 3 * s, 'plank', {sh: 'dir', nx: 0, ny: -0.9, tex: 'grain', edge: 1}); g.L(x - 4 * s, y - 4 * s, x + 4 * s, y - 4 * s, 'wood', 1, 0.4); };
     if (n > 1) box(4, -4, 0.75); box(0, 0, 1); }},
@@ -5967,8 +6013,8 @@ function wpainting(k, month){
 }
 
 /* ---------- camp as built, and the animals about ---------- */
-const siteXY = k => { const T = lvTrace('camp'); if (T && T.sites && T.sites[k]) return [Math.floor(T.sites[k][0] / 32), Math.floor(T.sites[k][1] / 32)]; const q = PLACES.camp.sites[k]; return [tX(q[0]), tY(q[1])]; };
-function wbuildKey(s, F){ const t = s.tools || {}; return JSON.stringify([s.loc, F.shelter, F.fire, F.wood, F.crates, F.meat, Object.keys(t).filter(k => t[k]).sort(), !!(s.trap && s.trap.set), F.flood, s.snare && s.snare.set ? s.snare.loc : '']); }
+const siteXY = k => { const T = lvTrace('camp'); if (T && T.sites && T.sites[k]) return [Math.floor(T.sites[k][0] / 32), Math.floor(T.sites[k][1] / 32)]; const q = PLACES.camp.sites[k]; return q ? [tX(q[0]), tY(q[1])] : null; };
+function wbuildKey(s, F){ const t = s.tools || {}; return JSON.stringify([(s.huts || []).join(), s.loc, F.shelter, F.fire, F.wood, F.crates, F.meat, Object.keys(t).filter(k => t[k]).sort(), !!(s.trap && s.trap.set), F.flood, s.snare && s.snare.set ? s.snare.loc : '']); }
 function wbuilds(s, F){
   const L = [], t = s.tools || {}, has = k => !!t[k], dyn = new Uint8Array(WW * WH), bt = {};
   const at = (k, w) => { const q = siteXY(k); return {bx: (q[0] + (w ? w / 2 : 0.5)) * WT, by: (q[1] + 1) * WT - 2}; };
@@ -5987,6 +6033,7 @@ function wbuilds(s, F){
     if (has('lookout')){ const q = siteXY('look'); add('look', 0, at('look', 2), 'look', [q, [q[0] + 1, q[1]], [q[0], q[1] - 1], [q[0] + 1, q[1] - 1]]); }
     if (F.crates > 0) add('crate', F.crates, at('crate'), 'crate' + F.crates, site('crate'));
     if (has('pot') || has('bowl')) add('pot', has('pot'), at('pot'), 'pot' + (has('pot') ? 1 : 0), site('pot'));
+    (s.huts || []).forEach((k, i) => { const q = siteXY('hut' + (i + 1)); if (!q) return; const tiles = []; for (let y = q[1] - 1; y <= q[1]; y++) for (let x = q[0] - 2; x <= q[0] + 1; x++) tiles.push([x, y]); add('hut', k, {bx: q[0] * WT, by: (q[1] + 1) * WT - 2}, 'hut-' + k, tiles); });
   }
   if (s.loc === 'river'){
     const sb = WV.map.spots.sandbar, sn = WV.map.spots.snag;
@@ -6238,6 +6285,7 @@ function wtap(tx, ty){
    working (the river's edge, the oaks), or by the fire. If his day has him somewhere else, he isn't here. */
 const MATE_CAMP = {build: 'work', boil: 'ring', fire: 'ring', rest: 'ring', sleep: 'boulders'};
 function wmateSpot(m, k){
+  if (k === 'camp' && m.at === 'camp' && m.k === 'sleep' && WV.S && (WV.S.huts || []).indexOf('sleep') >= 0){ const q = siteXY('hut' + (WV.S.huts.indexOf('sleep') + 1)); if (q) return {x: q[0], y: q[1] + 1, dir: 'up'}; }
   const M = WV.map, id = k === 'camp' && m.at === 'camp' ? MATE_CAMP[m.k] || 'ring' : Object.keys(M.spots).find(i => (M.spots[i].acts || []).indexOf(m.act) >= 0);
   const S = id && M.spots[id], t = S && S.tiles && S.tiles.find(q => wopen(M, q[0], q[1], WV.S));
   if (t){ const th = S.tiles.find(q => !wopen(M, q[0], q[1], WV.S)), dx = th ? th[0] - t[0] : 0, dy = th ? th[1] - t[1] : 1;
@@ -6627,7 +6675,7 @@ function lvAct(a){
 function lvCamp(){
   const s = WV.S, F = WV.F, t = s.tools || {}, has = k => !!t[k];
   const st = {fire: F.fire === 'lit' ? (s.fire && s.fire.fuel > 9 ? 'big' : 'lit') : F.fire === 'banked' ? 'coals' : 'out', shelter: F.shelter, bed: has('bedding'), blanket: has('blanket'), rack: has('rack'), meat: !!F.meat,
-    wood: F.wood ? (F.wood > 1 ? 1 : 0.5) : 0, store: has('woodstore'), rain: has('rain'), hang: has('hang'), crates: F.crates, bench: has('workbench'), cache: has('cache'), hearth: has('hearth'), look: has('lookout'), pot: has('pot'), bowl: has('bowl')};
+    wood: F.wood ? (F.wood > 1 ? 1 : 0.5) : 0, store: has('woodstore'), rain: has('rain'), hang: has('hang'), crates: F.crates, bench: has('workbench'), cache: has('cache'), hearth: has('hearth'), look: has('lookout'), pot: has('pot'), bowl: has('bowl'), huts: (s.huts || []).slice()};
   const key = JSON.stringify(st); if (key !== LV.campKey){ LV.campKey = key; LV.camp.set(st); }
 }
 // the things set out away from camp: the seep, the fish trap, the snares
