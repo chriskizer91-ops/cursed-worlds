@@ -3,7 +3,7 @@
 //   node animal-3d-models/tools/turnaround.mjs [--look henry] [--model game|hd|storybook] [--detail 1]
 //        [--out dir] [--poses stand,eat,lie] [--views front,left,...] [--size 640x520] [--close]
 // game: zebu.js (the ranch's cartoon cattle). hd: zebu-hd.js, full detail, with daylight, soft shadows and film-like
-// colour. storybook: zebu-storybook.js, the What the Map Forgot look. --close frames the head.
+// colour. storybook: makeZebuStorybook in zebu.js, the What the Map Forgot look. --close frames the head.
 // Writes one PNG per pose and view. Prints the triangle and draw counts; ends with "all good" if nothing failed.
 import path from 'node:path';
 import fs from 'node:fs';
@@ -23,7 +23,7 @@ fs.mkdirSync(out, {recursive: true});
 // the camera goes round the animal: the angle is measured from straight in front of it, towards its left side
 const VIEW = {front: 0, frontleft: 40, left: 90, backleft: 140, back: 180, backright: 220, right: 270, frontright: 320, top: 'top'};
 const src = f => pathToFileURL(path.join(top, f)).href;
-const scripts = ['vendor/three.r128.min.js', 'zebu-cattle/zebu.js'].concat(model === 'hd' ? ['zebu-cattle/zebu-hd.js'] : model === 'storybook' ? ['zebu-cattle/zebu-storybook.js'] : []);
+const scripts = ['vendor/three.r128.min.js', 'zebu-cattle/zebu.js'].concat(model === 'hd' ? ['zebu-cattle/zebu-hd.js'] : []);
 const make = model === 'hd' ? `makeZebuHD('${look}', {detail: ${detail}})` : model === 'storybook' ? `makeZebuStorybook('${look}')` : `makeZebu('${look}')`;
 const page0 = path.join(out, '_turnaround.html');
 fs.writeFileSync(page0, `<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#ddd}</style><body>

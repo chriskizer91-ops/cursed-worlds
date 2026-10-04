@@ -23,14 +23,25 @@ disagree.
 
 ## In 3D
 
-`zebu.js` builds each of them in code: `makeZebu('henry')`, `makeZebu('tan-cow')` and so on, plus `calf`.
+Each animal comes in three looks (see [the guide](../HOW-TO-MAKE-3D-MODELS.md)):
+
+- **Full detail**, `zebu-hd.js`: `makeZebuHD('henry')`. One skin over a skeleton; the hump, the hip bones, the muscles
+  and the folds of the dewlap under it; hair painted into the coat so it catches the light; dark moist eyes under a
+  glossy cornea; his whole left horn with its rings and his broken right one, pink and spotted; split hooves; a tail
+  switch of single hairs. About 140,000 triangles.
+- **Storybook**, `makeZebuStorybook('henry')` in `zebu.js`: What the Map Forgot's look. A big round head, short legs,
+  big shining eyes, flat warm colours and an ink outline.
+- **Ranch game**, `makeZebu('henry')` in `zebu.js`: the cartoon the ranch map uses for the whole herd.
+
 Henry's shape is measured off Chris's photos: the hump over his shoulders, the loose folded skin down his throat, the
 long drooping ears, the dark nose and hooves, the black tail tuft, his whole left horn and his broken right one.
 The cows are a little smaller, with smaller humps and both horns.
 
-Each one can stand, walk (one foot at a time, the way cattle do), eat with its head down and chewing, and lie down
-the way cattle really do it: front knees first, then the back end; getting up, back end first. The ears flick and the
-tail swats flies.
+Each one can stand, walk (one foot at a time, the way cattle do), eat with its head down in the grass and chewing,
+and lie down the way cattle really do it: front knees first, then the back end; getting up, back end first. The ears
+flick and the tail swats flies.
 
-- `henry/model-turnaround.png`: Henry from every side, eating and lying down.
-- `herd-lineup.png`: the whole herd side by side.
+- `henry/model-full-detail.jpg`: the full-detail Henry from the sides, his head close up, eating, kneeling and lying.
+- `henry/model-storybook.jpg`: the storybook Henry.
+- `henry/model-turnaround.png`: the ranch game's Henry from every side.
+- `herd-lineup.png`: the whole herd side by side, in the ranch game's look.

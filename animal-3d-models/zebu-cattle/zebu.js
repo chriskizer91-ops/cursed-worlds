@@ -13,6 +13,10 @@
 //                             first and then the hind end, and get up hind end first; z.busy is true while they do.
 //   z.state                   'stand', 'eat', 'lie', 'lying-down' or 'getting-up'
 //   z.anchor(name, v)         world position of 'mouth', 'head' or 'poll'
+//
+// makeZebuStorybook(look) is the same animal in the look of What the Map Forgot's 3D (what_the_map_forgot wren-3d):
+// a chunky storybook figure with a big head, short legs and big shining eyes, in flat warm colours with three-step cel
+// shading, a cool rim of light and an ink outline in the game's ink colour.
 (function (root) {
   'use strict';
   const PI = Math.PI, TAU = PI * 2;
@@ -121,27 +125,54 @@
       horn: {left: 'none', right: 'none'}}
   };
 
+  // the storybook colours: warmer and flatter, from What the Map Forgot's palette (ink #1d1b2c, paper #f4efe2)
+  const STORYBOOK = {
+    henry: {coat: 0xf4efe2, shade: 0xd9ccb4, belly: 0xf8f4ea, fold: 0xd6c8ae, knee: 0xe0d4be, muzzle: 0x3b3344, hoof: 0x2b2733, tuft: 0x2b2733,
+      earIn: 0xeab7ab, earRim: 0xcdbca5, hornBase: 0xcdb59b, hornMid: 0x6d5c54, hornTip: 0x2b2733, stump: 0xeaa999, stumpSpot: 0x94564d, stumpTop: 0xf6ded4, eye: 0x1d1b2c}
+  };
+
   function makeZebu(look, opts) {
+    opts = opts || {};
+    const SB = opts.style === 'storybook', key = typeof look === 'string' ? look : null;
     if (typeof look === 'string') look = LOOKS[look];
-    look = Object.assign({}, LOOKS.henry, look || {}); opts = opts || {};
-    const RAD = opts.detail === 'low' ? 16 : 26, HK = look.hump == null ? 1 : look.hump;
+    look = Object.assign({}, LOOKS.henry, look || {}, SB && key && STORYBOOK[key] ? STORYBOOK[key] : {});
+    const RAD = opts.detail === 'low' ? 16 : 26, HK = (look.hump == null ? 1 : look.hump) * (SB ? 1.3 : 1);
     const col = c => new THREE.Color(c);
 
     // ---------- materials ----------
-    const grad = (() => { const d = new Uint8Array([96, 96, 96, 255, 172, 172, 172, 255, 232, 232, 232, 255, 255, 255, 255, 255]); const t = new THREE.DataTexture(d, 4, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+    const grad = (() => { const d = SB ? new Uint8Array([120, 120, 120, 255, 200, 200, 200, 255, 255, 255, 255, 255]) : new Uint8Array([96, 96, 96, 255, 172, 172, 172, 255, 232, 232, 232, 255, 255, 255, 255, 255]); const t = new THREE.DataTexture(d, d.length / 4, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
     const skin = new THREE.MeshToonMaterial({vertexColors: true, gradientMap: grad});
+    // the storybook look: a cool rim of light round the edges, and an ink outline that follows averaged normals
+    if (SB) { skin.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vec3(.62, .71, 1.) * .16 * smoothstep(.55, .85, 1. - abs(dot(normal, normalize(vViewPosition))));'); }; skin.customProgramCacheKey = () => 'zebu-storybook'; }
     const outMat = new THREE.ShaderMaterial({
-      uniforms: {uW: {value: opts.outline == null ? 0.009 : opts.outline}, uC: {value: new THREE.Color(0x2a221c)}},
-      vertexShader: 'uniform float uW; void main(){ vec3 p = position + normal * uW; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.); }',
+      uniforms: {uW: {value: opts.outline == null ? (SB ? 0.013 : 0.009) : opts.outline}, uC: {value: new THREE.Color(SB ? 0x1d1b2c : 0x2a221c)}},
+      vertexShader: SB ? 'attribute vec3 inkn; uniform float uW; void main(){ vec3 p = position + inkn * uW; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.); }' : 'uniform float uW; void main(){ vec3 p = position + normal * uW; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.); }',
       fragmentShader: 'uniform vec3 uC; void main(){ gl_FragColor = vec4(uC, 1.); }',
       side: THREE.BackSide
     });
+    // the storybook proportions: short legs, a wider body and a big head (every joint and part goes through these)
+    const HEADS = new Set(['head', 'jaw', 'earL', 'earR']), LEGY = 0.78, LEGK = 0.72, HEADK = 1.45, WIDE = 1.1;
+    let H0 = null, H0w = null;
+    function warp(v, name) {
+      if (!SB) return v;
+      if (HEADS.has(name) && H0) {
+        // a rounder, bigger head with a shorter nose: scaled in the head's own frame (across, up, along the face)
+        const S3 = (x, y, z) => { const [lx, ly, lz] = toL(x, y, z); return toW(lx * HEADK * 1.05, ly * HEADK, lz * 1.12); };
+        return v.copy(S3(v.x, v.y, v.z)).sub(S3(H0.x, H0.y, H0.z)).add(H0w);
+      }
+      if (v.y <= LEGY) v.y *= LEGK; else v.y -= LEGY * (1 - LEGK);
+      v.x *= WIDE; v.z *= 0.88; return v;
+    }
 
     // ---------- the skeleton ----------
     // Every joint is placed by where it sits when the animal stands, and every part is drawn where it sits then too.
     const R = new THREE.Group(); R.name = look.name || 'Zebu';
     const J = {root: R}, W = {root: V3(0, 0, 0)};
-    function joint(name, parent, x, y, z) { const g = new THREE.Group(); g.name = name; const p = W[parent]; g.position.set(x - p.x, y - p.y, z - p.z); J[parent].add(g); J[name] = g; W[name] = V3(x, y, z); return g; }
+    function joint(name, parent, x, y, z) {
+      const g = new THREE.Group(); g.name = name; const p = W[parent], v = V3(x, y, z);
+      if (name === 'head') { H0 = v.clone(); warp(v, 'body'); H0w = v.clone(); } else warp(v, name);
+      g.position.set(v.x - p.x, v.y - p.y, v.z - p.z); J[parent].add(g); J[name] = g; W[name] = v; return g;
+    }
     const buckets = new Map();
     // add a part to a joint, coloured by a colour or by a function of where each point is (standing position)
     function add(name, geo, color, noLine) {
@@ -152,6 +183,7 @@
         for (let i = 0; i < n; i++) { c.set(typeof color === 'function' ? color(p.getX(i), p.getY(i), p.getZ(i)) : color); a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
         g.setAttribute('color', new THREE.BufferAttribute(a, 3));
       }
+      if (SB) { const p = g.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); warp(v, name); p.setXYZ(i, v.x, v.y, v.z); } }
       const w = W[name]; g.translate(-w.x, -w.y, -w.z);
       if (!buckets.has(name)) buckets.set(name, {all: [], lines: []});
       const b = buckets.get(name); b.all.push(g); if (!noLine) b.lines.push(g);
@@ -163,12 +195,19 @@
       const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.BufferAttribute(pos, 3)); m.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); m.setAttribute('color', new THREE.BufferAttribute(cc, 3));
       m.computeBoundingSphere(); return m;
     }
+    // normals that agree wherever two points meet, so the ink outline doesn't split at seams and hard edges
+    function inkNormals(geo) {
+      const p = geo.attributes.position, n = geo.attributes.normal, map = new Map(), out = new Float32Array(p.count * 3), key = i => Math.round(p.getX(i) * 1e4) + ',' + Math.round(p.getY(i) * 1e4) + ',' + Math.round(p.getZ(i) * 1e4);
+      for (let i = 0; i < p.count; i++) { const k = key(i), a = map.get(k) || [0, 0, 0]; a[0] += n.getX(i); a[1] += n.getY(i); a[2] += n.getZ(i); map.set(k, a); }
+      for (let i = 0; i < p.count; i++) { const a = map.get(key(i)), l = Math.hypot(a[0], a[1], a[2]) || 1; out[i * 3] = a[0] / l; out[i * 3 + 1] = a[1] / l; out[i * 3 + 2] = a[2] / l; }
+      geo.setAttribute('inkn', new THREE.BufferAttribute(out, 3)); return geo;
+    }
     let TRIS = 0;
     function bake() {
       for (const [name, b] of buckets) {
         const g = merge(b.all); TRIS += g.attributes.position.count / 3;
         const mesh = new THREE.Mesh(g, skin); mesh.frustumCulled = false; J[name].add(mesh);
-        if (b.lines.length) { const o = new THREE.Mesh(merge(b.lines), outMat); o.frustumCulled = false; J[name].add(o); }
+        if (b.lines.length) { const lg = merge(b.lines); if (SB) inkNormals(lg); const o = new THREE.Mesh(lg, outMat); o.frustumCulled = false; J[name].add(o); }
       }
       buckets.clear();
     }
@@ -182,14 +221,14 @@
       tmp.lerp(cShade, cl(top * (look.topShade == null ? 1 : look.topShade), 0, 0.7));
       tmp.lerp(cBelly, sstep(0.62, 0.42, y) * 0.6);
       if (look.spots) { const sp = look.spots, n2 = noise(x * sp.scale + 11, y * sp.scale, z * sp.scale) * 0.7 + noise(x * sp.scale * 2.3, y * sp.scale * 2.3 + 5, z * sp.scale * 2.3) * 0.3; if (n2 > sp.cut) tmp.copy(cSpot).multiplyScalar(0.94 + 0.12 * noise(x * 30, y * 30, z * 30)); }
-      const n = noise(x * 9, y * 9, z * 9) - 0.5; tmp.multiplyScalar(1 + n * 0.06);
+      if (!SB) { const n = noise(x * 9, y * 9, z * 9) - 0.5; tmp.multiplyScalar(1 + n * 0.06); }
       return tmp;
     }
     // the neck and dewlap hang in loose upright folds
     function folds(x, y, z) {
       coat(x, y, z);
       const f = (z * 13 + Math.sin(y * 7 + x * 3) * 0.35) % 1; const k = f < 0 ? f + 1 : f;
-      if (k < 0.14) tmp.lerp(cFold, 0.4 * sstep(0.5, 0.8, z));
+      if (k < 0.14 && !SB) tmp.lerp(cFold, 0.4 * sstep(0.5, 0.8, z));
       return tmp;
     }
     function legCoat(x, y, z) {
@@ -273,6 +312,13 @@
     add('head', place(ball(0.05, 0.004, 0.035).translate(0, -0.105, 0.47)), 0x1a1614, true);
     // eyes, with the dark rims Zebu have
     for (const s of [1, -1]) {
+      if (SB) {
+        // big storybook eyes: dark, with two catchlights
+        add('head', place(ball(0.022, 0.03, 0.033).rotateX(-0.2).translate(0.096 * s, -0.004, 0.14)), look.eye, true);
+        add('head', place(ball(0.008, 0.008, 0.008).translate(0.115 * s, 0.009, 0.15)), 0xffffff, true);
+        add('head', place(ball(0.004, 0.004, 0.004).translate(0.113 * s, -0.013, 0.162)), 0xffffff, true);
+        continue;
+      }
       add('head', place(ball(0.012, 0.03, 0.04).rotateX(-0.2).translate(0.097 * s, -0.012, 0.135)), look.lid, true);
       add('head', place(ball(0.014, 0.02, 0.028).rotateX(-0.2).translate(0.101 * s, -0.012, 0.137)), look.eye, true);
       add('head', place(ball(0.004, 0.005, 0.005).translate(0.112 * s, 0.0, 0.148)), 0xe8e4dc, true);
@@ -449,4 +495,5 @@
       get state() { return st.state; }, get busy() { return !!st.seq; }, get tris() { return TRIS; }};
   }
   root.makeZebu = makeZebu; root.ZEBU_LOOKS = LOOKS;
+  root.makeZebuStorybook = (look, opts) => makeZebu(look, Object.assign({style: 'storybook'}, opts || {}));
 })(typeof window !== 'undefined' ? window : globalThis);

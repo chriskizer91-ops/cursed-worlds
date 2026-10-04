@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Henry Three Ways</title>
+<style>
+/* Henry in three looks, turned by hand. Layout: the animal fills the screen; the looks on top, the moves at the bottom. */
+:root {
+  --ink: #f6f1e4; --ink-dim: #cfc6b2; --panel: rgba(32, 28, 24, 0.82); --edge: rgba(246, 241, 228, 0.16);
+  --hay: #e3b04b; --hay-ink: #2a2116; --font: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; background: #2a2622; overflow: hidden; }
+body { font: 15px/1.4 var(--font); color: var(--ink); -webkit-tap-highlight-color: transparent; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--hay); outline-offset: 2px; }
+.bar { position: fixed; left: 0; right: 0; display: flex; justify-content: center; gap: 8px; padding: 0 12px; pointer-events: none; flex-wrap: wrap; }
+#looks { top: calc(env(safe-area-inset-top, 0px) + 12px); }
+#moves { bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); }
+.seg { display: flex; background: var(--panel); border: 1px solid var(--edge); border-radius: 999px; padding: 3px; pointer-events: auto; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.seg button { border: 0; background: none; border-radius: 999px; padding: 7px 13px; font-weight: 600; font-size: 14px; }
+.seg button[aria-pressed="true"] { background: var(--hay); color: var(--hay-ink); }
+#about { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 62px); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px);
+  background: var(--panel); border-radius: 12px; padding: 6px 12px; font-size: 13px; color: var(--ink-dim); text-align: center; pointer-events: none; }
+#about b { color: var(--ink); font-weight: 600; }
+#busy { position: fixed; inset: 0; display: grid; place-items: center; font-size: 17px; font-weight: 600; background: rgba(42, 38, 34, 0.55); }
+#busy[hidden] { display: none; }
+@media (max-width: 380px) { .seg button { padding: 7px 10px; font-size: 13px; } }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="looks" class="bar"><div class="seg" role="group" aria-label="Look">
+  <button data-look="hd" aria-pressed="true">Full detail</button><button data-look="storybook" aria-pressed="false">Storybook</button><button data-look="game" aria-pressed="false">Ranch game</button>
+</div></div>
+<div id="about"></div>
+<div id="moves" class="bar">
+  <div class="seg" role="group" aria-label="What he does">
+    <button data-act="stand" aria-pressed="true">Stand</button><button data-act="walk" aria-pressed="false">Walk</button><button data-act="eat" aria-pressed="false">Eat</button><button data-act="lie" aria-pressed="false">Lie down</button>
+  </div>
+  <div class="seg"><button id="faceBtn" aria-pressed="false">Face</button></div>
+</div>
+<div id="busy">Building Henry…</div>
+<script src="../vendor/three.r128.min.js"></script>
+<script src="../zebu-cattle/zebu.js"></script>
+<script src="../zebu-cattle/zebu-hd.js"></script>
+<script src="henry.js"></script>
+</body>
+</html>

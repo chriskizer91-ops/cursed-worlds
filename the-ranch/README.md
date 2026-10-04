@@ -15,9 +15,11 @@ repository, because it's rebuilt every time).
   fingers to turn.
 - Zoom in and the view tips over, and the trees, the houses and sheds, the barn, the fences and the things you work
   with stand up out of the map around you, with a little bounce. Pull back out and they sink back into the painting.
-- The herd (Henry and the five others) grazes along the cow trails, wanders, and lies down now and then.
+- The herd (Henry and the five others) grazes along the cow trails, wanders, and lies down now and then. Henry is the
+  head of the herd: he decides where to go, and the others follow him (the calf keeps by its mother).
 - **Today's work** (top left) has the first four jobs of your day: put out a bale in the hay ring (the herd walks in
-  along the trails to eat), fill the troughs (thirsty cattle come to drink), let the chickens out and feed them, and
+  along the trails to eat), fill the troughs up by the house in the bottom-left corner (thirsty cattle come to drink),
+  let the chickens out of the coop by the same house and feed them, and
   look the cattle over (tap each one to see it up close, walk round it, and make it walk, eat, lie down or stand).
 - **1×** makes time go four times faster. **Whole ranch** goes back to the full map.
 
@@ -61,6 +63,21 @@ The street address on the satellite picture is covered, because this repository 
   the buildings, the yards, the pond, the fences and the places of the day's work. The cattle prefer the trails, the
   way real cattle do, and walk round the trees.
 - Each painted tree gets a 3D tree in the same spot, coloured from the painting under it.
+
+## Changing the map in Walking Paths
+
+Walking Paths is Chris's map editing tool (in the building-with-assets- repo, `editing-tools/walking-paths/`). The
+ranch map is ready for it in `map/ranch-walking-paths.json`: the picture, the green walk area (the pasture), the red
+blocks (the yards, the buildings, the pond and every tree in the pasture) and the places of the day's work (the "look"
+spots: hay ring, troughs, coop and the rest).
+
+1. Open Walking Paths, then **Open** `map/ranch-walking-paths.json`.
+2. Move, add or take away walk areas and blocks, and drag the places where they really are. Walk it with F2 to try it.
+3. **Save the maps file** and put it back as `map/ranch-walking-paths.json`.
+4. Run `node the-ranch/tools/make-trace.mjs` and `node the-ranch/tools/build.mjs`. While the file is there it decides
+   where the cattle can walk and where the places are; the painting still decides the trails and the trees.
+
+`node the-ranch/tools/make-trace.mjs --export` writes the file afresh from what's written in the tool.
 
 ## Checking a change
 

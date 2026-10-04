@@ -291,7 +291,7 @@
 
   // ---------- the herd ----------
   const ABOUT = {
-    henry: 'The white Zebu bull. His left horn is whole; his right horn is broken off short.',
+    henry: 'The white Zebu bull, the head of the herd: where he goes, the others follow. His left horn is whole; his right horn is broken off short.',
     'tan-cow': 'A tan cow with long horns that sweep up.',
     'black-cow': 'A black cow. She likes the shade.',
     'red-brown-cow': 'A red-brown cow with short, curved horns.',
@@ -308,16 +308,25 @@
     z.act('eat'); HERD.push(cow);
   }
   // the calf keeps near the black cow, as a calf does with its mother
-  const mother = HERD.find(c => c.key === 'black-cow'), calf = HERD.find(c => c.key === 'calf'); calf.x = mother.x + 3; calf.zz = mother.zz + 2;
+  const mother = HERD.find(c => c.key === 'black-cow'), calf = HERD.find(c => c.key === 'calf'), leader = HERD[0];
+  // the herd starts out round Henry
+  HERD.forEach((c, i) => { if (i) { const w = cellW(nearestOpen(cellOf(leader.x + rnd(-10, 10), leader.zz + rnd(-10, 10)))); c.x = w.x; c.zz = w.z; } });
+  calf.x = mother.x + 3; calf.zz = mother.zz + 2;
   function goTo(cow, x, z, speed) {
     const p = route(cellOf(cow.x, cow.zz), cellOf(x, z)); if (!p || !p.length) return false;
     p.push({x, z}); cow.path = p; cow.pi = 0; cow.want = speed || 1.1; if (cow.z.state !== 'stand') cow.z.act('stand'); return true;
   }
+  // Henry leads: he picks where to go, and the others graze their way after him (the calf stays by its mother)
   function wander(cow, far) {
-    const near = herdCells.filter(i => { const w = cellW(i), d = Math.hypot(w.x - cow.x, w.z - cow.zz); return d > 6 && d < (far || 30) && (T.grid[i] === 'g' || Math.random() < 0.3); });
+    const lead = cow === calf ? mother : cow === leader ? null : leader;
+    let cx = cow.x, cz = cow.zz, R = far || 30;
+    if (lead) { const g = lead.path ? lead.path[lead.path.length - 1] : {x: lead.x, z: lead.zz}; cx = g.x; cz = g.z; R = cow === calf ? 5 : 14; }
+    else if (!far && Math.random() < 0.35) R = 55;   // now and then Henry sets off somewhere new
+    const near = herdCells.filter(i => { const w = cellW(i), d = Math.hypot(w.x - cx, w.z - cz), m = Math.hypot(w.x - cow.x, w.z - cow.zz); return d < R && (lead ? d > 3 : d > 6) && m > 3 && (T.grid[i] === 'g' || Math.random() < 0.3); });
     if (!near.length) return; const w = cellW(near[(Math.random() * near.length) | 0]);
-    if (cow === calf) { w.x = mother.x + rnd(-4, 4); w.z = mother.zz + rnd(-4, 4); }
-    goTo(cow, w.x, w.z, far ? 1.1 : 0.55);
+    const dist = Math.hypot(w.x - cow.x, w.z - cow.zz);
+    goTo(cow, w.x, w.z, far || dist > 20 ? 1.1 : 0.55);
+    if (cow === leader) cow.led = 0;
   }
   let hayLeft = 0, waterOn = false;
   function slotAround(x, z, n, r) { return {x: x + Math.cos(n) * r, z: z + Math.sin(n) * r}; }
@@ -337,6 +346,10 @@
     cow.x += Math.sin(cow.h) * cow.speed * dt; cow.zz += Math.cos(cow.h) * cow.speed * dt;
     // keep a little room between animals
     for (const o of HERD) if (o !== cow) { const dx = cow.x - o.x, dz = cow.zz - o.zz, d = Math.hypot(dx, dz), m = (cow.z.look.size + o.z.look.size) * 1.1; if (d < m && d > 0.01) { const k = (m - d) * 0.5 * Math.min(1, dt * 4); cow.x += dx / d * k; cow.zz += dz / d * k; } }
+    if (cow !== leader && !cow.path && cow.held <= 0 && (cow.mode === 'graze' || cow.mode === 'walk') && cow.z.state !== 'lie') {
+      const lead = cow === calf ? mother : leader;
+      if (Math.hypot(lead.x - cow.x, lead.zz - cow.zz) > (cow === calf ? 8 : 22)) { wander(cow); cow.timer = rnd(6, 14); }
+    }
     if (!cow.path && cow.held <= 0) {
       cow.timer -= dt;
       if (cow.mode === 'hay') { if (hayLeft <= 0) { cow.mode = 'graze'; cow.timer = rnd(2, 8); Z.act('stand'); } else { faceTo(cow, PL.hay.x, PL.hay.z, dt); hayLeft -= dt * 0.0016; } }
@@ -467,8 +480,8 @@
   // ---------- today's work ----------
   const JOBS = [
     {id: 'hay', what: 'Feed the herd a bale of hay', how: 'Tap the Hay ring sign by the farmyard.'},
-    {id: 'water', what: 'Fill the water troughs', how: 'Tap the Water troughs sign, next to the hay ring.'},
-    {id: 'chickens', what: 'Let the chickens out and feed them', how: 'Tap the Chicken coop sign.'},
+    {id: 'water', what: 'Fill the water troughs', how: 'Tap the Water troughs sign, up by the house in the bottom-left corner.'},
+    {id: 'chickens', what: 'Let the chickens out and feed them', how: 'Tap the Chicken coop sign, by the same house.'},
     {id: 'look', what: 'Look the cattle over', how: 'Tap each animal to look at it up close.'}
   ];
   const done = {};
