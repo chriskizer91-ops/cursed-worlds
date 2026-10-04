@@ -18,7 +18,7 @@
   'use strict';
 
   function makeStage(opts) {
-    const T = opts.trace, PW = T.size[0], PH = T.size[1];
+    let T = opts.trace; const PW = T.size[0], PH = T.size[1];
     const K = opts.K || 54.5, PITCH = (opts.pitch || 33) * Math.PI / 180, SN = Math.sin(PITCH), CS = Math.cos(PITCH);
     const TAU = Math.PI * 2;
     let seed = opts.seed || 20261004;
@@ -42,29 +42,34 @@
     const toPaint = v => [v.x * K, K * (v.z * SN - v.y * CS)];
 
     // ---------- the painting, and what each pixel of it is ----------
-    const DP = Trace.depth(T, 2), DW = DP.W, DH = DP.H;
-    const dRGBA = new Uint8Array(DW * DH * 4); for (let i = 0; i < DW * DH; i++) dRGBA[i * 4] = DP.D[i];
-    const depthTex = new THREE.DataTexture(dRGBA, DW, DH, THREE.RGBAFormat); depthTex.magFilter = depthTex.minFilter = THREE.NearestFilter; depthTex.needsUpdate = true;
-    // the mask: R how much it moves in the wind, G grass on the ground, B bare dirt (255) or flowers (128), A evergreen
-    const pc = document.createElement('canvas'); pc.width = DW; pc.height = DH; const pg = pc.getContext('2d'); pg.drawImage(opts.painting, 0, 0, DW, DH);
-    const px = pg.getImageData(0, 0, DW, DH).data, mk = new Uint8Array(DW * DH * 4);
-    const tallPoly = (T.ground || []).filter(g => g[0] === 'G').map(g => g[1]);
-    for (let y = 0; y < DH; y++) for (let x = 0; x < DW; x++) {
-      const i = y * DW + x, r = px[i * 4] / 255, g = px[i * 4 + 1] / 255, b = px[i * 4 + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx, s = mx > 0 ? (mx - mn) / mx : 0;
-      let h = 0; if (mx > mn) { if (mx === r) h = ((g - b) / (mx - mn)) % 6; else if (mx === g) h = (b - r) / (mx - mn) + 2; else h = (r - g) / (mx - mn) + 4; h *= 60; if (h < 0) h += 360; }
-      const obj = DP.D[i] > 0, green = h > 52 && h < 175 && s > 0.14 && v > 0.08;
-      let R = 0, G = 0, B = 0, A = 0;
-      if (obj) { if (green || (v < 0.22 && s > 0.1)) { R = 255; if (h > 100 && s > 0.22 && v < 0.5) A = 255; } }
-      else {
-        if (green) G = 255;
-        if (!green && h < 50 && s > 0.12 && s < 0.65 && v > 0.3 && r > g) B = 255;
-        if (s > 0.5 && v > 0.45 && (h < 48 || h > 320) && !(h > 20 && h < 48 && s < 0.7)) B = 128;
-        if ((green || G) && tallPoly.some(P => Trace.inPoly(P, (x + 0.5) * 2, (y + 0.5) * 2))) { R = 150; G = 255; }
+    // what each pixel of the painting is: where it meets the ground (the depth map), and a mask: R how much it moves in
+    // the wind, G grass on the ground, B bare dirt (255) or flowers (128), A evergreen. Made again for each painting.
+    let DP, DW, DH, mk, depthTex, maskTex, paintTex, seasonal = false;
+    function makeMaps(img) {
+      DP = Trace.depth(T, 2); DW = DP.W; DH = DP.H;
+      const dRGBA = new Uint8Array(DW * DH * 4); for (let i = 0; i < DW * DH; i++) dRGBA[i * 4] = DP.D[i];
+      if (depthTex) depthTex.dispose(); depthTex = new THREE.DataTexture(dRGBA, DW, DH, THREE.RGBAFormat); depthTex.magFilter = depthTex.minFilter = THREE.NearestFilter; depthTex.needsUpdate = true;
+      const pc = document.createElement('canvas'); pc.width = DW; pc.height = DH; const pg = pc.getContext('2d'); pg.drawImage(img, 0, 0, DW, DH);
+      const px = pg.getImageData(0, 0, DW, DH).data; mk = new Uint8Array(DW * DH * 4);
+      const tallPoly = (T.ground || []).filter(g => g[0] === 'G').map(g => g[1]);
+      for (let y = 0; y < DH; y++) for (let x = 0; x < DW; x++) {
+        const i = y * DW + x, r = px[i * 4] / 255, g = px[i * 4 + 1] / 255, b = px[i * 4 + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx, s = mx > 0 ? (mx - mn) / mx : 0;
+        let h = 0; if (mx > mn) { if (mx === r) h = ((g - b) / (mx - mn)) % 6; else if (mx === g) h = (b - r) / (mx - mn) + 2; else h = (r - g) / (mx - mn) + 4; h *= 60; if (h < 0) h += 360; }
+        const obj = DP.D[i] > 0, green = h > 52 && h < 175 && s > 0.14 && v > 0.08;
+        let R = 0, G = 0, B = 0, A = 0;
+        if (obj) { if (green || (v < 0.22 && s > 0.1) || (seasonal && s > 0.25 && (h < 52 || h > 300))) { R = 255; if (h > 100 && s > 0.22 && v < 0.5) A = 255; } }
+        else {
+          if (green) G = 255;
+          if (!green && h < 50 && s > 0.12 && s < 0.65 && v > 0.3 && r > g) B = 255;
+          if (s > 0.5 && v > 0.45 && (h < 48 || h > 320) && !(h > 20 && h < 48 && s < 0.7)) B = 128;
+          if ((green || G || seasonal) && tallPoly.some(P => Trace.inPoly(P, (x + 0.5) * 2, (y + 0.5) * 2))) { R = 150; G = 255; }
+        }
+        mk[i * 4] = R; mk[i * 4 + 1] = G; mk[i * 4 + 2] = B; mk[i * 4 + 3] = A;
       }
-      mk[i * 4] = R; mk[i * 4 + 1] = G; mk[i * 4 + 2] = B; mk[i * 4 + 3] = A;
+      if (maskTex) maskTex.dispose(); maskTex = new THREE.DataTexture(mk, DW, DH, THREE.RGBAFormat); maskTex.magFilter = maskTex.minFilter = THREE.LinearFilter; maskTex.needsUpdate = true;
+      if (paintTex) paintTex.dispose(); paintTex = new THREE.Texture(img); paintTex.flipY = false; paintTex.minFilter = THREE.LinearMipmapLinearFilter; paintTex.magFilter = THREE.LinearFilter; paintTex.anisotropy = 4; paintTex.needsUpdate = true;
     }
-    const maskTex = new THREE.DataTexture(mk, DW, DH, THREE.RGBAFormat); maskTex.magFilter = maskTex.minFilter = THREE.LinearFilter; maskTex.needsUpdate = true;
-    const paintTex = new THREE.Texture(opts.painting); paintTex.flipY = false; paintTex.minFilter = THREE.LinearMipmapLinearFilter; paintTex.magFilter = THREE.LinearFilter; paintTex.anisotropy = 4; paintTex.needsUpdate = true;
+    makeMaps(opts.painting);
 
     // ---------- the air: one wind for everything, the clouds' shadows, and up to four lights on the ground ----------
     const AIRU = {uT: {value: 0}, uWind: {value: V4(0.86, 0.5, 0.25, 0)}, uFlow: {value: V4(0, 0, 0, 0.2)}};
@@ -207,7 +212,8 @@
       L.uTint.value.copy(t); L.uDesat.value = cl(0.12 * cur.cloud + 0.5 * nightK + (state.month >= 11 || state.month < 2 ? 0.08 : 0), 0, 0.75);
       L.uAmb.value.set(0.015, 0.018, 0.03).multiplyScalar(nightK);
       L.uNight.value = nightK;
-      L.uSeason.value.set(mAt(DRY, m), mAt(FALL, m), mAt(BROWN, m), mAt(LUSH, m)); L.uFlowers.value = mAt(FLOW, m);
+      // a painting made for its season already shows it; the spring paintings are turned toward the month in code
+      if (seasonal) { L.uSeason.value.set(0, 0, 0, 0); L.uFlowers.value = 1; } else { L.uSeason.value.set(mAt(DRY, m), mAt(FALL, m), mAt(BROWN, m), mAt(LUSH, m)); L.uFlowers.value = mAt(FLOW, m); }
       // snow builds up while it snows and melts slowly after; the ground dries after rain
       wxLight.snowCover = cl(wxLight.snowCover + dt * (cur.snow > 0.5 ? 0.05 : -0.012 * (state.month >= 11 || state.month < 2 ? 0.3 : 1)), 0, 1);
       wxLight.wet = cl(wxLight.wet + dt * (cur.rain > 0.3 ? 0.12 : cur.snow > 0.3 ? 0.02 : -0.02), 0, 1);
@@ -388,6 +394,7 @@
       m.rotation.x = -Math.PI / 2; m.renderOrder = 1; scene.add(m);
       const S = {m, target, rx: rx || 0.35, rz: rz || 0.3, k: 1}; shadows.push(S); return S;
     }
+    function dropShadow(S) { const i = shadows.indexOf(S); if (i >= 0) { shadows.splice(i, 1); scene.remove(S.m); S.m.geometry.dispose(); S.m.material.dispose(); } }
     function stepShadows() {
       for (const S of shadows) {
         const t = S.target; if (!t.visible) { S.m.visible = false; continue; }
@@ -418,8 +425,11 @@
     function render() { PV.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); renderer.render(scene, camera); }
 
     const api = {
-      renderer, scene, camera, root: rootG, K, SN, CS, size: [PW, PH], trace: T, depth: DP, mask: mk,
-      toWorld, toPaint, paintAt, groundAt, setView, view, viewBox, resize, update, render, glow, emit, shadow, light, sun, hemi, paintTex,
+      renderer, scene, camera, root: rootG, K, SN, CS, size: [PW, PH], get trace() { return T; }, get depth() { return DP; }, get mask() { return mk; }, get paintTex() { return paintTex; },
+      // a different place, or the same place's painting for another season (season true when the painting is made for it)
+      setPlace(trace, img, season) { const moved = T !== trace; T = trace; seasonal = !!season; makeMaps(img); if (moved) for (const P of [PN, PA]) for (const q of P.L) q.on = false; BU.uPaint.value = paintTex; BU.uDepth.value = depthTex; BU.uMask.value = maskTex; wxLight.snowCover = Math.min(wxLight.snowCover, 1); },
+      get seasonal() { return seasonal; },
+      toWorld, toPaint, paintAt, groundAt, setView, view, viewBox, resize, update, render, glow, emit, shadow, dropShadow, light, sun, hemi,
       // is the ground at a painting pixel open, or does something stand there (by the depth map)
       standsAt(px, py) { const X = Math.floor(px / 2), Y = Math.floor(py / 2); return X >= 0 && Y >= 0 && X < DW && Y < DH ? DP.D[Y * DW + X] * 4 : 0; },
       uniforms: {AIRU, LOOKU, GLOWU, BU}, chunks: {NOISE, AIR, GLOW, LOOK}, rnd,

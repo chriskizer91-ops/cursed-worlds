@@ -16,13 +16,14 @@
   function makeSurvivor(opts) {
     opts = opts || {};
     const partner = !!opts.partner;
+    // the colors of the model sheets (docs/model-sheets/20-survivor-turnaround and 26-partner-turnaround)
     const C = Object.assign({
-      skin: '#c69474', hair: '#3a2f28', shirt: partner ? '#6f7a4f' : '#4e6576', pants: '#2f3b45', pack: '#7d7350', bedroll: '#8a6a4a',
-      cap: '#e0521b', boot: '#3b2e25', sole: '#231b16', belt: '#46321f', strap: '#4b3f2c', eye: '#1b1410', brow: '#2b2019', lip: '#a46a58',
-      metal: '#a8a597', bark: '#6b5238', wood: '#b89466', cord: '#cdbf96'
+      skin: '#c68a64', stubble: '#8e6a52', hair: '#3b2a1e', shirt: partner ? '#6e7a4c' : '#5877a2', tee: '#8b8b86', pants: '#4a4a4c', pack: '#c19c62', bedroll: '#7e8186',
+      cap: '#e4571d', boot: '#8a5430', sole: '#2b2420', lace: '#5e3a22', belt: '#7a4826', buckle: '#c9a24e', sheath: '#a8582a', strap: '#7c4426', eye: '#1b1410', brow: '#2b2019', lip: '#a46a58',
+      metal: '#a8a597', bark: '#6b5238', wood: '#b89466', cord: '#cdbf96', steel: '#4d5257', stock: '#7a4a2a'
     }, opts.colors || {});
     const shade = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return c; };
-    C.shirt2 = shade(C.shirt, 0.78); C.pants2 = shade(C.pants, 0.82); C.pack2 = shade(C.pack, 0.8); C.cap2 = shade(C.cap, 0.82);
+    C.shirt2 = shade(C.shirt, 0.8); C.cuff = shade(C.shirt, 1.22); C.pants2 = shade(C.pants, 0.82); C.pack2 = shade(C.pack, 0.86); C.cap2 = shade(C.cap, 0.84); C.bedroll2 = shade(C.bedroll, 0.82);
     const TAU = Math.PI * 2, PI = Math.PI;
     const V2 = (x, y) => new THREE.Vector2(x, y);
     const cl = (v, a, b) => (v < a ? a : v > b ? b : v), lerp = (a, b, t) => a + (b - a) * t, ease = t => t * t * (3 - 2 * t);
@@ -109,70 +110,78 @@
     const chest = joint('chest', spine, 0, 0.12, 0);
     const neck = joint('neck', chest, 0, 0.32, 0);
     const head = joint('head', neck, 0, 0.07, 0);
-    const headS = joint('headS', head, 0, 0, 0); headS.scale.setScalar(1.16);
+    const headS = joint('headS', head, 0, 0, 0); headS.scale.setScalar(1.1);
     for (const s of [1, -1]) {
       const L = s > 0 ? 'L' : 'R';
       const sh = joint('sh' + L, chest, 0.19 * s, 0.25, -0.005), el = joint('el' + L, sh, 0, -0.27, 0), wr = joint('wr' + L, el, 0, -0.235, 0), wrS = joint('wrS' + L, wr, 0, 0, 0); wrS.scale.setScalar(1.18);
       const hp = joint('hip' + L, hips, 0.095 * s, -0.03, 0), kn = joint('kn' + L, hp, 0, -0.39, 0), an = joint('an' + L, kn, 0, -0.39, 0), anS = joint('anS' + L, an, 0, 0, 0); anS.scale.setScalar(1.1);
-      // the leg: thigh, shin, the trouser cuff, and the boot
+      // the leg: thigh with its cargo pocket, shin, the trouser cuff, and the laced work boot
       add(hp, capsule(0.39, 0.098, 0.074), C.pants);
+      add(hp, put(rbox(0.06, 0.1, 0.03, 0.01, 1), 0.088 * s, -0.2, 0.01, 0, 0, 0.06 * s), C.pants2, true);
       add(kn, capsule(0.37, 0.073, 0.058), C.pants);
-      add(kn, put(cyl(0.066, 0.07, 0.06, SEG, true), 0, -0.34, 0), C.pants2, true);
-      add(anS, put(cyl(0.056, 0.058, 0.12, SEG), 0, 0.0, -0.005), C.boot);
-      add(anS, put(rbox(0.105, 0.075, 0.245, 0.034), 0, -0.045, 0.045), C.boot);
-      add(anS, put(rbox(0.112, 0.022, 0.26, 0.01, 2), 0, -0.07, 0.045), C.sole, true);
-      add(anS, put(torus(0.057, 0.006, 4, 14), 0, 0.045, -0.005, PI / 2), C.sole, true);
-      // the arm: sleeve, rolled cuff, wrist and a work-worn hand
-      add(sh, put(ball(0.07, 0.068, 0.066), 0, -0.005, 0), C.shirt);
-      add(sh, capsule(0.26, 0.064, 0.052), C.shirt);
-      add(el, capsule(0.19, 0.052, 0.044), C.shirt);
-      add(el, put(torus(0.045, 0.013, 5, 14), 0, -0.18, 0, PI / 2), C.shirt2, true);
-      add(el, put(capsule(0.05, 0.034, 0.032), 0, -0.19, 0), C.skin, true);
-      add(wrS, put(ball(0.022, 0.05, 0.04), 0, -0.045, 0.004), C.skin);
+      add(kn, put(cyl(0.066, 0.072, 0.07, SEG, true), 0, -0.33, 0), C.pants2, true);
+      add(anS, put(cyl(0.058, 0.06, 0.12, SEG), 0, 0.0, -0.005), C.boot);
+      add(anS, put(rbox(0.108, 0.078, 0.25, 0.034), 0, -0.043, 0.045), C.boot);
+      add(anS, put(rbox(0.116, 0.026, 0.265, 0.01, 2), 0, -0.07, 0.045), C.sole, true);
+      for (let k = 0; k < 3; k++) add(anS, put(rbox(0.05, 0.008, 0.012, 0.003, 1), 0, 0.03 - k * 0.03, 0.055 + k * 0.012, 0.4), C.lace, true);
+      // the arm: sleeve, the sleeve rolled to the forearm, a sun-browned forearm and a work-worn hand
+      add(sh, put(ball(0.072, 0.07, 0.068), 0, -0.005, 0), C.shirt);
+      add(sh, capsule(0.26, 0.066, 0.054), C.shirt);
+      add(el, capsule(0.05, 0.054, 0.05), C.shirt);
+      add(el, put(torus(0.05, 0.02, 6, 14), 0, -0.065, 0, PI / 2), C.cuff, true);
+      add(el, put(capsule(0.2, 0.044, 0.034), 0, -0.04, 0), C.skin);
+      add(wrS, put(ball(0.023, 0.05, 0.04), 0, -0.045, 0.004), C.skin);
       add(wrS, put(capsule(0.035, 0.012, 0.011), -0.016 * s, -0.03, 0.03, 0.6, 0, 0.5 * s), C.skin, true);
     }
 
-    // the pelvis, the belt and a knife on the hip
+    // the pelvis, the belt with its brass buckle, and the boning knife in its sheath on the right hip
     add(hips, body([[-0.13, 0.04], [-0.12, 0.11], [-0.07, 0.158], [0, 0.168], [0.07, 0.16], [0.13, 0.152]], 0.7), C.pants);
-    add(hips, put(torus(0.154, 0.017, 5, 24), 0, 0.085, 0, PI / 2, 0, 0, 1, 1, 0.72), C.belt, true);
-    add(hips, put(rbox(0.05, 0.035, 0.012, 0.005, 1), 0, 0.085, 0.112), C.metal, true);
-    add(hips, put(rbox(0.035, 0.15, 0.045, 0.012, 2), -0.168, -0.03, 0.03, 0, 0, 0.1), C.belt);
-    add(hips, put(capsule(0.06, 0.016, 0.014), -0.172, 0.1, 0.03, 0, 0, 0.1), '#5a4030', true);
-    // the belly, tucked shirt
-    add(spine, body([[-0.04, 0.152], [0.06, 0.156], [0.15, 0.163]], 0.69), C.shirt);
-    // the chest and shoulders, collar, placket and pockets
-    add(chest, body([[-0.05, 0.158], [0.06, 0.168], [0.16, 0.178], [0.24, 0.182], [0.285, 0.17], [0.315, 0.13], [0.335, 0.07], [0.345, 0.0]], 0.66), C.shirt);
-    add(chest, put(torus(0.062, 0.02, 6, 18), 0, 0.31, 0.004, PI / 2 - 0.25, 0, 0, 1, 1, 0.9), C.shirt2, true);
-    add(chest, put(rbox(0.022, 0.26, 0.012, 0.004, 1), 0, 0.15, 0.115), C.shirt2, true);
-    for (const s of [1, -1]) add(chest, put(rbox(0.075, 0.075, 0.014, 0.006, 1), 0.075 * s, 0.2, 0.111, -0.12), C.shirt2, true);
-    // the neck and the head: skull, jaw, ears, nose, eyes, brows, and hair under the cap
-    add(neck, put(capsule(0.08, 0.05, 0.052), 0, 0.08, 0), C.skin);
+    add(hips, put(torus(0.154, 0.018, 5, 24), 0, 0.085, 0, PI / 2, 0, 0, 1, 1, 0.72), C.belt, true);
+    add(hips, put(rbox(0.055, 0.04, 0.014, 0.006, 1), 0, 0.085, 0.112), C.buckle, true);
+    add(hips, put(rbox(0.04, 0.16, 0.05, 0.016, 2), -0.17, -0.03, 0.04, 0, 0, 0.12), C.sheath);
+    add(hips, put(capsule(0.07, 0.018, 0.016), -0.176, 0.11, 0.04, 0, 0, 0.12), C.wood, true);
+    // the belly, the shirt tucked in
+    add(spine, body([[-0.04, 0.152], [0.06, 0.157], [0.15, 0.165]], 0.69), C.shirt);
+    // the chest and shoulders: an open collar, the placket, two buttoned chest pockets
+    add(chest, body([[-0.05, 0.16], [0.06, 0.17], [0.16, 0.182], [0.24, 0.188], [0.285, 0.175], [0.315, 0.133], [0.335, 0.072], [0.345, 0.0]], 0.66), C.shirt);
+    for (const s of [1, -1]) add(chest, put(rbox(0.07, 0.03, 0.06, 0.012, 1), 0.05 * s, 0.31, 0.07, -0.5, 0.35 * s, 0.35 * s), C.shirt2, true);
+    add(chest, put(rbox(0.022, 0.22, 0.012, 0.004, 1), 0, 0.13, 0.118), C.shirt2, true);
+    for (const s of [1, -1]) { add(chest, put(rbox(0.078, 0.082, 0.016, 0.006, 1), 0.078 * s, 0.19, 0.112, -0.1), C.shirt2, true); add(chest, put(rbox(0.078, 0.022, 0.02, 0.006, 1), 0.078 * s, 0.226, 0.116, -0.1), C.shirt2, true); }
+    // the neck and the head: skull, jaw with a few days' stubble (a short beard for the partner), ears, nose, eyes,
+    // brows, and short brown hair under the cap
+    add(neck, put(capsule(0.08, 0.05, 0.053), 0, 0.08, 0), C.skin);
     add(headS, put(ball(0.1, 0.112, 0.104), 0, 0.085, 0), C.skin);
-    add(headS, put(ball(0.078, 0.06, 0.08), 0, 0.03, 0.022), C.skin);
+    add(headS, put(ball(0.08, 0.062, 0.082), 0, 0.03, 0.022), C.skin);
+    add(headS, put(new THREE.SphereGeometry(0.084, SEG, 6, 0, TAU, PI * 0.42, PI * 0.5), 0, 0.034, 0.026, 0, 0, 0, 1, partner ? 0.78 : 0.74, 1), partner ? C.hair : C.stubble, true);
     for (const s of [1, -1]) {
       add(headS, put(ball(0.016, 0.03, 0.022, 8, 6), 0.1 * s, 0.075, -0.004), C.skin);
       add(headS, put(ball(0.013, 0.016, 0.008, 8, 6), 0.037 * s, 0.09, 0.096), C.eye, true);
-      add(headS, put(rbox(0.036, 0.008, 0.01, 0.003, 1), 0.037 * s, 0.117, 0.095, 0, 0, -0.12 * s), C.brow, true);
+      add(headS, put(rbox(0.038, 0.009, 0.01, 0.003, 1), 0.037 * s, 0.117, 0.095, 0, 0, -0.12 * s), C.brow, true);
     }
-    add(headS, put(ball(0.016, 0.024, 0.022, 8, 6), 0, 0.068, 0.106), C.skin, true);
-    add(headS, put(rbox(0.032, 0.007, 0.008, 0.003, 1), 0, 0.034, 0.1), C.lip, true);
+    add(headS, put(ball(0.017, 0.026, 0.024, 8, 6), 0, 0.068, 0.107), C.skin, true);
+    add(headS, put(rbox(0.032, 0.007, 0.008, 0.003, 1), 0, 0.036, 0.101), C.lip, true);
     add(headS, put(new THREE.SphereGeometry(0.108, SEG + 2, 8, PI * 0.82, PI * 1.36, 0, PI * 0.6), 0, 0.09, -0.006, 0, 0, 0, 1, 1.06, 1.02), C.hair);
     // the cap: crown, brim and button
     add(headS, put(new THREE.SphereGeometry(0.112, SEG + 4, 8, 0, TAU, 0, PI * 0.46), 0, 0.132, -0.008, -0.14, 0, 0, 1, 0.78, 1.03), C.cap);
     add(headS, put(new THREE.CylinderGeometry(0.1, 0.1, 0.011, 16, 1, false, -PI * 0.42, PI * 0.84), 0, 0.142, 0.03, -0.05, 0, 0, 1, 1, 1.12), C.cap2);
     add(headS, put(ball(0.012, 0.008, 0.012, 8, 4), 0, 0.218, -0.02), C.cap2, true);
 
-    // the pack and its bedroll, with straps over the shoulders
+    // the pack: tan canvas with a top flap, two front pockets on leather straps with brass buckles, and the grey wool
+    // bedroll strapped across its top; leather straps over the shoulders
     if (!partner && opts.pack !== false) {
-      add(chest, put(rbox(0.3, 0.38, 0.16, 0.05), 0, 0.12, -0.19), C.pack);
-      add(chest, put(rbox(0.31, 0.12, 0.17, 0.04), 0, 0.27, -0.19, 0.06), C.pack2);
-      add(chest, put(rbox(0.2, 0.13, 0.05, 0.02), 0, 0.03, -0.285), C.pack2);
-      for (const s of [1, -1]) add(chest, put(rbox(0.06, 0.2, 0.08, 0.025), 0.165 * s, 0.07, -0.19), C.pack2);
-      add(chest, put(cyl(0.075, 0.075, 0.44, SEG + 2), 0, 0.37, -0.18, 0, 0, PI / 2), C.bedroll);
-      for (const s of [1, -1]) add(chest, put(torus(0.078, 0.008, 4, 16), 0.13 * s, 0.37, -0.18, 0, PI / 2), C.strap, true);
+      add(chest, put(rbox(0.31, 0.38, 0.17, 0.055), 0, 0.12, -0.2), C.pack);
+      add(chest, put(rbox(0.32, 0.13, 0.18, 0.045), 0, 0.27, -0.2, 0.06), C.pack2);
       for (const s of [1, -1]) {
-        add(chest, put(rbox(0.045, 0.016, 0.24, 0.006, 1), 0.105 * s, 0.322, -0.02, 0.1), C.strap, true);
-        add(chest, put(rbox(0.042, 0.25, 0.014, 0.006, 1), 0.098 * s, 0.17, 0.112, -0.08, 0, 0.06 * s), C.strap, true);
+        add(chest, put(rbox(0.12, 0.14, 0.055, 0.02), 0.075 * s, 0.03, -0.295), C.pack2);
+        add(chest, put(rbox(0.02, 0.17, 0.012, 0.004, 1), 0.075 * s, 0.07, -0.325), C.strap, true);
+        add(chest, put(rbox(0.026, 0.02, 0.008, 0.003, 1), 0.075 * s, 0.02, -0.33), C.buckle, true);
+        add(chest, put(rbox(0.06, 0.2, 0.08, 0.025), 0.17 * s, 0.07, -0.2), C.pack2);
+      }
+      add(chest, put(cyl(0.078, 0.078, 0.46, SEG + 2), 0, 0.375, -0.185, 0, 0, PI / 2), C.bedroll);
+      for (const s of [1, -1]) { add(chest, put(cyl(0.079, 0.079, 0.012, SEG + 2, true), 0.231 * s, 0.375, -0.185, 0, 0, PI / 2), C.bedroll2, true); add(chest, put(torus(0.081, 0.009, 4, 16), 0.13 * s, 0.375, -0.185, 0, PI / 2), C.strap, true); }
+      for (const s of [1, -1]) {
+        add(chest, put(rbox(0.048, 0.017, 0.25, 0.006, 1), 0.105 * s, 0.322, -0.02, 0.1), C.strap, true);
+        add(chest, put(rbox(0.045, 0.26, 0.015, 0.006, 1), 0.1 * s, 0.165, 0.118, -0.08, 0, 0.06 * s), C.strap, true);
       }
     }
 
@@ -207,6 +216,41 @@
     // a single long stick, held in both hands to snap over a knee
     prop('stick', J.wrR, g => { const P = new THREE.Group(); g.add(P); add(P, put(stick(0.8, 0.022), 0, 0.4, 0, 0, 0, PI / 2), C.bark); g.position.set(0.0, -0.07, 0.03); });
     prop('knife', J.wrR, g => { const P = new THREE.Group(); g.add(P); add(P, put(rbox(0.024, 0.085, 0.024, 0.008, 1), 0, 0, 0), '#5a4030'); add(P, put(rbox(0.006, 0.1, 0.022, 0.002, 1), 0, -0.09, 0.004), C.metal, true); g.position.set(0, -0.07, 0.02); g.rotation.x = -PI / 2; });
+    const tube = (pts, r, seg) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(q => new THREE.Vector3(q[0], q[1], q[2]))), seg || 12, r, 6);
+    // the hunting rifle, at the right shoulder, aimed straight ahead
+    prop('rifle', chest, g => {
+      const P = new THREE.Group(); g.add(P);
+      add(P, put(rbox(0.045, 0.1, 0.32, 0.018), 0, -0.02, 0.0, 0.12), C.stock);
+      add(P, put(rbox(0.04, 0.06, 0.28, 0.014), 0, 0.02, 0.27), C.stock);
+      add(P, put(rbox(0.036, 0.05, 0.18, 0.01, 1), 0, 0.045, 0.2), C.steel);
+      add(P, put(cyl(0.011, 0.011, 0.62, 8), 0, 0.055, 0.6, PI / 2), C.steel, true);
+      add(P, put(rbox(0.012, 0.03, 0.012, 0.004, 1), 0, 0.08, 0.86), C.steel, true);
+      g.position.set(-0.11, 0.29, 0.06);
+    });
+    // the longbow, held out in the left hand, with an arrow on the string drawn to the cheek
+    prop('longbow', chest, g => {
+      const P = new THREE.Group(); g.add(P);
+      add(P, tube([[0, 0.72, -0.12], [0, 0.4, 0.02], [0, 0, 0.06], [0, -0.4, 0.02], [0, -0.72, -0.12]], 0.013, 16), C.bark);
+      add(P, tube([[0, 0.72, -0.12], [-0.1, 0.02, -0.52], [0, -0.72, -0.12]], 0.003, 8), C.cord, true);
+      add(P, put(cyl(0.006, 0.006, 0.72, 5), -0.05, 0.02, -0.18, PI / 2), C.wood, true);
+      add(P, put(new THREE.ConeGeometry(0.014, 0.05, 5), -0.05, 0.02, 0.2, PI / 2), C.steel, true);
+      g.position.set(0.12, 0.3, 0.62);
+    });
+    // the spear: a cedar shaft with a knife blade lashed to its point, held in both hands
+    prop('spear', chest, g => {
+      const P = new THREE.Group(); g.add(P);
+      add(P, put(cyl(0.017, 0.02, 1.9, 7), 0, 0, 0), C.bark);
+      add(P, put(rbox(0.008, 0.14, 0.03, 0.003, 1), 0, -1.0, 0), C.metal, true);
+      add(P, put(cyl(0.022, 0.022, 0.08, 6), 0, -0.92, 0), C.cord, true);
+      g.position.set(0.02, -0.1, 0.32); g.rotation.set(0.5, 0, 0.12); g.userData.base = g.position.clone();
+    });
+    // the grey wool bedroll, unrolled round a sleeper
+    prop('bag', hips, g => {
+      const P = new THREE.Group(); g.add(P);
+      add(P, put(capsule(1.3, 0.2, 0.17), 0, 0.42, 0), C.bedroll);
+      add(P, put(torus(0.2, 0.012, 4, 16), 0, -0.3, 0, PI / 2), C.strap, true);
+      add(P, put(torus(0.19, 0.012, 4, 16), 0, -0.65, 0, PI / 2), C.strap, true);
+    });
     bake();
 
     // ---------- moves ----------
@@ -239,10 +283,10 @@
         p.shL = [-0.85 + 0.2 * b, 0, 0.25]; p.elL = [-0.7 + 0.25 * a, 0, 0]; p.shR = [-0.9 + 0.22 * a, 0, -0.25]; p.elR = [-0.6 + 0.2 * b, 0, 0]; return p; }},
       kneel: {dur: 1, hold: true, f: () => KNEEL},
       // bending to pick something up and standing with it
-      gather: {dur: 1.6, f: u => key([[0, {}], [0.38, {drop: -0.2, hips: [0.3, 0, 0], spine: [0.55, 0, 0], chest: [0.25, 0, 0], neck: [0.2, 0, 0], hipL: [-0.75, 0, 0], knL: [0.95, 0, 0], anL: [-0.2, 0, 0], hipR: [-0.35, 0, 0], knR: [0.85, 0, 0], anR: [-0.5, 0, 0], shR: [-1.25, 0, -0.1], elR: [-0.15, 0, 0], shL: [-0.4, 0, 0.2], elL: [-0.5, 0, 0]}],
-        [0.55, {drop: -0.21, hips: [0.3, 0, 0], spine: [0.58, 0, 0], chest: [0.25, 0, 0], neck: [0.2, 0, 0], hipL: [-0.75, 0, 0], knL: [0.95, 0, 0], anL: [-0.2, 0, 0], hipR: [-0.35, 0, 0], knR: [0.85, 0, 0], anR: [-0.5, 0, 0], shR: [-1.3, 0, -0.05], elR: [-0.25, 0, 0], shL: [-0.45, 0, 0.2], elL: [-0.5, 0, 0]}],
+      // crouching to pick something off the ground, an armful of greens held to the chest
+      gather: {dur: 1.7, f: u => key([[0, {}], [0.35, {drop: -0.4, fwd: -0.05, hips: [0.25, 0, 0], spine: [0.5, 0, 0], chest: [0.2, 0, 0], neck: [0.15, 0, 0], hipL: [-1.55, 0, 0.12], knL: [2.15, 0, 0], anL: [-0.55, 0, 0], hipR: [-1.2, 0, -0.1], knR: [2.25, 0, 0], anR: [-0.95, 0, 0], shR: [-0.95, 0, -0.35], elR: [-0.15, 0, 0], shL: [-0.85, 0, 0.25], elL: [-1.35, 0.3, 0]}],
+        [0.62, {drop: -0.41, fwd: -0.05, hips: [0.25, 0, 0], spine: [0.54, 0, 0], chest: [0.2, 0, 0], neck: [0.15, 0, 0], hipL: [-1.55, 0, 0.12], knL: [2.15, 0, 0], anL: [-0.55, 0, 0], hipR: [-1.2, 0, -0.1], knR: [2.25, 0, 0], anR: [-0.95, 0, 0], shR: [-1.05, 0, -0.25], elR: [-0.35, 0, 0], shL: [-0.85, 0, 0.25], elL: [-1.35, 0.3, 0]}],
         [1, {}]], u)},
-      // snapping a long stick over a raised knee
       snap: {dur: 1.5, props: ['stick'], f: u => key([[0, {}], [0.3, {shL: [-0.7, 0, 0.1], elL: [-0.9, 0, 0], shR: [-0.7, 0, -0.1], elR: [-0.9, 0, 0], wrR: [0, 0.4, 0], hipL: [-0.2, 0, 0]}],
         [0.5, {shL: [-0.5, 0, 0.1], elL: [-0.6, 0, 0], shR: [-0.5, 0, -0.1], elR: [-0.6, 0, 0], wrR: [0, 0.4, 0], hipL: [-1.1, 0, 0], knL: [1.2, 0, 0], spine: [0.2, 0, 0], drop: -0.03}],
         [0.6, {shL: [-0.15, 0, 0.25], elL: [-0.3, 0, 0], shR: [-0.15, 0, -0.25], elR: [-0.3, 0, 0], wrR: [0, 0.4, 0], hipL: [-1.0, 0, 0], knL: [1.1, 0, 0], spine: [0.28, 0, 0], drop: -0.03}],
@@ -253,8 +297,9 @@
         p.shL = [lerp(-1.1, -1.35, k), 0, 0.15]; p.elL = [lerp(-0.4, -1.75, k), 0, 0]; p.wrL = [0.3, 0, -0.5]; p.shR = [lerp(-1.1, -1.35, k), 0, -0.15]; p.elR = [lerp(-0.4, -1.75, k), 0, 0]; p.wrR = [0.3, 0, 0.5]; return p; }},
       sit: {dur: 1.2, hold: true, f: (u, t) => { const p = Object.assign({}, SIT); p.chest = [0.12 + 0.015 * Math.sin(t * 1.4), 0, 0]; return p; }},
       // asleep on one side, knees drawn up
-      sleep: {dur: 1.6, hold: true, f: (u, t) => ({drop: -0.8, roll: 1.5, fwd: 0, hips: [0, 0, 0], spine: [0.15, 0, 0], chest: [0.1 + 0.03 * Math.sin(t * 0.9), 0, 0], neck: [0.25, 0, 0], head: [0.1, 0, 0.15],
-        hipL: [-0.9, 0, 0.05], knL: [1.3, 0, 0], anL: [0.2, 0, 0], hipR: [-0.75, 0, -0.05], knR: [1.2, 0, 0], anR: [0.2, 0, 0], shL: [-1.0, 0, 0.1], elL: [-1.4, 0, 0], shR: [-0.9, 0, -0.1], elR: [-1.6, 0, 0], wrR: [0, 0, 0]})},
+      // asleep on one side in the grey wool bedroll, the pack under the head
+      sleep: {dur: 1.6, hold: true, props: ['bag'], f: (u, t) => ({drop: -0.72, roll: 1.5, fwd: 0, hips: [0, 0, 0], spine: [0.12, 0, 0], chest: [0.08 + 0.03 * Math.sin(t * 0.9), 0, 0], neck: [0.2, 0, 0], head: [0.05, 0, 0.2],
+        hipL: [-0.32, 0, 0.04], knL: [0.5, 0, 0], anL: [0.1, 0, 0], hipR: [-0.26, 0, -0.04], knR: [0.42, 0, 0], anR: [0.1, 0, 0], shL: [-1.15, 0, 0.12], elL: [-1.6, 0, 0], shR: [-1.0, 0, -0.1], elR: [-1.8, 0, 0], wrR: [0, 0, 0]})},
       wave: {dur: 2.2, f: (u, t) => { const k = key([[0, {k: 0}], [0.2, {k: 1}], [0.85, {k: 1}], [1, {k: 0}]], u).k, w = Math.sin(t * 9) * 0.35; return {shR: [-0.2 * k, 0, -2.5 * k], elR: [-0.5 * k, 0, w * k], wrR: [0, 0, 0], head: [0, -0.15 * k, 0], chest: [0, 0.1 * k, -0.05 * k]}; }},
       // scanning the distance, a hand shading the eyes
       look: {dur: 3.6, f: u => { const k = key([[0, {k: 0}], [0.15, {k: 1}], [0.85, {k: 1}], [1, {k: 0}]], u).k, turn = Math.sin(u * TAU) * 0.6;
@@ -264,6 +309,20 @@
         return {shL: [-2.1 * k, 0.2, 0.3 * k + s * k], elL: [-2.2 * k, 0, 0], head: [-0.15 * k, 0, 0]}; }},
       stretch: {dur: 2.4, f: u => { const k = key([[0, {k: 0}], [0.35, {k: 1}], [0.7, {k: 1}], [1, {k: 0}]], u).k;
         return {shL: [-0.3 * k, 0, 2.7 * k], elL: [-0.3 * k, 0, 0], shR: [-0.3 * k, 0, -2.7 * k], elR: [-0.3 * k, 0, 0], spine: [-0.15 * k, 0, 0], chest: [-0.1 * k, 0, 0], head: [-0.3 * k, 0, 0]}; }},
+      // a hunting rifle raised to the shoulder and aimed
+      aim: {dur: 1, hold: true, props: ['rifle'], f: (u, t) => ({hipL: [-0.22, 0, 0.1], hipR: [0.12, 0, -0.08], knL: [0.12, 0, 0], chest: [0.02, -0.12, 0], spine: [0.04, -0.05, 0], neck: [0.06, -0.12, 0], head: [0.14, -0.12, 0.08],
+        shR: [-1.15, 0.25, -0.5], elR: [-1.5, 0, 0], wrR: [0, 0, 0.3], shL: [-1.45, -0.32, 0.38], elL: [-0.45, 0, 0], wrL: [0, 0, -0.2], drop: -0.02 + 0.004 * Math.sin(t * 1.3)})},
+      // drawing the longbow: the left arm straight out, the right hand at the cheek
+      draw: {dur: 1, hold: true, props: ['longbow'], f: () => ({hipL: [-0.18, 0, 0.12], hipR: [0.1, 0, -0.1], chest: [0, 0.18, 0], neck: [0, -0.12, 0], head: [0.04, -0.1, 0],
+        shL: [-1.55, 0, 0.12], elL: [-0.04, 0, 0], shR: [-1.45, 0.55, -0.5], elR: [-2.3, 0, 0], wrR: [0.2, 0, 0]})},
+      // a spear thrust down into the shallows
+      spear: {dur: 1.5, props: ['spear'], f: u => key([[0, {}], [0.35, {spine: [-0.05, 0, 0], shL: [-1.6, 0, 0.2], elL: [-1.2, 0, 0], shR: [-1.9, 0, -0.2], elR: [-1.0, 0, 0], hipL: [-0.4, 0, 0], knL: [0.4, 0, 0]}],
+        [0.5, {drop: -0.12, spine: [0.55, 0, 0], chest: [0.2, 0, 0], neck: [0.2, 0, 0], shL: [-0.9, 0, 0.2], elL: [-0.5, 0, 0], shR: [-1.0, 0, -0.2], elR: [-0.4, 0, 0], hipL: [-0.7, 0, 0], knL: [0.8, 0, 0], anL: [-0.2, 0, 0], knR: [0.35, 0, 0]}],
+        [0.75, {drop: -0.12, spine: [0.55, 0, 0], chest: [0.2, 0, 0], neck: [0.2, 0, 0], shL: [-0.9, 0, 0.2], elL: [-0.5, 0, 0], shR: [-1.0, 0, -0.2], elR: [-0.4, 0, 0], hipL: [-0.7, 0, 0], knL: [0.8, 0, 0], anL: [-0.2, 0, 0], knR: [0.35, 0, 0]}], [1, {}]], u),
+        prop: (u, g) => { const k = u < 0.35 ? -u / 0.35 * 0.25 : u < 0.5 ? -0.25 + (u - 0.35) / 0.15 * 0.6 : u < 0.75 ? 0.35 : 0.35 * (1 - (u - 0.75) / 0.25); g.position.copy(g.userData.base); g.translateY(-k); }},
+      // hands held out to the fire, palms to the warmth
+      warm: {dur: 1, hold: true, f: (u, t) => ({spine: [0.12, 0, 0], chest: [0.06 + 0.015 * Math.sin(t * 1.5), 0, 0], neck: [0.1, 0, 0], shL: [-1.05, 0, 0.12], elL: [-0.75, 0.35, 0], wrL: [-0.9, 0, 0.1], shR: [-1.05, 0, -0.12], elR: [-0.75, -0.35, 0], wrR: [-0.9, 0, -0.1],
+        hipL: [-0.05, 0, 0.08], hipR: [0.05, 0, -0.08]})},
       hurt: {dur: 0.6, f: u => { const k = Math.sin(u * PI); return {spine: [0.35 * k, 0, 0], chest: [0.2 * k, 0, 0], head: [0.3 * k, 0, 0], shL: [-0.6 * k, 0, 0.3 * k], shR: [-0.6 * k, 0, -0.3 * k], elL: [-0.8 * k, 0, 0], elR: [-0.8 * k, 0, 0], drop: -0.05 * k}; }}
     };
     // carrying an armload: arms only, so the legs keep walking
@@ -328,6 +387,7 @@
       if (st.carryW > 0.001) blendInto(P, CARRY, st.carryW);
       const holdName = st.hold || st.prevHold;
       if (holdName && st.holdW > 0.001) blendInto(P, MOVES[holdName].f(cl(st.holdU || 0, 0, 1) % 1, t), ease(st.holdW));
+      if (st.move && MOVES[st.move].prop && MOVES[st.move].props) MOVES[st.move].prop(st.u, props[MOVES[st.move].props[0]]);
       if (st.move && st.w > 0.001) { const M = MOVES[st.move], mp = M.f(st.u, t); blendInto(P, Object.assign(newPose(), currentAsBase(P), mp), ease(st.w)); }
 
       // set the joints

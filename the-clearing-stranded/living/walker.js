@@ -11,7 +11,7 @@
     opts = opts || {};
     const T = S.trace, K = S.K, SN = S.SN, B = Trace.build(T), GW = Trace.GW, GH = Trace.GH;
     const TW = T.size[0] / GW / K, TD = T.size[1] / GH / (K * SN);        // a square's width and depth in metres
-    const COST = {t: 1, g: 1.25, G: 1.7};
+    const COST = {t: 1, g: 1.25, f: 1.3, s: 1.4, m: 1.6, G: 1.7};
     const cost = (gx, gy) => (gx < 0 || gy < 0 || gx >= GW || gy >= GH) ? 0 : (COST[B.M[gy][gx]] || 0);
     const tileOf = (x, z) => [Math.floor(x / TW), Math.floor(z / TD)];
     const centre = (gx, gy) => new THREE.Vector3((gx + 0.5) * TW, 0, (gy + 0.5) * TD);

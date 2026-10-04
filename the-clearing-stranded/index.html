@@ -124,6 +124,13 @@ h1,h2,h3,p{margin:0}
 .world{position:relative;width:100%;aspect-ratio:380/330;outline:none;overflow:hidden;background:#1d2621;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .world canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 .world:focus-visible{box-shadow:inset 0 0 0 3px var(--blaze)}
+.world canvas.lvcv{position:absolute;inset:0;image-rendering:auto}
+.lvfade{position:absolute;inset:0;background:#0a0c10;opacity:0;pointer-events:none}
+.lvmark{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+.lvmark::before{content:"";position:absolute;left:-9px;top:-18px;border-style:solid;border-width:13px 9px 0 9px;border-color:var(--blaze) transparent transparent transparent;filter:drop-shadow(0 0 1px #231f24) drop-shadow(0 0 1px #231f24);animation:lvbob 1s ease-in-out infinite alternate}
+.lvmark.edge::before{left:-7px;top:-8px;border-width:8px 0 8px 13px;border-color:transparent transparent transparent var(--blaze);animation:none}
+@keyframes lvbob{to{transform:translateY(-4px)}}
+@media (prefers-reduced-motion: reduce){.lvmark::before{animation:none}}
 .world button{font:inherit}
 .wtag{position:absolute;left:8px;top:44px;background:var(--ink);color:var(--paper);font-weight:700;font-size:14px;line-height:1;padding:7px 10px;border:2px solid var(--paper);box-shadow:0 0 0 2px var(--ink);opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s;pointer-events:none}
 .wtag.on{opacity:1;transform:none}
@@ -3548,6 +3555,25 @@ root.Engine = E;
 })(typeof window !== 'undefined' ? window : globalThis, (typeof window !== 'undefined' ? window : globalThis).DATA);
 
 </script>
+<!-- The living world (living/): the paintings, with everything else made in code. tools/build-game.mjs puts these, and the paintings, into Stranded.html. -->
+<script src="living/vendor/three.r128.min.js"></script>
+<script src="living/trace.js"></script>
+<script src="living/merge.js"></script>
+<script src="living/traces/camp.js"></script>
+<script src="living/traces/cedar.js"></script>
+<script src="living/traces/oak.js"></script>
+<script src="living/traces/prairie.js"></script>
+<script src="living/traces/berry.js"></script>
+<script src="living/traces/river.js"></script>
+<script src="living/traces/pond.js"></script>
+<script src="living/traces/creek.js"></script>
+<script src="living/traces/spring.js"></script>
+<script src="living/stage.js"></script>
+<script src="living/survivor.js"></script>
+<script src="living/camp.js"></script>
+<script src="living/life.js"></script>
+<script src="living/things.js"></script>
+<script src="living/beasts.js"></script>
 <script>
 /* ===== 4. SCENE ===== */
 /* THE CLEARING: the scene. A picture of where you are, drawn from the real game state.
@@ -5076,7 +5102,7 @@ const PLACES = {
     spots: {pool: {name: 'The spring', at: [55, 62], acts: ['drink_spring', 'fill_spring'], say: 'Cold, clear water seeping from the foot of the ledge.'}},
     beasts: {}}
 };
-const WSOLID = 'FwockLhb';   // b: a bramble thicket   // ground nobody walks on. H, the brush over the path to the spring, is solid until you find it.
+const WSOLID = 'FwockLhbr';   // b: a bramble thicket, r: the stones of the fire ring   // ground nobody walks on. H, the brush over the path to the spring, is solid until you find it.
 const tX = p => Math.max(0, Math.min(WW - 1, Math.round(p / 100 * (WW - 1)))), tY = p => Math.max(0, Math.min(WH - 1, Math.round(p / 100 * (WH - 1))));
 // how big each kind of thing is on the ground, in squares
 const FOOT = {bigboulder: [4, 3], oak: [1, 1], pecan: [1, 1], mulberry: [2, 1], osage: [1, 1], cedar: [1, 1], plum: [1, 1], bramble: [2, 1], deadfall: [2, 1], tangle: [3, 1], log: [2, 1], snag: [2, 1], clay: [2, 1], cane: [1, 1], stones: [2, 1], chimney: [1, 1], sapling: [1, 1]};
@@ -5155,7 +5181,7 @@ function pgen(k){
 }
 // every place's map, made once
 const WMAPS = {};
-const wmap = k => WMAPS[k] || (WMAPS[k] = pgen(k));
+const wmap = k => WMAPS[k] || (WMAPS[k] = lvTrace(k) ? lvMap(k) : pgen(k));   // a painted place is laid out by its trace
 // the next place to walk toward on the way to k, along the trails
 function wnextHop(from, to){
   if (from === to) return to;
@@ -5502,7 +5528,7 @@ const WSAY = {
   shelter: 'Your shelter.', ring: 'Your fire ring.', wood: 'Your woodpile.', store: 'Your wood store.', rack: 'Your drying rack.', rain: 'Your rain catcher.', look: 'Your lookout.',
   bench: 'Your workbench.', cache: 'Your food cache.', crate: 'Your crates.', pot: 'Your pot.', seep: 'The seep you dug.', snare: 'Your snare.', trap: 'Your fish trap.',
   w: 'The river: slow, brown, and deep.', o: 'The pond. Something big rolls under the surface.', c: 'The creek runs clear over gravel.', k: 'A pool of cold, clear water.',
-  L: 'A sandstone ledge.', F: 'The Cross Timbers: too thick to push through.', h: 'Thick brush, too tangled to push through.', H: 'Thick brush, too tangled to push through.',
+  r: 'Your fire ring.', b: 'Blackberry brambles. Thorny.', L: 'A sandstone ledge.', F: 'The Cross Timbers: too thick to push through.', h: 'Thick brush, too tangled to push through.', H: 'Thick brush, too tangled to push through.',
   bison: 'A bison. Better give it room.', deer: 'A white-tailed deer.', turkey: 'A wild turkey.', rabbit: 'A cottontail.', squirrel: 'A fox squirrel.'
 };
 const wesc = x => String(x == null ? '' : x).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
@@ -5521,7 +5547,7 @@ function wopen(Wd, x, y, s){ // can you stand here?
 
 /* ---------- paintings: when one has come back for a place, it is drawn instead of the game's own picture ---------- */
 // The art that exists, by name (art/places/<name>.webp); a single-file build puts the pictures in window.STRANDED_ART.
-const ART_HAVE = [];
+const ART_HAVE = ['01-camp', '01-camp-summer', '01-camp-fall', '01-camp-winter', '02-cedar-stand', '02-cedar-stand-summer', '02-cedar-stand-fall', '02-cedar-stand-winter', '03-oak-woods', '04-prairie', '05-berry-thicket', '06-river-bank', '07-pond', '08-creek-bottom', '09-hidden-spring'];
 const ART_FILE = {camp: '01-camp', cedar: '02-cedar-stand', oak: '03-oak-woods', prairie: '04-prairie', berry: '05-berry-thicket', river: '06-river-bank', pond: '07-pond', creek: '08-creek-bottom', spring: '09-hidden-spring'};
 const ART = {};
 function wpainting(k, month){
@@ -5538,7 +5564,7 @@ function wpainting(k, month){
 }
 
 /* ---------- camp as built, and the animals about ---------- */
-const siteXY = k => { const q = PLACES.camp.sites[k]; return [tX(q[0]), tY(q[1])]; };
+const siteXY = k => { const T = lvTrace('camp'); if (T && T.sites && T.sites[k]) return [Math.floor(T.sites[k][0] / 32), Math.floor(T.sites[k][1] / 32)]; const q = PLACES.camp.sites[k]; return [tX(q[0]), tY(q[1])]; };
 function wbuildKey(s, F){ const t = s.tools || {}; return JSON.stringify([s.loc, F.shelter, F.fire, F.wood, F.crates, F.meat, Object.keys(t).filter(k => t[k]).sort(), !!(s.trap && s.trap.set), F.flood, s.snare && s.snare.set ? s.snare.loc : '']); }
 function wbuilds(s, F){
   const L = [], t = s.tools || {}, has = k => !!t[k], dyn = new Uint8Array(WW * WH), bt = {};
@@ -5609,14 +5635,20 @@ function wmount(wrap, hooks){
   const pad = wrap.querySelector('.wpad'), box = wrap.querySelector('.world');
   WV.box = box; WV.cv = box.querySelector('canvas'); WV.ctx = WV.cv.getContext('2d', {willReadFrequently: !!root.__gb});
   WV.tag = box.querySelector('.wtag'); WV.say = box.querySelector('.wsay'); WV.menu = box.querySelector('.wmenu'); WV.qline = box.querySelector('.wquest'); WV.pad = pad; WV.Z = null; WV.menuOpen = false;
+  lvMount(box);
   if (WV.ro) WV.ro.disconnect(); if (WV.io) WV.io.disconnect();
   if (root.ResizeObserver){ WV.ro = new ResizeObserver(() => { WV.Z = null; wkick(); }); WV.ro.observe(box); }
   if (root.IntersectionObserver){ WV.io = new IntersectionObserver(es => { for (const e of es) WV.vis = e.isIntersecting; wkick(); }); WV.io.observe(box); }
-  WV.cv.addEventListener('pointerdown', e => {
-    box.focus({preventScroll: true}); const Z = WV.Z; if (!Z) return; e.preventDefault();
+  const onDown = e => {
+    box.focus({preventScroll: true});
+    if (LV.shown && LV.S){ e.preventDefault(); const q = lvTile(e.clientX, e.clientY); wtap(q[0], q[1]); return; }
+    const Z = WV.Z; if (!Z) return; e.preventDefault();
     const r = WV.cv.getBoundingClientRect(), ax = (e.clientX - r.left) / r.width * Z.W + WV.cam[0], ay = (e.clientY - r.top) / r.height * Z.H + WV.cam[1];
     wtap(Math.floor(ax / WT), Math.floor(ay / WT), ay);
-  });
+  };
+  WV.cv.addEventListener('pointerdown', onDown);
+  if (LV.cv && !LV.cv.dataset.on){ LV.cv.dataset.on = '1'; LV.cv.addEventListener('pointerdown', e => { if (WV.box && LV.cv.parentNode === WV.box) WV.onDown(e); }); }
+  WV.onDown = onDown;
   box.querySelector('.wfield').addEventListener('click', () => { if (WV.menuOpen) wmenuClose(); if (WV.hooks.field) WV.hooks.field(); });
   WV.menu.addEventListener('click', e => { const b = e.target.closest('[data-wi]'); if (b) wchoose(+b.dataset.wi); });
   pad.querySelectorAll('[data-d]').forEach(b => {
@@ -5685,6 +5717,7 @@ function wsync(s, h, o){
 const winward = e => ({left: 'right', right: 'left', up: 'down', down: 'up'})[e.dir];
 function wstepIn(e){ const d = WDIR[winward(e)]; for (let k = 2; k >= 0; k--){ const x = e.x + d[0] * k, y = e.y + d[1] * k; if (wopen(WV.map, x, y, WV.S)) return [x, y]; } return WV.map.hub; }
 function wplace(t, dir){
+  LV.pos = null; LV.ppos = null; LV.snap = true;
   WV.pos = {x: t[0], y: t[1], dir: dir || 'down'}; WV.moving = false; WV.path = []; WV.auto = false; WV.bump = null;
   const s = WV.S; let behind = [t[0], t[1]];
   for (const d of [[0, 1], [-1, 0], [1, 0], [0, -1]]) if (wopen(WV.map, t[0] + d[0], t[1] + d[1], s)){ behind = [t[0] + d[0], t[1] + d[1]]; break; }
@@ -5726,7 +5759,7 @@ function wupdate(dt, now){
   if (!WV.calm) for (const b of WV.beasts) wbeastStep(b, now, dt);
   if (WV.fade > 0) WV.fade = Math.max(0, WV.fade - dt * 3.2);
   if (WV.moving){
-    WV.t += dt * (WV.auto ? 9 : 5.5); if (WV.t < 1) return;
+    WV.t += dt * (LV.shown ? (WV.auto ? 2.7 : 2.1) / (WV.fromY === WV.toY ? 0.587 : 1.078) : (WV.auto ? 9 : 5.5)); if (WV.t < 1) return;   // alive: a brisk walk, in metres a second
     const carry = WV.t - 1; WV.moving = false; WV.t = 0; WV.pos.x = WV.toX; WV.pos.y = WV.toY;
     WV.hist.unshift({x: WV.pos.x, y: WV.pos.y}); if (WV.hist.length > 4) WV.hist.pop();
     if (WV.path.length && WV.path[0].x === WV.pos.x && WV.path[0].y === WV.pos.y) WV.path.shift();
@@ -5860,6 +5893,7 @@ function wchoose(i){
   const a = WV.macts[idx]; if (!a){ wmenuClose(); return; }
   if (!a.ok){ WV.msel = i; wmenuMove(0); return; }   // can't do it: the reason is showing below
   wmenuClose();
+  lvAct(a);
   if (a.kind === 'make'){ if (WV.hooks.make) WV.hooks.make(a.id); }
   else if (WV.hooks.run) WV.hooks.run(a.id);
 }
@@ -5884,6 +5918,7 @@ function wmeasure(){
 }
 function wppos(){ const e = WV.moving ? WV.t : 0, x = WV.moving ? lerp(WV.fromX, WV.toX, e) : WV.pos.x, y = WV.moving ? lerp(WV.fromY, WV.toY, e) : WV.pos.y; return {x: (x + 0.5) * WT, y: (y + 1) * WT - 3}; }
 function wdraw(now){
+  if (lvDraw(now)) return;
   if (!WV.Z){ const Z = wmeasure(); if (!Z) return; WV.Z = Z; WV.cv.width = Z.devW; WV.cv.height = Z.devH; }
   const Z = WV.Z, W = Z.W, H = Z.H, c = WV.ctx, s = WV.S, t = WV.calm ? 40 : now / 1000, MW = WW * WT, MH = WH * WT;
   if (!WV.A) WV.A = wart(WV.F);
@@ -6007,7 +6042,208 @@ function gbify(c, W, H){
   for (let y = 0, i = 0; y < H; y++) for (let x = 0; x < W; x++, i += 4){ const l = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255 + (NZ.bay(x, y) - 0.5) * 0.1, q = GBP[l < 0.3 ? 0 : l < 0.52 ? 1 : l < 0.74 ? 2 : 3]; d[i] = q[0]; d[i + 1] = q[1]; d[i + 2] = q[2]; }
   c.putImageData(id, 0, 0);
 }
-root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), goTo: k => { if (PLACES[k]) wgo(k); }, closeMenu: () => { if (WV.menuOpen) wmenuClose(); }, places: PLACES, map: k => wmap(k), _v: WV};
+
+/* ---------- the living world: the paintings, with the survivor, the camp, the animals, the light and the weather made in code ----------
+   (living/*.js; the same pieces as the living camp demo.) The walking itself doesn't change: squares, paths, spots, menus and
+   exits are all as above, read from each painting's trace (living/traces/). Only the drawing does: a locked 3D camera matched
+   to the painter, so the survivor walks in the painting and behind its boulders and trees. Without WebGL, or for a place
+   with no painting, the game's own pixel drawing carries on as before. */
+const LV = {ok: null, S: null, cv: null, fadeEl: null, markEl: null, hero: null, partner: null, camp: null, life: null, k: '', paint: '', img: {}, beasts: new Map(), things: new Map(),
+  pos: null, ppos: null, face: 0, pface: 0, act: null, carryWood: false, campKey: '', shown: false, last: 0, view: {cx: 768, cy: 512}, cssW: 0, cssH: 0};
+const LV_SEASONS = {camp: ['summer', 'fall', 'winter'], cedar: ['summer', 'fall', 'winter']};
+const lvTrace = k => (root.TRACES && root.TRACES[k]) || null;
+function lvSupported(){
+  if (LV.ok !== null) return LV.ok;
+  try { const c = document.createElement('canvas'); LV.ok = !!(root.THREE && root.makeStage && root.Trace && root.makeSurvivor && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { LV.ok = false; }
+  return LV.ok;
+}
+// a place's walk map from its trace, in the same shape as the game's own maps
+function lvMap(k){
+  const T = lvTrace(k), L = PLACES[k], B = Trace.build(T), M = B.M, spotAt = new Array(WW * WH).fill(null), spots = {};
+  const inb = (x, y) => x >= 0 && y >= 0 && x < WW && y < WH, solid = (x, y) => WSOLID.indexOf(M[y][x]) >= 0;
+  const claim = (id, x, y) => { if (!inb(x, y) || (spotAt[y * WW + x] && spotAt[y * WW + x] !== id)) return false; spotAt[y * WW + x] = id; return true; };
+  for (const id in L.spots){
+    const S = L.spots[id], pts = S.site && T.sites && T.sites[S.site] ? [T.sites[S.site]] : (T.spots && T.spots[id]) || null;
+    if (!pts) continue;
+    const tiles = [], seen = {};
+    const take = (x, y) => { const key = x + ',' + y; if (seen[key]) return; seen[key] = 1; if (claim(id, x, y)) tiles.push([x, y]); };
+    for (const p of pts){
+      const [x, y] = B.tileOf(p[0], p[1]); take(x, y);
+      // the thing itself, close by, belongs to the spot too, so a tap anywhere on it works: a tree, the brambles, the water
+      const starts = solid(x, y) ? [[x, y]] : [[1, 0], [-1, 0], [0, 1], [0, -1]].map(d => [x + d[0], y + d[1]]).filter(q => inb(q[0], q[1]) && solid(q[0], q[1]));
+      for (const s0 of starts){ const c = M[s0[1]][s0[0]], Q = [s0], vis = {[s0[0] + ',' + s0[1]]: 1}; take(s0[0], s0[1]);
+        while (Q.length){ const [qx, qy] = Q.shift(); for (const d of [[1, 0], [-1, 0], [0, 1], [0, -1]]){ const nx = qx + d[0], ny = qy + d[1], key = nx + ',' + ny; if (vis[key] || Math.abs(nx - x) > 2 || Math.abs(ny - y) > 2 || !inb(nx, ny) || M[ny][nx] !== c) continue; vis[key] = 1; take(nx, ny); Q.push([nx, ny]); } } }
+    }
+    spots[id] = Object.assign({id, tiles}, S);
+  }
+  return {k, M, O: [], B: new Uint8Array(WW * WH), RES: new Uint8Array(WW * WH), spotAt, spots, exits: B.exits, hub: B.hub, trace: T};
+}
+// the painting for a place and month: its own season's painting when there is one
+function lvArt(k, month){
+  const base = ART_FILE[k], season = ['winter', 'winter', '', '', '', 'summer', 'summer', 'summer', 'fall', 'fall', 'fall', 'winter'][month];
+  const name = season && (LV_SEASONS[k] || []).indexOf(season) >= 0 ? base + '-' + season : base;
+  let a = LV.img[name];
+  if (!a){ a = LV.img[name] = {img: new Image(), ok: false, bad: false, name, season: name !== base}; a.img.onload = () => { a.ok = true; wkick(); }; a.img.onerror = () => { a.bad = true; }; a.img.src = (root.STRANDED_ART && root.STRANDED_ART[name]) || ('art/places/' + name + '.webp'); }
+  if (a.ok) return a;
+  if (a.bad && name !== base) return lvArt(k, 3);
+  return null;
+}
+const lvW = (x, y) => LV.S.toWorld((x + 0.5) * 32, (y + 0.62) * 32);     // the middle of a square, where a figure stands
+function lvMount(box){
+  if (LV.cv){ if (LV.cv.parentNode !== box){ WV.cv.after(LV.cv); box.appendChild(LV.fadeEl); box.appendChild(LV.markEl); LV.shown = null; lvShow(false); } return; }
+  LV.cv = document.createElement('canvas'); LV.cv.className = 'lvcv'; LV.cv.setAttribute('aria-hidden', 'true'); LV.cv.hidden = true;
+  LV.fadeEl = document.createElement('div'); LV.fadeEl.className = 'lvfade'; LV.fadeEl.setAttribute('aria-hidden', 'true');
+  LV.markEl = document.createElement('div'); LV.markEl.className = 'lvmark'; LV.markEl.setAttribute('aria-hidden', 'true'); LV.markEl.hidden = true;
+  WV.cv.after(LV.cv); box.appendChild(LV.fadeEl); box.appendChild(LV.markEl);
+}
+// the first time a painting is ready: the stage, the survivor and the partner, the camp
+function lvBuild(a, T){
+  LV.S = makeStage({canvas: LV.cv, painting: a.img, trace: T, hour: 12, month: 4});
+  LV.S.renderer.setClearColor(0x1d2621);
+  LV.hero = makeSurvivor(); LV.S.scene.add(LV.hero.root); LV.S.shadow(LV.hero.root, 0.3, 0.24);
+  LV.partner = makeSurvivor({partner: true}); LV.S.scene.add(LV.partner.root); LV.S.shadow(LV.partner.root, 0.3, 0.24); LV.partner.root.visible = false;
+  LV.camp = makeCamp(LV.S, {trace: lvTrace('camp')});
+  LV.k = T.id; LV.paint = a.name; LV.S.setPlace(T, a.img, a.season); LV.life = makeLife(LV.S, {noRabbit: true});
+}
+function lvShow(on){
+  if (LV.shown === on) return; LV.shown = on;
+  if (LV.cv) LV.cv.hidden = !on; if (WV.cv) WV.cv.style.visibility = on ? 'hidden' : '';
+  if (!on && LV.markEl) LV.markEl.hidden = true; if (!on && LV.fadeEl) LV.fadeEl.style.opacity = 0;
+}
+// can this place be drawn alive right now? builds and switches the stage as needed
+function lvReady(){
+  const s = WV.S, k = s && s.loc, T = k && lvTrace(k);
+  if (!T || !lvSupported() || root.__gb || !WV.map || !WV.map.trace || !WV.F) return false;
+  const a = lvArt(k, WV.F.month); if (!a) return !!(LV.S && LV.k === k);
+  try {
+    if (!LV.S) lvBuild(a, T);
+    else if (LV.k !== k || LV.paint !== a.name){
+      const moved = LV.k !== k; LV.S.setPlace(T, a.img, a.season); LV.paint = a.name;
+      if (moved){ LV.k = k; if (LV.life) LV.life.dispose(); LV.life = makeLife(LV.S, {noRabbit: true}); LV.pos = null; for (const [o, b] of LV.beasts){ LV.S.scene.remove(b.root); LV.S.dropShadow(b.sh); } LV.beasts.clear(); for (const [, o] of LV.things) LV.S.scene.remove(o); LV.things.clear(); }
+    }
+  } catch (e){ if (root.console) console.error(e); LV.ok = false; return false; }
+  return true;
+}
+// the game's sky, as the stage's weather
+function lvSky(){
+  const S = LV.S, F = WV.F, h = WV.h || {}, rain = F.raining, sky = F.sky, wind = +h.wind || 6;
+  let w = 'clear';
+  if (rain) w = sky === 'storm' ? 'storm' : sky === 'snow' ? 'snow' : 'rain';
+  else if (sky === 'cloudy') w = 'overcast';
+  else if (wind > 15 || h.norther || sky === 'partly') w = wind > 12 || h.norther ? 'breezy' : 'clear';
+  S.setWeather(w);
+  S.setHour(F.hour); S.setMonth(F.month + ((F.dom || 15) - 15) / 31);
+}
+// what the survivor is doing, as a move to play while the game works it out
+const LV_MOVES = [
+  [/^firestart$/, 'drill', 4], [/^(addwood|stock|bank|uncover|cook|boil|hearth)/, 'work', 3], [/^drink_/, 'drink', 5], [/^fill_/, 'work', 3],
+  [/^(forage_|pick|shake|grass|yucca|cattail|crawfish|clay|cane|stones|pecans|grubs|vines|bark|stave|seep)/, 'gather', 0], [/^(poles|wood[A-Z])/, 'snap', 0],
+  [/^hunt_|^shoot/, 'aim', 3], [/^(spear|frogs)$/, 'spear', 0], [/^(trapset|trapcheck|snareset|snarecheck|snarepull|turtle)/, 'work', 3],
+  [/^sleep$/, 'sleep', 0], [/^rest$/, 'sit', 6], [/^explore_/, 'look', 0]];
+function lvAct(a){
+  if (!LV.hero || !LV.shown) return;
+  const id = a.id || '';
+  if (a.kind === 'make'){ LV.hero.hold('work'); LV.act = {name: 'work', until: performance.now() / 1000 + 3}; return; }
+  for (const [re, move, secs] of LV_MOVES) if (re.test(id)){
+    if (LV.hero.MOVES[move].hold){ LV.hero.hold(move); LV.act = {name: move, until: secs ? performance.now() / 1000 + secs : Infinity}; }
+    else { LV.hero.play(move); LV.act = null; }
+    if (/^(poles|wood[A-Z])/.test(id)) LV.carryWood = true;
+    return;
+  }
+}
+// the camp as built, from the game's own state
+function lvCamp(){
+  const s = WV.S, F = WV.F, t = s.tools || {}, has = k => !!t[k];
+  const st = {fire: F.fire === 'lit' ? (s.fire && s.fire.fuel > 9 ? 'big' : 'lit') : F.fire === 'banked' ? 'coals' : 'out', shelter: F.shelter, bed: has('bedding'), blanket: has('blanket'), rack: has('rack'), meat: !!F.meat,
+    wood: F.wood ? (F.wood > 1 ? 1 : 0.5) : 0, store: has('woodstore'), rain: has('rain'), hang: has('hang'), crates: F.crates, bench: has('workbench'), cache: has('cache'), hearth: has('hearth'), look: has('lookout'), pot: has('pot'), bowl: has('bowl')};
+  const key = JSON.stringify(st); if (key !== LV.campKey){ LV.campKey = key; LV.camp.set(st); }
+}
+// the things set out away from camp: the seep, the fish trap, the snares
+function lvThings(){
+  const want = new Set();
+  for (const b of WV.blds){
+    if (['seep', 'trap', 'snare'].indexOf(b.k) < 0) continue;
+    const key = b.k + '@' + b.bx + ',' + b.by; want.add(key);
+    if (!LV.things.has(key)){ const o = makeThing(b.k === 'trap' ? 'fishtrap' : b.k); o.position.copy(LV.S.toWorld(b.bx * 2, b.by * 2)); if (b.k === 'snare') o.rotation.y = -0.6; LV.S.scene.add(o); LV.things.set(key, o); }
+  }
+  for (const [key, o] of LV.things) if (!want.has(key)){ LV.S.scene.remove(o); LV.things.delete(key); }
+}
+// the animals the game keeps track of, walking square to square
+function lvBeasts(dt, t){
+  const seen = new Set();
+  for (const b of WV.beasts){
+    seen.add(b); let m = LV.beasts.get(b);
+    if (!m){ m = makeBeast(b.k); m.sh = LV.S.shadow(m.root, b.k === 'bison' ? 0.7 : b.k === 'deer' ? 0.45 : 0.18, b.k === 'bison' ? 0.45 : b.k === 'deer' ? 0.25 : 0.12); LV.S.scene.add(m.root); m.root.position.copy(lvW(b.x, b.y)); m.root.rotation.y = b.face > 0 ? Math.PI / 2 : -Math.PI / 2; LV.beasts.set(b, m); }
+    const e = b.t, p = lvW(lerp(b.fx, b.x, e), lerp(b.fy, b.y, e)), d = p.clone().sub(m.root.position), v = d.length() / Math.max(dt, 0.001);
+    m.root.position.lerp(p, Math.min(1, dt * 10));
+    if (d.lengthSq() > 1e-6) { const want = Math.atan2(d.x, d.z), r = m.root.rotation.y; m.root.rotation.y = r + ((((want - r) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 8); }
+    m.animate(dt, t, b.t < 1 ? Math.min(6, v) : 0, b.graze);
+  }
+  for (const [b, m] of LV.beasts) if (!seen.has(b)){ LV.S.scene.remove(m.root); LV.S.dropShadow(m.sh); LV.beasts.delete(b); }
+}
+const LV_FACE = {down: 0, up: Math.PI, left: -Math.PI / 2, right: Math.PI / 2};
+// one figure following its square, smoothly, turning the way it goes; returns its speed
+function lvFollow(fig, key, x, y, dir, dt){
+  const p = lvW(x, y);
+  if (!LV[key]){ LV[key] = p.clone(); fig.root.position.copy(p); fig.root.rotation.y = LV_FACE[dir] || 0; return 0; }
+  const q = LV[key], before = q.clone(); q.lerp(p, Math.min(1, dt * 11)); fig.root.position.copy(q);
+  const d = q.clone().sub(before), sp = d.length() / Math.max(dt, 0.001);
+  const want = sp > 0.3 ? Math.atan2(d.x, d.z) : (LV_FACE[dir] != null ? LV_FACE[dir] : fig.root.rotation.y), r = fig.root.rotation.y;
+  fig.root.rotation.y = r + ((((want - r) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 10);
+  return sp;
+}
+// the quest's target: an orange arrow over the thing to use, or pointing off the edge toward the way to go
+function lvMarker(t){
+  const T = wtarget(), el = LV.markEl; if (!T){ el.hidden = true; return; }
+  const S = LV.S, w = lvW(T.x, T.y); w.y = T.spot ? 1.9 + 0.08 * Math.sin(t * 4) : 0.6;
+  const p = S.toPaint(w), v = S.view, x = (p[0] - (v.cx - v.w / 2)) / v.w * LV.cssW, y = (p[1] - (v.cy - v.h / 2)) / v.h * LV.cssH;
+  el.hidden = false;
+  if (x > 12 && x < LV.cssW - 12 && y > 16 && y < LV.cssH - 12){ el.className = 'lvmark'; el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`; return; }
+  const a = Math.atan2(y - LV.cssH / 2, x - LV.cssW / 2), ex = clamp(x, 18, LV.cssW - 18), ey = clamp(y, 18, LV.cssH - 18);
+  el.className = 'lvmark edge'; el.style.transform = `translate(${ex.toFixed(1)}px, ${ey.toFixed(1)}px) rotate(${(a * 180 / Math.PI).toFixed(1)}deg)`;
+}
+function lvDraw(now){
+  if (!lvReady()){ lvShow(false); return false; }
+  lvShow(true);
+  const S = LV.S, s = WV.S, F = WV.F, dt = LV.last ? Math.min(0.1, (now - LV.last) / 1000) : 0.016, t = now / 1000; LV.last = now;
+  const r = WV.box.getBoundingClientRect(); if (r.width < 20 || r.height < 20) return true;
+  if (r.width !== LV.cssW || r.height !== LV.cssH){ LV.cssW = r.width; LV.cssH = r.height; S.resize(r.width, r.height); }
+  lvSky();
+  // the survivor, and the partner a step behind
+  const e = WV.moving ? WV.t : 0, hx = WV.moving ? lerp(WV.fromX, WV.toX, e) : WV.pos.x, hy = WV.moving ? lerp(WV.fromY, WV.toY, e) : WV.pos.y;
+  const going = WV.moving || WV.auto || WV.path.length;
+  if (going && LV.hero.action){ LV.hero.hold(null); LV.act = null; }
+  if (LV.act && t > LV.act.until){ LV.hero.hold(null); LV.act = null; }
+  if (s.loc === 'camp') LV.carryWood = false;
+  LV.hero.carry(LV.carryWood ? 'wood' : null);
+  const fe = s.feels != null ? s.feels : (WV.h && WV.h.feels), nearFire = s.loc === 'camp' && F.fire === 'lit';
+  LV.hero.state.cold = fe != null && fe < 40 && !nearFire ? clamp((42 - fe) / 20, 0, 1) : 0;
+  LV.hero.animate(dt, t, lvFollow(LV.hero, 'pos', hx, hy, WV.pos.dir, dt));
+  const two = F.party > 1 && WV.hist.length > 1; LV.partner.root.visible = two;
+  if (two){ const a = WV.hist[1], b = WV.hist[0]; LV.partner.animate(dt, t, lvFollow(LV.partner, 'ppos', lerp(a.x, b.x, e), lerp(a.y, b.y, e), WV.pos.dir, dt)); LV.partner.state.cold = LV.hero.state.cold; }
+  else LV.ppos = null;
+  // the camp, the things set out, the animals, the life of the place
+  LV.camp.root.visible = s.loc === 'camp';
+  if (s.loc === 'camp') { lvCamp(); LV.camp.update(t, dt); } else S.glow(0, 0, 0, 0, 0);
+  lvThings(); lvBeasts(dt, t);
+  LV.life.update(t, dt, two ? [LV.hero.root.position, LV.partner.root.position] : [LV.hero.root.position]);
+  // the camera follows the survivor: on a phone the survivor stands about a seventh of the view tall
+  const vw = Math.min(1536, Math.max(380, LV.cssW / (LV.cssW < 700 ? 0.8 : 0.95))), vh = vw * LV.cssH / LV.cssW;
+  const hp = S.toPaint(LV.hero.root.position), v = LV.view, k = LV.snap ? 1 : 1 - Math.exp(-dt * 4);
+  v.cx += (hp[0] - v.cx) * k; v.cy += (hp[1] - 40 - v.cy) * k; LV.snap = false;
+  S.setView(v.cx, v.cy, vw, vh); v.cx = S.view.cx; v.cy = S.view.cy;
+  S.update(t, dt); S.render();
+  lvMarker(t);
+  LV.fadeEl.style.opacity = WV.fade > 0 ? WV.fade.toFixed(3) : 0;
+  return true;
+}
+// a tap on the living picture, as the square of ground it means: a tap on a tree or a rock means where it stands
+function lvTile(cx, cy){ const [px, py] = LV.S.paintAt(cx, cy), g = LV.S.groundAt(px, py); return [Math.floor(g[0] / 32), Math.floor(g[1] / 32)]; }
+// where a square of ground is on the screen (for the phone test)
+function lvClient(x, y){ const S = LV.S, p = S.toPaint(lvW(x, y)), v = S.view, r = LV.cv.getBoundingClientRect(); return {cx: r.left + (p[0] - (v.cx - v.w / 2)) / v.w * r.width, cy: r.top + (p[1] - (v.cy - v.h / 2)) / v.h * r.height}; }
+
+root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), goTo: k => { if (PLACES[k]) wgo(k); }, closeMenu: () => { if (WV.menuOpen) wmenuClose(); }, places: PLACES, map: k => wmap(k), _v: WV,
+  living: () => !!LV.shown, client: (x, y) => LV.shown ? lvClient(x, y) : null, _lv: LV};
 function wsetgb(on){ root.__gb = !!on; WV.Z = null; VIEWS.forEach(v => { if (v.S) v.draw(performance.now()); }); wkick(); }
 
 root.Scene = {show, light, dayRibbon};

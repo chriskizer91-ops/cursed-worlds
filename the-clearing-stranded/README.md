@@ -4,11 +4,11 @@ Dagr's survival game. You are a grown-up stranded alone in the North Texas wild 
 
 Play it here: https://claude.ai/artifact/CeSyczAQN8DmkVMw2rAKZM
 
-**The living camp (October 4, 2026):** https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT. This is a demo of where the game is going.
-Dagr wants everything made in code except the backgrounds. So your camp painting is the background, and the survivor,
-the fire, the shelter, the animals, the moving grass, the light, the weather and the seasons are all made in code on
-top of it. Tap the ground to walk there; tap the fire ring, the shelter or the woodpile to use them. The `living/`
-folder has the details.
+**Alive (October 4, 2026):** every place is now one of your paintings, and everything on top of it is made in code:
+the survivor and the partner, the animals, the fire, the shelter and everything you build, the moving grass, the
+light from dawn to night, the weather and the seasons. The camp and the Cedar Stand use your summer, fall and winter
+paintings; the other places are turned toward the season in code. If a phone can't do 3D, the game falls back to its
+own pixel drawing on top of the painting. The camp on its own, to play with: https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT
 
 ## What changed from the first version
 
@@ -20,11 +20,16 @@ folder has the details.
 
 ## Art
 
-Only the backgrounds are pictures. The camp painting is in (`art/places/01-camp.webp`; the original is in
-`art/originals/`). The other eight places and five backgrounds are in `docs/art-requests/`: attach `01-camp.png` as
-the style reference for each, name each image exactly as its prompt says, and send them back. Big, high-resolution
-images are fine; they get shrunk for the game. The game still uses its drawn stand-in art for places that don't have a
-painting yet.
+All the art you sent is in (October 4, 2026):
+
+- **The nine places**, and **summer, fall and winter** for the camp and the Cedar Stand: the backgrounds you walk on.
+  Compressed for the game in `art/places/`, kept as they came in `art/originals/`. Each one is traced to the game in
+  `living/traces/`: where you can walk, what you walk behind, the trails, the ways out, and where each thing you use is.
+- **The survivor and partner sheets, the shelter stages and the camp things**: the game makes these in code, so they
+  are the model sheets the code was built to match. They're kept, smaller, in `docs/model-sheets/`.
+
+If you'd like more seasons, the other seven places in summer, fall and winter would replace the code's own season
+colors there (same names as the camp's: `03-oak-woods-summer.png` and so on).
 
 ## Files
 
@@ -35,22 +40,23 @@ painting yet.
 | `docs/design.md` | The plan: places, quests, seasons, difficulty, skill moments. |
 | `docs/art-requests/` | Image prompts, in batches. |
 | `art/` | The paintings: compressed for the game in `places/`, as they came in `originals/`. |
-| `living/` | The living world: the painting with everything else made in code. Its demo is the camp. |
+| `living/` | The living world: the painting with everything else made in code, and each place's trace. |
+| `docs/model-sheets/` | The character, shelter and camp sheets the code matches. |
 | `tools/` | Test players (see below). |
 
 ## Checking a change (for whoever works on it next)
 
+`index.html` is the game, and loads `living/` and `art/places/` beside it. `Stranded.html` is the same game as one file
+that works offline (made by `tools/build-game.mjs`; it isn't kept in git, it's rebuilt).
+
 ```
 node tools/autoplay.mjs --games 24 --days 200 --quests   # robot players; must end with "all good"
 node tools/autoplay.mjs --trial                          # how each season goes on each difficulty
-node tools/phone-check.mjs                               # plays the first quest in a phone-sized browser; "all good"
+node tools/build-game.mjs                                # builds Stranded.html
+node tools/phone-check.mjs                               # plays the first quests in Stranded.html on a phone screen; "all good"
+node tools/places-check.mjs                              # every painted place: its spots and ways out can be reached; "all good"
+node tools/living-tour.mjs                               # screenshots of every place, the seasons and night; "all good"
+node tools/trace-check.mjs camp                          # draws one place's trace over its painting, to check by eye
 ```
 
-`phone-check` saves screenshots to `shots/`.
-
-For the living camp:
-
-```
-node tools/build-living.mjs      # builds living/Stranded_Living_Camp.html
-node tools/living-check.mjs      # plays it on a phone-sized screen; must end with "all good"
-```
+Screenshots go to `shots/`. The camp demo on its own: `node tools/build-living.mjs`, then `node tools/living-check.mjs`.

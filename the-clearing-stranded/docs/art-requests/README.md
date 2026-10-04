@@ -1,6 +1,8 @@
 # Art for Stranded (The Clearing)
 
-The pictures the game still needs, written as prompts ready to paste into your image tool.
+**All in (October 4, 2026).** The nine places, the camp and Cedar Stand seasons, and the character, shelter and
+camp sheets have all come back and are in the game. Nothing is waiting on a picture. The prompts are kept as a
+record, and for any more seasons (the other seven places in summer, fall and winter) or new places later.
 
 ## The rule: only backgrounds are pictures
 

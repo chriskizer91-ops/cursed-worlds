@@ -54,6 +54,8 @@ window.TRACES.camp = {
   ],
   hub: [772, 624],
   exits: [['oak', 938, 0], ['cedar', 0, 292], ['berry', 0, 696], ['prairie', 1536, 388], ['river', 770, 1024]],
+  // the game's spots: the pocket between the boulders (sleep, rest, build the shelter) and the oak's long limb (the food hang)
+  spots: {boulders: [[784, 372]], hangoak: [[440, 456]]},
   // the camp's build sites and the spots on the ground
   ring: [767, 552, 40, 24],     // the fire ring: centre, and its half width and half height
   pocket: [784, 364],           // the sheltered pocket between the boulders

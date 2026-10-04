@@ -12,7 +12,7 @@
 
   function makeCamp(S, opts) {
     opts = opts || {};
-    const T = S.trace, K = S.K, SN = S.SN, CS = S.CS, PI = Math.PI, TAU = PI * 2;
+    const T = (opts && opts.trace) || S.trace, K = S.K, SN = S.SN, CS = S.CS, PI = Math.PI, TAU = PI * 2;
     const W = (px, py, h) => S.toWorld(px, py, h);
     let seed = 77031; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, rr = (a, b) => a + (b - a) * rnd();
     const cl = (v, a, b) => (v < a ? a : v > b ? b : v), lerp = (a, b, t) => a + (b - a) * t;
@@ -23,7 +23,7 @@
     const speck = (g, w, h, n, cols, s) => { for (let i = 0; i < n; i++) { g.fillStyle = cols[Math.floor(rnd() * cols.length)]; g.fillRect(rnd() * w, rnd() * h, s || 2, s || 2); } };
     // the blue tarp: weathered poly weave, creases and grommets
     const tarpTex = cvs(256, 256, (g, w, h) => {
-      g.fillStyle = '#3f6ea6'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#3c7a8c'; g.fillRect(0, 0, w, h);
       for (let y = 0; y < h; y += 3) { g.fillStyle = 'rgba(255,255,255,.035)'; g.fillRect(0, y, w, 1); }
       for (let x = 0; x < w; x += 3) { g.fillStyle = 'rgba(0,0,0,.04)'; g.fillRect(x, 0, 1, h); }
       for (let i = 0; i < 14; i++) { const x0 = rnd() * w, y0 = rnd() * h, a = rnd() * PI, l = 40 + rnd() * 120; g.strokeStyle = rnd() < 0.5 ? 'rgba(255,255,255,.13)' : 'rgba(10,20,40,.16)'; g.lineWidth = 2 + rnd() * 4; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + Math.cos(a) * l, y0 + Math.sin(a) * l); g.stroke(); }
@@ -53,7 +53,7 @@
     // grass bedding
     const strawTex = cvs(128, 128, (g, w, h) => { g.fillStyle = '#b39a5f'; g.fillRect(0, 0, w, h); for (let i = 0; i < 500; i++) { const x = rnd() * w, y = rnd() * h, a = rr(-0.5, 0.5); g.strokeStyle = ['#d6c182', '#8f7a45', '#c9b06a', '#a68e52'][i % 4]; g.lineWidth = 1 + rnd(); g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * 14, y + Math.sin(a) * 14); g.stroke(); } });
     // a deer hide blanket
-    const hideTex = cvs(128, 128, (g, w, h) => { g.fillStyle = '#8a6440'; g.fillRect(0, 0, w, h); speck(g, w, h, 900, ['#9c7650', '#6e4c30', '#b08a60'], 2); const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(60,40,24,.5)'); gr.addColorStop(0.5, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(60,40,24,.5)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    const hideTex = cvs(128, 128, (g, w, h) => { g.fillStyle = '#8a6440'; g.fillRect(0, 0, w, h); speck(g, w, h, 900, ['#9c7650', '#6e4c30', '#b08a60'], 2); g.fillStyle = 'rgba(240,226,200,.85)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.ellipse(20 + rnd() * 88, 14 + rnd() * 100, 2 + rnd() * 2, 2 + rnd() * 1.5, 0, 0, TAU); g.fill(); } const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(60,40,24,.5)'); gr.addColorStop(0.5, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(60,40,24,.5)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
 
     // ---------- materials, and a dark outline round each solid thing ----------
     const grad = (() => { const d = new Uint8Array([100, 100, 100, 255, 175, 175, 175, 255, 240, 240, 240, 255]); const t = new THREE.DataTexture(d, 3, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
@@ -63,7 +63,7 @@
       fragmentShader: 'void main(){ gl_FragColor = vec4(.14, .1, .08, 1.); }'});
     const M = {
       tarp: mat({map: tarpTex, side: THREE.DoubleSide}), bark: mat({map: barkTex}), plank: mat({map: plankTex}), wattle: mat({map: wattleTex}), straw: mat({map: strawTex}), hide: mat({map: hideTex}),
-      log: mat({color: 0x6b5038}), char: mat({color: 0x2b2420}), ash: mat({color: 0x8d8a84}), split: mat({color: 0xc59a66}), meat: mat({color: 0x7a2a22}), rope: mat({color: 0xc8b88e}), bag: mat({color: 0x3f6ea6}), clay: mat({color: 0x9c8a6c})
+      log: mat({color: 0x6b5038}), char: mat({color: 0x2b2420}), ash: mat({color: 0x8d8a84}), split: mat({color: 0xc59a66}), meat: mat({color: 0x7a2a22}), rope: mat({color: 0xc8b88e}), bag: mat({map: null, color: 0x3c7a8c}), stone: mat({color: 0x9a948a}), stone2: mat({color: 0x847c70}), water: mat({color: 0x5f8a96}), thatch: mat({color: 0xb39a58}), pot: mat({color: 0xb5643a}), soot: mat({color: 0x3a302a}), hideS: mat({color: 0x9a6a40}), sod: mat({color: 0x6f8a44}), basket: mat({color: 0xa88654}), leaf: mat({color: 0x55803a}), clay: mat({color: 0x9c8a6c})
     };
     function mesh(g, m, line, parent) { const o = new THREE.Mesh(g, m); (parent || root).add(o); if (line !== false) { const l = new THREE.Mesh(g, outMat); o.add(l); } return o; }
     // a pole from a to b (Vector3s), radius r
@@ -169,21 +169,36 @@
       for (let i = 0; i < 7; i++) { const o = mesh(new THREE.SphereGeometry(rr(0.08, 0.13), 7, 5), M.clay, false, G); o.position.copy(W(rr(724, 822), rr(422, 428), 0.02)); o.scale.y = 0.5; }
     }
 
-    // ---------- the bed and the blanket, inside the shelter ----------
-    const bedG = group('bed');
-    { const g = new THREE.BoxGeometry(1.9, 0.18, 0.85, 6, 1, 3), p = g.attributes.position; for (let i = 0; i < p.count; i++) { if (p.getY(i) > 0) p.setY(i, p.getY(i) + 0.03 * Math.sin(p.getX(i) * 5) - 0.04 * Math.abs(p.getZ(i) * 2.2) ** 2); } g.computeVertexNormals(); const o = mesh(g, M.straw, true, bedG); o.position.copy(W(784, 372, 0.08)); }
-    const blanketG = group('blanket');
-    { const g = new THREE.PlaneGeometry(1.3, 0.8, 6, 4), p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, 0.04 * Math.sin(p.getX(i) * 6 + p.getY(i) * 3)); g.computeVertexNormals(); const o = mesh(g, M.hide, false, blanketG); o.rotation.x = -PI / 2; o.position.copy(W(796, 372, 0.2)); }
+    // a ring of stones on the ground (a fire pit, the rain pit's lining), and a stack of them (the hearth)
+    function stoneRing(G, c, rx, rz, n, h) { for (let i = 0; i < n; i++) { const a = i / n * TAU, o = mesh(new THREE.DodecahedronGeometry(rr(0.07, 0.1)), i % 3 ? M.stone : M.stone2, true, G); o.position.set(c.x + Math.cos(a) * rx, (h || 0.05), c.z + Math.sin(a) * rz); o.rotation.set(rnd() * 3, rnd() * 3, 0); o.scale.y = 0.75; } }
+    const disc = (G, c, r, m, y, sx, sz) => { const o = mesh(new THREE.CircleGeometry(r, 18), m, false, G); o.rotation.x = -PI / 2; o.position.set(c.x, y || 0.012, c.z); o.scale.set(sx || 1, sz || 1, 1); return o; };
 
-    // ---------- the drying rack: two A-frames, two crossbars, strips of meat ----------
+    // ---------- the bed and the blanket, inside the shelter (docs/model-sheets/40-grass-bed, 41-hide-blanket) ----------
+    // a mattress of cured grass between two side logs, on a bed of green boughs
+    const bedG = group('bed');
+    {
+      const c = W(784, 372, 0);
+      const g = new THREE.BoxGeometry(1.8, 0.14, 0.72, 6, 1, 3), p = g.attributes.position; for (let i = 0; i < p.count; i++) { if (p.getY(i) > 0) p.setY(i, p.getY(i) + 0.025 * Math.sin(p.getX(i) * 5) - 0.03 * Math.abs(p.getZ(i) * 2.4) ** 2); } g.computeVertexNormals();
+      const o = mesh(g, M.straw, true, bedG); o.position.set(c.x, 0.1, c.z);
+      for (const s of [-1, 1]) pole(new THREE.Vector3(c.x - 0.95, 0.07, c.z + s * 0.42), new THREE.Vector3(c.x + 0.95, 0.07, c.z + s * 0.42), 0.06, M.bark, bedG);
+      const b = mesh(new THREE.BoxGeometry(2.0, 0.04, 0.95), M.leaf, false, bedG); b.position.set(c.x, 0.02, c.z);
+    }
+    // a deer hide, spotted, folded over the foot of the bed
+    const blanketG = group('blanket');
+    { const g = new THREE.PlaneGeometry(1.1, 0.8, 8, 5), p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, 0.05 * Math.sin(p.getX(i) * 6 + p.getY(i) * 3) + 0.04 * Math.abs(p.getX(i))); g.computeVertexNormals(); const o = mesh(g, M.hide, false, blanketG); o.rotation.x = -PI / 2; o.position.copy(W(800, 372, 0.2)); }
+
+    // ---------- the drying rack: four posts, a grid of sticks, strips of meat over a smoky pit (30-drying-rack) ----------
     const rackG = group('rack'), meatG = new THREE.Group(); rackG.add(meatG);
     {
-      const c = T.sites.rack, a = W(c[0] - 38, c[1]), b = W(c[0] + 38, c[1]);
-      for (const e of [a, b]) { pole(e.clone().add(new THREE.Vector3(0, 0, -0.35)), e.clone().add(new THREE.Vector3(0, 1.45, 0.05)), 0.025, M.bark, rackG); pole(e.clone().add(new THREE.Vector3(0, 0, 0.4)), e.clone().add(new THREE.Vector3(0, 1.45, -0.05)), 0.025, M.bark, rackG); }
-      for (const h of [1.38, 1.05]) pole(a.clone().add(new THREE.Vector3(-0.1, h, 0)), b.clone().add(new THREE.Vector3(0.1, h, 0)), 0.022, M.bark, rackG);
-      for (let i = 0; i < 9; i++) { const x = lerp(a.x + 0.1, b.x - 0.1, i / 8) + rr(-0.03, 0.03), h = i % 2 ? 1.05 : 1.38, len = rr(0.28, 0.42); const g = new THREE.BoxGeometry(0.07, len, 0.012); g.translate(0, -len / 2, 0); const o = mesh(g, M.meat, true, meatG); o.position.set(x, h, a.z + rr(-0.02, 0.02)); o.rotation.z = rr(-0.1, 0.1); }
+      const c = W(T.sites.rack[0], T.sites.rack[1]), hw = 0.62, hd = 0.42, H = 1.25;
+      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) pole(new THREE.Vector3(c.x + sx * hw, 0, c.z + sz * hd), new THREE.Vector3(c.x + sx * hw, H + 0.18, c.z + sz * hd), 0.03, M.bark, rackG);
+      for (const sz of [-1, 1]) pole(new THREE.Vector3(c.x - hw - 0.08, H, c.z + sz * hd), new THREE.Vector3(c.x + hw + 0.08, H, c.z + sz * hd), 0.022, M.bark, rackG);
+      for (let i = 0; i < 6; i++) { const x = c.x - hw + (i + 0.5) / 6 * hw * 2; pole(new THREE.Vector3(x, H + 0.02, c.z - hd - 0.06), new THREE.Vector3(x, H + 0.02, c.z + hd + 0.06), 0.012, M.bark, rackG); }
+      for (const sx of [-1, 1]) pole(new THREE.Vector3(c.x + sx * hw, H + 0.04, c.z - hd - 0.05), new THREE.Vector3(c.x + sx * hw, H + 0.04, c.z + hd + 0.05), 0.016, M.bark, rackG);
+      stoneRing(rackG, c, 0.5, 0.36, 11); disc(rackG, c, 0.42, M.ash, 0.012, 1, 0.75);
+      for (let i = 0; i < 10; i++) { const x = c.x - hw + 0.1 + (i % 5) / 4 * (hw * 2 - 0.2) + rr(-0.03, 0.03), z = c.z + (i < 5 ? -0.16 : 0.16), len = rr(0.3, 0.45); const g = new THREE.BoxGeometry(0.07, len, 0.012); g.translate(0, -len / 2, 0); const o = mesh(g, M.meat, true, meatG); o.position.set(x, H + 0.01, z); o.rotation.z = rr(-0.1, 0.1); }
     }
-    // ---------- the woodpile: split logs stacked in a row ----------
+    // ---------- the woodpile: split logs stacked in a row (39-woodpile) ----------
     const woodG = group('wood'), woodRows = [];
     {
       // each log is bark round its side and pale split wood at its ends
@@ -197,34 +212,95 @@
         }
       }
     }
-    // ---------- the rain catcher: the tarp sagging between four poles into a bowl ----------
+    // ---------- the wood store: a thatched roof on posts over the stacked wood (36-wood-store) ----------
+    const storeG = group('store');
+    {
+      const c = W(T.sites.wood[0], T.sites.wood[1]), hw = 0.6, hd = 0.4;
+      for (const [sx, sz, h] of [[-1, -1, 1.45], [1, -1, 1.45], [-1, 1, 1.25], [1, 1, 1.25]]) pole(new THREE.Vector3(c.x + sx * hw, 0, c.z + sz * hd), new THREE.Vector3(c.x + sx * hw, h, c.z + sz * hd), 0.03, M.bark, storeG);
+      // a pitched roof of thatch, ridge running across
+      for (const sz of [-1, 1]) { const g = new THREE.BoxGeometry(hw * 2 + 0.4, 0.1, hd + 0.35, 6, 1, 3); g.translate(0, 0, sz * (hd + 0.35) / 2); g.rotateX(sz * 0.55); const o = mesh(g, M.straw, true, storeG); o.position.set(c.x, 1.55, c.z); }
+      for (let row = 0; row < 5; row++) for (let i = 0; i < 6; i++) { const lg = new THREE.CylinderGeometry(0.07, 0.07, 0.7, 7); lg.rotateX(PI / 2); const l = mesh(lg, [M.log, M.split, M.split], false, storeG); l.position.set(c.x - hw + 0.12 + i * 0.19, 0.08 + row * 0.14, c.z); }
+    }
+    // ---------- the rain catcher: the tarp sagging between four posts into a stone-lined pit (31-rain-catcher) ----------
     const rainG = group('rain');
     {
       const c = T.sites.rain, p = (dx, dz) => W(c[0] + dx, c[1] + dz);
       const k = [p(-30, -24), p(30, -24), p(-30, 26), p(30, 26)];
-      for (const q of k) pole(q, q.clone().add(new THREE.Vector3(0, 1.05, 0)), 0.025, M.bark, rainG);
-      cloth(k.map(q => q.clone().add(new THREE.Vector3(0, 1.0, 0))), 0.55, M.tarp, 8, 8, rainG);
-      const bowl = mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.18, 12, 1, true), M.log, true, rainG); bowl.position.copy(W(c[0], c[1] + 2, 0.09)); bowl.material = mat({color: 0x6b4a30, side: THREE.DoubleSide});
+      for (const q of k) pole(q, q.clone().add(new THREE.Vector3(0, 1.1, 0)), 0.03, M.bark, rainG);
+      cloth(k.map(q => q.clone().add(new THREE.Vector3(0, 1.05, 0))), 0.65, M.tarp, 8, 8, rainG);
+      const w = W(c[0], c[1] + 2); stoneRing(rainG, w, 0.42, 0.32, 12); disc(rainG, w, 0.36, M.water, 0.03, 1, 0.75);
     }
-    // ---------- the food hang: a rope over the big oak's limb, a tarp bag up out of reach ----------
+    // ---------- the food hang: a rope over the big oak's limb, a tarp bag up out of reach (48-food-hang) ----------
     const hangG = group('hang');
     {
       const c = T.sites.hang, top = W(c[0], c[1], 3.4), bag = W(c[0], c[1], 2.45);
-      pole(top, bag.clone().add(new THREE.Vector3(0, 0.2, 0)), 0.008, M.rope, hangG);
-      const b = mesh(new THREE.SphereGeometry(0.2, 10, 8), M.bag, true, hangG); b.position.copy(bag); b.scale.set(1, 1.25, 1);
+      pole(top, bag.clone().add(new THREE.Vector3(0, 0.22, 0)), 0.008, M.rope, hangG);
+      const g = new THREE.SphereGeometry(0.2, 10, 8), pp = g.attributes.position; for (let i = 0; i < pp.count; i++) { const y = pp.getY(i); if (y > 0.1) { pp.setX(i, pp.getX(i) * (1 - (y - 0.1) * 4)); pp.setZ(i, pp.getZ(i) * (1 - (y - 0.1) * 4)); } } g.computeVertexNormals();
+      const b = mesh(g, M.tarp, true, hangG); b.position.copy(bag); b.scale.set(1, 1.3, 1);
       pole(top, W(300, 418, 1.0), 0.008, M.rope, hangG);
     }
-    // ---------- the crates ----------
+    // ---------- the crates: pine, with rope handles (37-crates-two, 38-crate) ----------
     const crateG = [];
-    for (let i = 0; i < 2; i++) { const g = new THREE.BoxGeometry(0.62, 0.44, 0.44); const o = mesh(g, M.plank, true, root); const c = T.sites.crate; o.position.copy(W(c[0] + (i ? 30 : -6), c[1] + (i ? -4 : 6), 0.22)); o.rotation.y = i ? 0.25 : -0.08; crateG.push(o); }
+    for (let i = 0; i < 2; i++) {
+      const G = new THREE.Group(); root.add(G); const c = T.sites.crate;
+      mesh(new THREE.BoxGeometry(0.62, 0.44, 0.44), M.plank, true, G);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const o = mesh(new THREE.BoxGeometry(0.04, 0.46, 0.04), M.split, false, G); o.position.set(sx * 0.3, 0, sz * 0.21); }
+      for (const sx of [-1, 1]) { const o = mesh(new THREE.TorusGeometry(0.06, 0.01, 4, 10, PI), M.rope, false, G); o.position.set(sx * 0.315, 0.08, 0); o.rotation.set(0, PI / 2, PI); }
+      G.position.copy(W(c[0] + (i ? 30 : -6), c[1] + (i ? -4 : 6), 0.22)); G.rotation.y = i ? 0.25 : -0.08; mergeMeshes(G, outMat); crateG.push(G);
+    }
+    // ---------- the workbench: split logs lashed on four legs (32-workbench) ----------
+    const benchG = group('bench');
+    {
+      const c = W(T.sites.bench[0], T.sites.bench[1]);
+      for (let i = 0; i < 4; i++) pole(new THREE.Vector3(c.x - 0.7, 0.72, c.z - 0.18 + i * 0.12), new THREE.Vector3(c.x + 0.7, 0.72, c.z - 0.18 + i * 0.12), 0.055, M.log, benchG);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) pole(new THREE.Vector3(c.x + sx * 0.55, 0, c.z + sz * 0.22), new THREE.Vector3(c.x + sx * 0.52, 0.7, c.z + sz * 0.18), 0.035, M.bark, benchG);
+      for (const sx of [-1, 1]) pole(new THREE.Vector3(c.x + sx * 0.54, 0.3, c.z - 0.24), new THREE.Vector3(c.x + sx * 0.54, 0.3, c.z + 0.24), 0.022, M.bark, benchG);
+    }
+    // ---------- the food cache: a pit lined with grass, a lip of sod, logs half over it (33-food-cache) ----------
+    const cacheG = group('cache');
+    {
+      const c = W(T.sites.cache[0], T.sites.cache[1]);
+      const lip = mesh(new THREE.TorusGeometry(0.45, 0.14, 6, 18), M.sod, true, cacheG); lip.rotation.x = -PI / 2; lip.position.set(c.x, 0.04, c.z); lip.scale.set(1, 0.8, 0.45);
+      disc(cacheG, c, 0.4, M.straw, 0.03, 1, 0.8);
+      for (let i = 0; i < 4; i++) pole(new THREE.Vector3(c.x - 0.55, 0.1, c.z - 0.3 + i * 0.13), new THREE.Vector3(c.x + 0.55, 0.1, c.z - 0.3 + i * 0.13), 0.05, M.log, cacheG);
+    }
+    // ---------- the hearth: a stone firebox round the fire, open to the south (34-hearth) ----------
+    const hearthG = group('hearth');
+    {
+      const c = F;
+      // fieldstones of every shade, chinked with clay, stacked round the back and sides, a flat capstone over the back
+      const SM = [M.stone, M.stone2, mat({color: 0x8c7a66}), mat({color: 0xa49a88}), mat({color: 0x6f6a62})];
+      for (let i = 0; i < 9; i++) { const a = PI + i / 8 * PI; for (let h = 0; h < 3; h++) { const g = new THREE.DodecahedronGeometry(0.13, 0); g.scale(rr(1.0, 1.3), 0.62, rr(0.8, 1.0)); const o = mesh(g, SM[(i * 3 + h) % SM.length], true, hearthG); o.position.set(c.x + Math.cos(a) * 0.62, 0.08 + h * 0.13, c.z + Math.sin(a) * 0.5); o.rotation.set(rr(-0.2, 0.2), -a + rr(-0.4, 0.4), rr(-0.15, 0.15)); } }
+      for (let i = 0; i < 5; i++) { const o = mesh(new THREE.SphereGeometry(0.07, 6, 4), M.clay, false, hearthG); const a = PI + (i + 0.5) / 5 * PI; o.position.set(c.x + Math.cos(a) * 0.64, 0.2, c.z + Math.sin(a) * 0.52); o.scale.y = 0.6; }
+      const cg = new THREE.DodecahedronGeometry(0.4, 0); cg.scale(1.35, 0.18, 0.7); const cap = mesh(cg, SM[4], true, hearthG); cap.position.set(c.x, 0.47, c.z - 0.34);
+    }
+    // ---------- the lookout: a pole tower with a platform and a ladder (35-lookout) ----------
+    const lookG = group('look');
+    {
+      const c = W(T.sites.look[0], T.sites.look[1]), r = 0.45, H = 2.6;
+      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) pole(new THREE.Vector3(c.x + sx * r, 0, c.z + sz * r), new THREE.Vector3(c.x + sx * r * 0.85, H + 0.6, c.z + sz * r * 0.85), 0.04, M.bark, lookG);
+      for (let i = 0; i < 7; i++) pole(new THREE.Vector3(c.x - r, H, c.z - r + i * r / 3), new THREE.Vector3(c.x + r, H, c.z - r + i * r / 3), 0.025, M.split, lookG);
+      for (const sz of [-1, 1]) pole(new THREE.Vector3(c.x - r, H + 0.5, c.z + sz * r * 0.85), new THREE.Vector3(c.x + r, H + 0.5, c.z + sz * r * 0.85), 0.02, M.bark, lookG);
+      for (const sx of [-1, 1]) pole(new THREE.Vector3(c.x + sx * r, 1.2, c.z - r), new THREE.Vector3(c.x - sx * r, 2.4, c.z - r), 0.022, M.bark, lookG);
+      for (const sx of [-0.18, 0.18]) pole(new THREE.Vector3(c.x + sx, 0, c.z + r + 0.55), new THREE.Vector3(c.x + sx, H, c.z + r), 0.022, M.bark, lookG);
+      for (let i = 1; i < 8; i++) { const t = i / 8; pole(new THREE.Vector3(c.x - 0.18, H * t, c.z + r + 0.55 * (1 - t)), new THREE.Vector3(c.x + 0.18, H * t, c.z + r + 0.55 * (1 - t)), 0.014, M.split, lookG); }
+    }
+    // ---------- the clay pot and the burned-out bowl, by the fire (42-clay-pot, 43-wooden-bowl) ----------
+    const potG = group('pot'), bowlG = group('bowl');
+    {
+      const c = W(T.sites.pot[0], T.sites.pot[1]);
+      const prof = [[0, 0.06], [0.04, 0.13], [0.14, 0.17], [0.24, 0.15], [0.29, 0.1], [0.32, 0.11], [0.34, 0.12]].map(q => new THREE.Vector2(q[1], q[0]));
+      const pot = mesh(new THREE.LatheGeometry(prof, 14), mat({color: 0xb5643a, side: THREE.DoubleSide}), true, potG); pot.position.set(c.x + 0.15, 0, c.z);
+      const bowl = mesh(new THREE.LatheGeometry([[0.01, 0], [0.13, 0.01], [0.17, 0.05], [0.18, 0.11], [0.15, 0.11], [0.14, 0.06], [0.01, 0.04]].map(q => new THREE.Vector2(q[0], q[1])), 12), mat({color: 0x8a5a34, side: THREE.DoubleSide}), true, bowlG); bowl.position.set(c.x - 0.25, 0, c.z + 0.1);
+    }
 
     // ---------- join what never comes apart, so the phone draws each in a few calls ----------
-    for (const G of [...shelterG, bedG, blanketG, rainG, hangG, coalG]) mergeMeshes(G, outMat);
+    for (const G of [...shelterG, bedG, blanketG, rainG, hangG, coalG, storeG, benchG, cacheG, hearthG, lookG, potG, bowlG]) mergeMeshes(G, outMat);
     rackG.remove(meatG); mergeMeshes(rackG, outMat); mergeMeshes(meatG, outMat); rackG.add(meatG);
     woodRows.forEach(G => mergeMeshes(G, outMat));
 
     // ---------- the camp's state ----------
-    const st = {fire: 'out', shelter: 0, bed: false, blanket: false, rack: false, meat: false, wood: 0, rain: false, hang: false, crates: 2};
+    const st = {fire: 'out', shelter: 0, bed: false, blanket: false, rack: false, meat: false, wood: 0, store: false, rain: false, hang: false, crates: 2, bench: false, cache: false, hearth: false, look: false, pot: false, bowl: false};
     function set(o) {
       Object.assign(st, o || {});
       layLogs(st.fire);
@@ -233,7 +309,8 @@
       shelterG[0].visible = st.shelter === 1; shelterG[1].visible = st.shelter >= 2; shelterG[2].visible = st.shelter >= 3;
       bedG.visible = !!st.bed; blanketG.visible = !!st.blanket;
       rackG.visible = !!st.rack; meatG.visible = !!st.meat;
-      woodG.visible = st.wood > 0; woodRows.forEach((R, i) => { R.visible = st.wood > [0, 0.35, 0.6, 0.85][i]; });
+      woodG.visible = st.wood > 0 && !st.store; woodRows.forEach((R, i) => { R.visible = st.wood > [0, 0.35, 0.6, 0.85][i]; }); storeG.visible = !!st.store;
+      benchG.visible = !!st.bench; cacheG.visible = !!st.cache; hearthG.visible = !!st.hearth; lookG.visible = !!st.look; potG.visible = !!st.pot; bowlG.visible = !!st.bowl;
       rainG.visible = !!st.rain; hangG.visible = !!st.hang;
       crateG.forEach((o, i) => { o.visible = i < st.crates; });
     }
@@ -263,7 +340,7 @@
     }
     // a shower of sparks, when wood goes on
     function stoke() { for (let i = 0; i < 26; i++) S.emit({add: true, x: F.x + rr(-0.1, 0.1), y: 0.35, z: F.z + rr(-0.1, 0.1), vx: rr(-1.2, 1.2), vy: rr(2, 4.5), vz: rr(-1, 1), life: rr(0.8, 1.6), s: 0.04, c: [1, 0.7, 0.25], a: 1, k: 5, kind: 0}); }
-    return {root, set, update, stoke, state: st, fire: F};
+    return {root, set, update, stoke, state: st, fire: F, mat: M, pole, cloth, mesh, outMat, stoneRing, disc};
   }
   root.makeCamp = makeCamp;
 })(typeof window !== 'undefined' ? window : globalThis);

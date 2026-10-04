@@ -36,7 +36,7 @@
     // ================================================================================================================
     // the tallgrass, alive
     // ================================================================================================================
-    const GU = Object.assign({uPaint: {value: S.paintTex}, uSize: {value: new THREE.Vector2(PW, PH)}, uBlades: {value: null}, uPush: {value: [new THREE.Vector4(0, 0, 0, 0), new THREE.Vector4(0, 0, 0, 0)]}, uK: {value: K}, uSn: {value: SN}},
+    const GU = Object.assign({uPaint: S.uniforms.BU.uPaint, uSize: {value: new THREE.Vector2(PW, PH)}, uBlades: {value: null}, uPush: {value: [new THREE.Vector4(0, 0, 0, 0), new THREE.Vector4(0, 0, 0, 0)]}, uK: {value: K}, uSn: {value: SN}},
       S.uniforms.AIRU, S.uniforms.LOOKU, S.uniforms.GLOWU);
     {
       // the blades: an atlas of four tufts, white, their shape in the alpha
@@ -57,7 +57,7 @@
     for (let py = 0; py < PH; py += 9) for (let px = 0; px < PW; px += 13) {
       const x = px + rr(0, 13), y = py + rr(0, 9);
       if (!tall.some(P => Trace.inPoly(P, x, y))) continue;
-      if (Trace.toLine && T.trails.some(tr => Trace.toLine(tr.slice(1), x, y) < tr[0] / 2 + 4)) continue;
+      if (Trace.trailsOf(T).some(tr => Trace.toLine(tr.pts, x, y) < tr.w / 2 + 4)) continue;
       if (S.standsAt(x, y)) continue;
       tufts.push([x, y]);
     }
@@ -216,7 +216,7 @@
         if (!wantFlies && rnd() < dt * 0.2) { root.remove(f); flies.splice(i, 1); }
       }
       // the cottontail: out at dawn and dusk, and on quiet days
-      const wantBunny = (L.day < 0.7 || rnd() < 0.5) && wx.rain < 0.6 ? 1 : 0;
+      const wantBunny = !opts.noRabbit && (L.day < 0.7 || rnd() < 0.5) && wx.rain < 0.6 ? 1 : 0;
       if (bunnies.length < wantBunny && rnd() < dt * 0.05) newRabbit();
       for (let i = bunnies.length - 1; i >= 0; i--) {
         const r = bunnies[i], u = r.userData; u.t -= dt;
@@ -228,13 +228,15 @@
           u.hop += dt * (u.st === 'run' ? 9 : 6); r.position.y = Math.abs(Math.sin(u.hop * PI)) * (u.st === 'run' ? 0.16 : 0.08); u.head.rotation.x = 0;
           if (u.st === 'hop' && dist < 0.05) { u.st = 'feed'; u.t = rr(1.5, 5); r.position.y = 0; }
           // gone into the brush
-          if (u.st === 'run' && (u.t < 0 || !open(r.position.x, r.position.z))) { root.remove(r); r.visible = false; bunnies.splice(i, 1); }
+          if (u.st === 'run' && (u.t < 0 || !open(r.position.x, r.position.z))) { root.remove(r); r.visible = false; S.dropShadow(u.sh); bunnies.splice(i, 1); }
         }
       }
     }
     const AIRU = () => S.uniforms.AIRU.uWind.value;
     function scare(x, z) { for (const b of ground) if (b.userData.st !== 'fly') flyOff(b); for (const r of bunnies) { r.userData.st = 'run'; r.userData.to.set(r.position.x + (r.position.x - x) * 4, 0, r.position.z + (r.position.z - z) * 4); r.userData.t = 3; } }
-    return {root, update, scare, stats: () => ({tufts: tufts.length})};
+    // leaving the place: everything of it goes
+    function dispose() { S.scene.remove(root); root.traverse(o => { if (o.geometry) o.geometry.dispose(); }); for (const b of bunnies) if (b.userData.sh) S.dropShadow(b.userData.sh); }
+    return {root, update, scare, dispose, stats: () => ({tufts: tufts.length})};
   }
   root.makeLife = makeLife;
 })(typeof window !== 'undefined' ? window : globalThis);
