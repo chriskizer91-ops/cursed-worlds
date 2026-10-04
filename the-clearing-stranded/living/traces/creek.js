@@ -65,5 +65,7 @@ window.TRACES.creek = {
   // the game's spots: two big pecans, the grapevine tree, the fallen limb, the bois d'arc grove, the white sycamore,
   // and the path on downstream
   spots: {pecans: [[352, 336], [642, 482]], grapes: [[238, 772]], hardwood: [[790, 786]], osage: [[1286, 490], [1382, 534]],
-    stand: [[812, 238]], down: [[1476, 996]]}
+    stand: [[812, 238]], down: [[1476, 996]],
+    // the pool below the riffle, fished from the gravel bar
+    fishhole: [[1040, 744]]}
 };

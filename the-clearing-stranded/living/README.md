@@ -20,8 +20,11 @@ here is the same page as one file.
 | `survivor.js` | `makeSurvivor(opts)`: the survivor as the model sheets draw him (`docs/model-sheets/20` to `25j`): blaze-orange cap, denim-blue work shirt with the sleeves rolled, charcoal cargo trousers, tan work boots, a belt with a brass buckle and a knife on the hip, the tan canvas pack with the grey wool bedroll; the partner in olive with a short beard and no pack (`26`). Toon-shaded with an outline. Walks, runs, and holds or plays moves: bow drill, blowing on a coal, working the ground, crouching to gather, snapping a branch, drinking, aiming the rifle, drawing the bow, a spear thrust, warming hands, sitting, asleep in the bedroll, waving, looking out, wiping the brow, stretching, flinching; carries an armload of wood; shivers when cold. |
 | `camp.js` | `makeCamp(stage)`: the fire (out, coals, burning, roaring, with its light, smoke and embers), the three shelters (the lean-to with half the teal tarp, the tarp across the boulders, the walled hut with a hide door), and everything the game lets you build, after the sheets (`docs/model-sheets/30` to `49`): grass bed on its log frame, spotted hide, drying rack over its smoky pit, woodpile or thatched wood store, rain catcher over a stone-lined pit, food hang, crates with rope handles, workbench, food cache, stone hearth, lookout, clay pot and bowl. |
 | `life.js` | `makeLife(stage)`: tallgrass that sways and parts round whoever walks through it (colored from the painting itself), birds overhead with their shadows, cardinals and sparrows that fly off when you come close, butterflies, a cottontail that bolts for the brush. |
-| `beasts.js` | `makeBeast(kind)`: the animals the game tracks (deer, turkey, cottontail, fox squirrel, bison), walking and grazing. |
+| `beasts.js` | `makeBeast(kind)`: the animals the game tracks (deer, turkey, cottontail, fox squirrel, bison, and the quail, doves and wood ducks that fly), walking and grazing. |
 | `things.js` | `makeThing(kind)`: the snare, the fish trap, the seep well and the water bag. |
+| `hunt.js` | `Hunt.play(o, done)`: the hunting game, on its own stage over the place's painting. The animal comes out where cover meets the open; press and hold for the sights (they sway, settle, and drift), let go to shoot; three shots. A shot hits what's under the sights as the animal is drawn. Quail flush, doves and ducks fly across, bison come as a herd. `Hunt.practice` is the practice range. |
+| `fishing.js` | `Fishing.play(o, done)`: the fishing game, a plain 2D canvas: the place's painting above the water and the water cut away below. Fifteen fish drawn in code (`Fishing.drawFish`, also used by the Journal's catch log), each with its own depth, nibbling, fight and quirks. `Fishing.practice` is the practice pond. |
+| `sound.js` | `GameSound`: the rifle, the reel, splashes, the line snapping, quail flushing. Made in code with Web Audio. |
 | `walker.js` | `makeWalker(stage, figure)`: tap-to-walk over the walk grid, with the path pulled straight. |
 | `merge.js` | Joins the parts of things that never come apart, so a phone draws the scene in about 120 calls. |
 | `camp-alive.html`, `.css`, `.js` | The demo page's source. |
@@ -45,4 +48,5 @@ node tools/trace-check.mjs camp             # draws the camp's trace over its pa
 ## Still to do
 
 - The animals you only meet in encounters (hogs, snakes, coyotes, the bear) in code, for those moments.
-- Sound, as envoi makes it in code (`living-battlefields/sfx.js`): fire, wind, rain, birds and insects.
+- Sound for the walking world, as envoi makes it in code (`living-battlefields/sfx.js`): fire, wind, rain, birds and
+  insects. The hunting and fishing games have theirs (`sound.js`).

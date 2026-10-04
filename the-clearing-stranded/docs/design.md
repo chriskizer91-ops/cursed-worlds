@@ -260,11 +260,13 @@ In the two-person game the partner works on their own. They decide what camp nee
   so long at the job, so long back. Wherever you go, the game works out where they'd be right then. If you set
   off after them for the river, you find them on the trail or filling water at the river, not back at camp.
 - For "wait until they've left, then chase them" to work, the clock has to keep moving slowly while you walk
-  about, not only when you do a job. *Proposal:* one real second is one game minute while you walk, so a day of
+  about, not only when you do a job. **Decided:** one real second is one game minute while you walk, so a day of
   walking about is 24 real minutes; jobs and trips still jump the clock as they do now.
 - Two jobs now happen at once, so the engine has to let the partner's work run beside yours.
 
 ### Hunting is a target game; fishing is a fishing game
+
+**Built October 4, 2026** (`living/hunt.js`, `living/fishing.js`; how they play is below the list).
 
 - **Hunting:** a short target game. Usually a rabbit or a bird (turkey, quail, dove, duck); now and then a deer;
   very rarely the big ones. *Note:* there are no moose this far south; the rare big ones would be a bison or an elk.
@@ -275,14 +277,37 @@ In the two-person game the partner works on their own. They decide what camp nee
   Every catch goes in a catch log.
 - **Practice:** the menu gets a practice range and a practice pond, to play the two games on their own.
 
+**The hunting game.** You look out over the place you're hunting, its own painting alive in 3D, from where you
+stand. The animal the game found comes out of the cover: a rabbit hops and sits, a squirrel darts, a turkey pecks
+along, a deer steps out and stops to look, a covey of quail feeds in the grass until it hears you and bursts up,
+doves and ducks come across. Press and hold to bring up the sights; they sway with your breathing, settle after
+about a second (gold when steady), and drift again if you hold too long. Hunting skill steadies them. Let go to
+shoot. A miss sends a ground animal running for cover; birds flare and climb. A flock can give you more than one.
+- Small game is drawn bigger than life so a kid can find it on a phone.
+- Balance: a careful player hits about as often as the game's own dice did before, and a flock can give two or three
+  birds to a good shot. Tapping fast doesn't work: the sights need holding to settle.
+
+**The fishing game.** The water cut away like a fish tank, under the place's painting: weeds, stones, a sunken
+branch, light coming down, and fish drawn in code, fifteen kinds. Hold to swing the rod, let go to cast near, middle
+or far. The bait hangs high (sunfish, bass, crappie, gar) or lies on the bottom (catfish, drum, bullheads). Little
+bobs of the float are nibbles: strike then and the fish leaves (a bluegill steals the bait). When it goes under, tap.
+Then hold to reel and let go when the line goes red, or it snaps and takes a hook; let it go slack too long and it
+throws the hook. Crappie tear free if you reel too hard, gar are hard to hook, bass jump, and the alligator gar is
+a long, patient fight. Muddy river water shows shadows; the clear creek shows colors. An hour is a minute of play.
+- Every catch gets a card: the fish, its weight and length, and something true about it. New kinds and biggest
+  ones go in the Journal's catch log, where the fish you haven't caught show as shadows.
+- Balance, from robot anglers: a careful player lands about 2 fish an hour, a kid about 1.6, and someone tapping
+  as fast as they can lands none. The game's own dice (for the robot players and anyone who skips) give about 1.6.
+
 ### Doing one thing a lot builds something you can see
 
 - Huts aren't one each. With enough wood you build another, and another, on the open ground round the boulders.
 - Any job you keep doing turns into something lasting. *Proposal:* the camp has building plots, and each skill
   has things to build. Wood gives woodpiles, more huts, a palisade and a lodge. Fishing gives fish weirs and a
   smokehouse. Hunting gives a hide-tanning frame and a hide tent.
-- **Skill points:** every job earns points in its skill: "+1 Exploring", "+1 Hunting". Points become levels, and
-  levels unlock real tricks.
+- **Skill points** (built October 4, 2026): every job earns points in its skill: "+1 Exploring", "+1 Hunting".
+  Points become levels (ten, from Green to Legend), and each level makes those jobs go a little better. The result
+  of each job shows the points, and the Journal has a Skills page.
   - Skills: exploring, hunting, fishing, foraging, building, fire, tracking, crafting.
   - Doing the same job again in one day earns less, so mashing one button still doesn't pay.
 
@@ -309,8 +334,8 @@ In the two-person game the partner works on their own. They decide what camp nee
 | A small first-aid kit | Cuts, a sprain | A few uses |
 | Three days of food | Time to learn to find food | Three days |
 
-### Still to ask
+### Answered (October 4, 2026)
 
-- Fish and animal pictures for the catch log: Dagr's rule is that only backgrounds are pictures, so by that rule
-  they would be made in code like everything else.
-- The partner: the model sheet shows a bearded man. Keep him, or should the helper be a woman?
+- Fish and animal pictures: made in code, like everything but the backgrounds.
+- The partner: keep him, the bearded man from the model sheet.
+- The clock while walking: one real second is one game minute.

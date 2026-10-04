@@ -10,6 +10,20 @@ light from dawn to night, the weather and the seasons. The camp and the Cedar St
 paintings; the other places are turned toward the season in code. If a phone can't do 3D, the game falls back to its
 own pixel drawing on top of the painting. The camp on its own, to play with: https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT
 
+**Hunting and fishing (October 4, 2026)** are games of their own now:
+
+- **Hunting.** When you find an animal and pick Shoot, you look out over that place and the animal comes out of the
+  cover. Press and hold to bring up the sights, wait for them to steady (they turn gold), and let go to shoot. Three
+  shots. Mostly rabbits, squirrels and birds (quail burst up out of the grass, doves and ducks fly across), now and
+  then a turkey or a deer, and once in a long while bison. The rifle never runs out.
+- **Fishing.** At the pond, the river or the creek pool, pick Fish with hook and line. You see under the water. Hold
+  to swing the rod and let go to cast, choose whether the bait hangs high or lies on the bottom, wait out the
+  nibbles, tap when the float goes under, then hold to reel and let go when the line goes red. Fifteen kinds of real
+  North Texas fish, all drawn in code, up to the alligator gar.
+- **Skills.** Every job earns skill points ("+1 Hunting"), and levels make those jobs go better. The Journal has a
+  Skills page and a Catches page with every fish and animal you've brought home (the rest show as shadows).
+- **Practice.** The Menu has Practice shooting and Practice fishing. Nothing is kept there and no time passes.
+
 ## What changed from the first version
 
 - **You walk now.** Each place is its own map. Tap the ground to walk there. Tap a thing (the river's edge, a fallen log, the fire ring) to walk up to it and see what you can do with it. You can't win any more by pressing one button over and over.
@@ -54,6 +68,7 @@ node tools/autoplay.mjs --games 24 --days 200 --quests   # robot players; must e
 node tools/autoplay.mjs --trial                          # how each season goes on each difficulty
 node tools/build-game.mjs                                # builds Stranded.html
 node tools/phone-check.mjs                               # plays the first quests in Stranded.html on a phone screen; "all good"
+node tools/minigames-check.mjs                           # plays practice, an hour of fishing and a hunt in Stranded.html; "all good"
 node tools/places-check.mjs                              # every painted place: its spots and ways out can be reached; "all good"
 node tools/living-tour.mjs                               # screenshots of every place, the seasons and night; "all good"
 node tools/trace-check.mjs camp                          # draws one place's trace over its painting, to check by eye

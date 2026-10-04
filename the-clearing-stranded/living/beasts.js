@@ -80,6 +80,24 @@
       st.tail = grp(body, 0, 0.1, -0.85); part(ball(0.03, 0.25, 0.03), hide, st.tail).position.set(0, -0.2, 0);
       for (const [x, z] of [[0.24, 0.5], [-0.24, 0.5], [0.22, -0.55], [-0.22, -0.55]]) { const g = grp(body, x, -0.3, z); part(legG(0.68, 0.12, 0.07), z > 0 ? wool : hide, g); legs.push(g); }
       st.size = 1; st.gait = 4;
+    } else if (kind === 'quail' || kind === 'dove' || kind === 'duck') {
+      // the game birds: a bobwhite (brown, with a white face stripe), a mourning dove (grey-tan, a long pointed tail)
+      // and a wood duck drake (green crest, white bridle, chestnut breast). They walk, or fly with beating wings.
+      const B = {quail: {s: 0.11, body: 0x8a5a36, back: 0x6a4a30, belly: 0xd9c49a, head: 0x5a3a24, bill: 0x2a2018, tail: 0.06},
+        dove: {s: 0.12, body: 0xb0a08a, back: 0x9a8c78, belly: 0xd8c8b0, head: 0xa8988a, bill: 0x2a2018, tail: 0.16},
+        duck: {s: 0.2, body: 0x6a4a3a, back: 0x3a3a34, belly: 0xd8ccb0, head: 0x1f5a40, bill: 0xd04a2a, tail: 0.08}}[kind];
+      const k = B.s;
+      body.position.y = k * 0.9;
+      part(ball(k * 0.55, k * 0.5, k), B.body); part(ball(k * 0.45, k * 0.3, k * 0.8), B.belly).position.set(0, -k * 0.18, 0.02 * k);
+      st.head = grp(body, 0, k * 0.45, k * 0.85); part(ball(k * 0.36, k * 0.36, k * 0.4), B.head, st.head);
+      const bill = part(new THREE.ConeGeometry(k * 0.1, k * 0.3, 5), B.bill, st.head, false); bill.rotation.x = Math.PI / 2; bill.position.set(0, -k * 0.05, k * 0.4);
+      if (kind === 'quail') for (const s2 of [1, -1]) part(ball(k * 0.06, k * 0.06, k * 0.3), 0xf2eee0, st.head, false).position.set(0.3 * k * s2, k * 0.08, k * 0.05);
+      if (kind === 'duck') { part(ball(k * 0.2, k * 0.12, k * 0.45), 0x2f6a4a, st.head, false).position.set(0, k * 0.25, -k * 0.2); part(ball(k * 0.05, k * 0.25, k * 0.05), 0xf2f2ea, st.head, false).position.set(k * 0.3, 0, 0); part(ball(k * 0.4, k * 0.35, k * 0.35), 0x7a3a2a, body, false).position.set(0, k * 0.1, k * 0.65); }
+      st.tail = grp(body, 0, k * 0.05, -k * 0.9); part(new THREE.BoxGeometry(k * 0.4, k * 0.06, B.tail * 2), B.back, st.tail).position.z = -B.tail;
+      st.wings = [1, -1].map(side => { const w = grp(body, k * 0.4 * side, k * 0.25, 0); const sh = new THREE.Shape(); sh.moveTo(0, -k * 0.5); sh.lineTo(k * 1.6 * side, -k * 0.2); sh.lineTo(k * 1.3 * side, k * 0.5); sh.lineTo(0, k * 0.6);
+        const g = new THREE.ShapeGeometry(sh); g.rotateX(Math.PI / 2); const o = new THREE.Mesh(g, new THREE.MeshToonMaterial({color: B.back, gradientMap: grad, side: THREE.DoubleSide})); w.add(o); return w; });
+      for (const x of [0.15, -0.15]) { const g = grp(body, x * k, -k * 0.35, 0); part(legG(k * 0.5, k * 0.05, k * 0.03), 0xb07a50, g, false); legs.push(g); }
+      st.size = 1; st.gait = 14; st.bird = true;
     } else {
       // a cottontail
       const fur = 0x8a7560;
@@ -92,7 +110,18 @@
       st.size = 1; st.gait = 10;
     }
 
-    function animate(dt, t, speed, graze) {
+    function animate(dt, t, speed, graze, fly) {
+      if (st.bird) {
+        // a bird flying: wings beating, legs tucked, body level; on the ground it folds its wings
+        const f = fly ? 1 : 0;
+        st.flap = (st.flap || 0) + dt * (kind === 'dove' ? 26 : kind === 'quail' ? 34 : 18) * f;
+        const a = f ? Math.sin(st.flap) * 1.1 : 0;
+        st.wings[0].rotation.set(0, f ? 0 : 0.2, f ? a : -1.3); st.wings[1].rotation.set(0, f ? 0 : -0.2, f ? -a : 1.3);
+        legs.forEach(g => { g.visible = !f; });
+        if (!f) { st.phase += dt * 10 * Math.min(1.5, speed); body.position.y = body.userData.y0 + Math.abs(Math.sin(st.phase)) * 0.01 * (speed > 0.05 ? 1 : 0); if (st.head) st.head.rotation.x = graze ? 0.5 + 0.3 * Math.max(0, Math.sin(t * 9)) : 0; }
+        else { body.position.y = body.userData.y0; if (st.head) st.head.rotation.x = 0; }
+        return;
+      }
       speed = speed || 0;
       st.walkW += ((speed > 0.05 ? 1 : 0) - st.walkW) * Math.min(1, dt * 8);
       st.grazeW += ((graze && speed < 0.05 ? 1 : 0) - st.grazeW) * Math.min(1, dt * 3);

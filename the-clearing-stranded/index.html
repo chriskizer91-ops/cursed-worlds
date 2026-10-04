@@ -447,6 +447,32 @@ h1,h2,h3,p{margin:0}
 .deltas b{font-variant-numeric:tabular-nums}
 .deltas .dn{color:var(--bad)} .deltas .up{color:var(--good)}
 .news{margin-top:14px;font-size:15px;border-top:1px solid var(--rule);padding-top:10px}
+.skillgot{display:flex;flex-direction:column;gap:2px;margin-top:12px;font-size:15px}
+.skillgot p{padding:2px 0}
+.skillgot p.up{color:var(--good);font-weight:700}
+.skillgot p.tired{color:var(--ink-3);font-size:14px}
+.skl-list{display:flex;flex-direction:column;gap:2px}
+.skl{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--rule)}
+.skl .ic{font-size:24px;width:32px;text-align:center;flex:none}
+.skl .sk-b{flex:1;min-width:0}
+.skl .sk-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:16px}
+.skl .sk-h span{color:var(--ink-3);font-size:14.5px}
+.skl .sk-d{color:var(--ink-2);font-size:14px;margin-top:1px}
+.skl .bar{height:7px;border-radius:999px;background:var(--rule-2);margin-top:5px;overflow:hidden}
+.skl .bar i{display:block;height:100%;background:var(--en);border-radius:999px}
+.skl .sk-s{color:var(--ink-3);font-size:13px;margin-top:3px;font-variant-numeric:tabular-nums}
+.catches h3{display:flex;justify-content:space-between;margin:14px 0 6px;font-size:17px}
+.catches h3 span{color:var(--ink-3);font-weight:600;font-size:15px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ccard{border:1px solid var(--rule);border-radius:6px;background:var(--sheet);padding:7px 8px 9px;min-width:0}
+.ccard canvas{display:block;width:100%;height:auto;border-radius:4px;background:var(--water-tint);margin-bottom:5px}
+.ccard .gic{display:block;font-size:34px;text-align:center;padding:6px 0;border-radius:4px;background:var(--paper-2);margin-bottom:5px}
+.ccard b{display:block;font-size:15px;line-height:1.2}
+.ccard span{display:block;font-size:13px;color:var(--ink-3);margin-top:2px}
+.ccard p{font-family:var(--font-text);font-size:14px;line-height:1.35;color:var(--ink-2);margin-top:4px}
+.ccard.unk b{color:var(--ink-3)}
+.ccard.unk .gic{filter:grayscale(1) brightness(.35);opacity:.6}
+.ccard.legend{border-color:var(--sun);box-shadow:inset 0 0 0 1px var(--sun)}
 .news p{padding:2px 0}
 .news b{font-weight:700}
 .encounter{margin-top:16px;border-top:1.5px solid var(--blaze);padding-top:12px}
@@ -648,9 +674,13 @@ D.FOODS = {
   crawfish:   {name:'Crawfish tails', kcal:77, spoil:0.6, icon:'🦞', cook:true, lean:true, meat:true, g:'crawfish'},
   mussel:     {name:'River mussels', kcal:86, spoil:0.6, icon:'🦪', cook:true, lean:true, meat:true, g:'mussel'},
   sunfish:    {name:'Sunfish', kcal:89, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'sunfish'},
-  bass:       {name:'Largemouth bass', kcal:114, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'bass'},
-  catfish:    {name:'Channel catfish', kcal:95, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'catfish'},
-  gar:        {name:'Spotted gar', kcal:100, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'gar'}
+  bass:       {name:'Bass', kcal:114, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'bass'},
+  catfish:    {name:'Catfish', kcal:95, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'catfish'},
+  gar:        {name:'Gar', kcal:100, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'gar'},
+  fish:       {name:'Fish', kcal:90, spoil:0.75, icon:'🐟', cook:true, lean:true, meat:true, g:'drum'},
+  quail:      {name:'Quail', kcal:134, spoil:1, icon:'🐦', cook:true, lean:true, meat:true, g:'quail'},
+  dove:       {name:'Dove', kcal:140, spoil:1, icon:'🕊️', cook:true, lean:true, meat:true, g:'dove'},
+  duck:       {name:'Duck', kcal:200, spoil:1, icon:'🦆', cook:true, meat:true, g:'duck'}
 };
 D.BAR_KCAL = 150; // Dagr's ruling: 15 bars a day is maintenance
 
@@ -667,7 +697,7 @@ D.MATS = {
 };
 D.GEAR = {
   crates:{name:'Wooden crates', icon:'📦'}, tarp:{name:'Tarp (square meters)', icon:'🟦'},
-  knives:{name:'Boning knives', icon:'🔪'}, rounds:{name:'Rifle rounds', icon:'🎯'},
+  knives:{name:'Boning knives', icon:'🔪'}, rounds:{name:'Rifle rounds (never run out)', icon:'🎯'}, hooks:{name:'Fish hooks', icon:'🪝'},
   laces:{name:'Bootlaces', icon:'👟'}, bars:{name:'Ration bars', icon:'🍫'},
   snares:{name:'Snares', icon:'➰'}
 };
@@ -733,10 +763,12 @@ D.SPECIES = {
 };
 
 // Rifle and bow hunting: [animal, chance of an encounter per 2-hour hunt at a normal hour]
+// Mostly rabbits and birds; now and then a turkey; a deer only once in a while; a bison only when the herd is through.
+// Tried in order, so the first in each list is the most common.
 D.HUNT = {
-  oak:     [['deer',0.3],['turkey',0.25],['squirrel',0.55]],
-  prairie: [['bison',0.55],['deer',0.14],['turkey',0.12],['rabbit',0.5]],
-  creek:   [['deer',0.35],['turkey',0.28],['raccoon',0.12],['squirrel',0.45]]
+  oak:     [['squirrel',0.45],['rabbit',0.32],['turkey',0.28],['deer',0.3]],
+  prairie: [['quail',0.45],['rabbit',0.45],['dove',0.4],['turkey',0.14],['deer',0.15],['bison',0.5]],
+  creek:   [['duck',0.32],['squirrel',0.4],['turkey',0.25],['raccoon',0.1],['deer',0.3]]
 };
 D.GAME = {
   squirrel:{name:'fox squirrel', food:'squirrel', kg:[0.3,0.4], clean:0.5, small:true, eco:'squirrel'},
@@ -745,8 +777,41 @@ D.GAME = {
   raccoon:{name:'raccoon', food:'raccoon', kg:[2,3], clean:1, hides:1},
   deer:{name:'white-tailed deer', food:'venison', kg:[16,24], clean:2, hides:1, eco:'deer'},
   bison:{name:'bison', food:'bison', kg:[40,40], clean:4, hides:2},
-  pigeon:{name:'passenger pigeons', food:'pigeon', kg:[0.45,1.2], clean:1, small:true}
+  pigeon:{name:'passenger pigeons', food:'pigeon', kg:[0.45,1.2], clean:1, small:true},
+  // birds that come in flocks: a hunt can bring down more than one with its three shots
+  quail:{name:'bobwhite quail', food:'quail', kg:[0.15,0.2], clean:0.3, small:true, flock:[4,9], fly:true},
+  dove:{name:'mourning doves', food:'dove', kg:[0.1,0.13], clean:0.2, small:true, flock:[2,4], fly:true},
+  duck:{name:'wood ducks', food:'duck', kg:[0.45,0.65], clean:0.4, small:true, flock:[2,4], fly:true}
 };
+
+// Fish on a hook and line. where: how common at each water (missing: not there). kg: whole-fish weight. fight: how
+// hard it pulls (0 to 1). food: what it is in the pantry. warm: bites best in warm months. night: feeds at dusk and
+// after dark. run: the months it crowds up the river to spawn. legend: the fish of a lifetime.
+D.FISH = {
+  bluegill:    {name:'Bluegill', sci:'Lepomis macrochirus', food:'sunfish', where:{pond:1, creek:0.35, river:0.15}, kg:[0.06,0.35], fight:0.22, warm:true, fact:'The fish almost everyone catches first. It nibbles the bait off the hook if you strike too soon.'},
+  longear:     {name:'Longear sunfish', sci:'Lepomis megalotis', food:'sunfish', where:{creek:1, river:0.15}, kg:[0.04,0.18], fight:0.2, warm:true, fact:'Maybe the most colorful fish in North America: turquoise squiggles on bright orange, in clear rocky creeks.'},
+  greensunfish:{name:'Green sunfish', sci:'Lepomis cyanellus', food:'sunfish', where:{pond:0.45, creek:0.55}, kg:[0.05,0.25], fight:0.25, warm:true, fact:'A big mouth for a sunfish, and tough enough to live in the smallest, warmest pools.'},
+  crappie:     {name:'White crappie', sci:'Pomoxis annularis', food:'sunfish', where:{pond:0.35, river:0.25}, kg:[0.15,0.8], fight:0.3, fact:'Schools around sunken branches. Its mouth is paper-thin, so reel gently.'},
+  bass:        {name:'Largemouth bass', sci:'Micropterus salmoides', food:'bass', where:{pond:0.6, river:0.2, creek:0.15}, kg:[0.3,3], fight:0.62, warm:true, fact:'An ambush hunter of weedy shallows. When it\'s hooked, it jumps.'},
+  spottedbass: {name:'Spotted bass', sci:'Micropterus punctulatus', food:'bass', where:{creek:0.45, river:0.25}, kg:[0.2,1.3], fight:0.55, warm:true, fact:'The bass of clear, rocky creeks. Rows of little spots run down its belly.'},
+  whitebass:   {name:'White bass', sci:'Morone chrysops', food:'bass', where:{river:0.18}, run:[1,2,3], kg:[0.3,1.1], fight:0.5, fact:'In late winter they crowd up the rivers by the thousands to spawn. Texans call it the sand bass run.'},
+  catfish:     {name:'Channel catfish', sci:'Ictalurus punctatus', food:'catfish', where:{river:1, pond:0.35, creek:0.3}, kg:[0.4,5], fight:0.6, night:true, fact:'Finds food in muddy water by smell and taste: its whole body is covered in taste buds.'},
+  bullhead:    {name:'Yellow bullhead', sci:'Ameiurus natalis', food:'catfish', where:{pond:0.35, creek:0.3}, kg:[0.2,0.8], fight:0.35, night:true, fact:'A little catfish with white chin whiskers. Careful: the spines in its fins sting.'},
+  bluecat:     {name:'Blue catfish', sci:'Ictalurus furcatus', food:'catfish', where:{river:0.08}, kg:[3,25], fight:0.88, night:true, fact:'The biggest catfish in North America. Some grow past 100 pounds.'},
+  flathead:    {name:'Flathead catfish', sci:'Pylodictis olivaris', food:'catfish', where:{river:0.06}, kg:[3,30], fight:0.9, night:true, fact:'A loner that waits in deep holes and eats only live fish.'},
+  drum:        {name:'Freshwater drum', sci:'Aplodinotus grunniens', food:'fish', where:{river:0.4}, kg:[0.5,3], fight:0.55, fact:'It grunts by drumming muscles against its air bladder. The stones in its ears are called lucky stones.'},
+  spottedgar:  {name:'Spotted gar', sci:'Lepisosteus oculatus', food:'gar', where:{pond:0.25, creek:0.1}, kg:[0.5,2], fight:0.6, warm:true, fact:'Gulps air at the surface, so it does fine in warm, still ponds. Its eggs are poisonous: never eat gar roe.'},
+  longnosegar: {name:'Longnose gar', sci:'Lepisosteus osseus', food:'gar', where:{river:0.3}, kg:[0.8,4], fight:0.65, warm:true, fact:'A snout like a needle, full of teeth. Hard to hook: the bait slips off its bony jaws.'},
+  alligatorgar:{name:'Alligator gar', sci:'Atractosteus spatula', food:'gar', where:{river:0.012}, kg:[25,90], fight:1, warm:true, legend:true, fact:'The giant of the river. It can pass 8 feet and 300 pounds, and gars have been around since the dinosaurs.'}
+};
+
+// Skills: every job earns points in its skill, and points become levels. Levels make those jobs go a little better.
+D.SKILLS = {
+  exploring:{name:'Exploring', icon:'🧭'}, hunting:{name:'Hunting', icon:'🎯'}, tracking:{name:'Tracking', icon:'🐾'}, fishing:{name:'Fishing', icon:'🎣'},
+  foraging:{name:'Foraging', icon:'🧺'}, fire:{name:'Fire', icon:'🔥'}, building:{name:'Building', icon:'🔨'}, crafting:{name:'Crafting', icon:'🪢'}
+};
+D.SKILL_LEVELS = [0, 4, 10, 18, 28, 40, 55, 72, 92, 115];   // points to reach levels 1 to 10
+D.SKILL_TITLES = ['Green', 'Learner', 'Handy', 'Steady', 'Skilled', 'Seasoned', 'Expert', 'Old hand', 'Master', 'Legend'];
 
 // Build and craft. need uses inventory, gear, and tarp (square meters).
 D.RECIPES = [
@@ -756,6 +821,8 @@ D.RECIPES = [
    need:{yucca:3}, give:{fiber:2}, desc:'Strong fiber cord for snares, bowstrings, and hangs.'},
   {id:'bowdrill', name:'Carve a bow-drill kit', icon:'🔥', group:'Tools', hours:1, work:'light', anywhere:true,
    need:{poles:1}, flag:'bowdrill', desc:'Spindle, fireboard, and handhold from dry cedar. The bowstring comes from your cordage.'},
+  {id:'gorge', name:'Whittle gorge hooks', icon:'🪝', group:'Tools', hours:0.5, work:'light', anywhere:true,
+   need:{poles:1, fiber:1}, give:{hooks:3}, desc:'Little spindles of hard wood, sharp at both ends and tied at the middle. Swallowed with the bait, one turns crosswise and holds.'},
   {id:'spear', name:'Carve a fishing spear', icon:'🔱', group:'Tools', hours:1, work:'light', anywhere:true,
    need:{poles:1}, flag:'spear', desc:'A split-tip cedar gig for fish and frogs.'},
   {id:'leanto', name:'Build a lean-to', icon:'⛺', group:'Shelter', hours:3, work:'heavy', planks:true,
@@ -885,10 +952,14 @@ D.GUIDE = {
   snapper:{name:'Common snapping turtle', sci:'Chelydra serpentina', cat:'Animals', fact:'Keep your hands away from the front half. A big one is a lot of meat.'},
   mussel:{name:'Freshwater mussels', sci:'Unionidae', cat:'Animals', fact:'Without people, riverbeds are thick with them. Lean, small, and slow to gather.'},
   crawfish:{name:'Crawfish', sci:'Procambarus', cat:'Animals', fact:'A pound of whole crawfish holds only about 2 to 3 ounces of tail meat.'},
-  gar:{name:'Spotted gar', sci:'Lepisosteus oculatus', cat:'Fish', fact:'Gulps air at the surface, so it thrives in warm, low-oxygen ponds. Its eggs are toxic: never eat gar roe.'},
+  gar:{name:'Gars', sci:'Lepisosteidae', cat:'Fish', fact:'Spotted, longnose and alligator gar: armored fish older than the dinosaurs. They gulp air at the surface, so they do fine in warm, still water. Their eggs are toxic: never eat gar roe.'},
   alligatorgar:{name:'Alligator gar', sci:'Atractosteus spatula', cat:'Fish', fact:'Can grow past 8 feet long. Gars have been around since the time of the dinosaurs.'},
-  bass:{name:'Largemouth bass', sci:'Micropterus salmoides', cat:'Fish', fact:'An ambush predator of weedy shallows.'},
-  catfish:{name:'Channel catfish', sci:'Ictalurus punctatus', cat:'Fish', fact:'Feeds along the bottom at night, drawn to smelly bait. Perfect for traps.'},
+  bass:{name:'Bass', sci:'Micropterus and Morone', cat:'Fish', fact:'Largemouth bass ambush from the weeds, spotted bass from the rocks of clear creeks, and white bass crowd up the rivers in late winter. All good eating.'},
+  drum:{name:'Freshwater drum', sci:'Aplodinotus grunniens', cat:'Fish', fact:'It grunts by drumming muscles against its air bladder. The stones in its ears are called lucky stones.'},
+  quail:{name:'Northern bobwhite', sci:'Colinus virginianus', cat:'Animals', fact:'Coveys of a dozen birds huddle in the grass and burst up all at once. Named for its whistle: bob-WHITE.'},
+  dove:{name:'Mourning dove', sci:'Zenaida macroura', cat:'Animals', fact:'Fast and twisting in flight. Its wings whistle when it takes off.'},
+  duck:{name:'Wood duck', sci:'Aix sponsa', cat:'Animals', fact:'Nests in hollow trees along creeks. The day after they hatch, the ducklings jump from the nest to the ground.'},
+  catfish:{name:'Catfish', sci:'Ictaluridae', cat:'Fish', fact:'Channel cats, bullheads, blue cats and flatheads feed along the bottom, most at night, and find smelly bait by taste. Perfect for traps.'},
   sunfish:{name:'Bluegill and sunfish', sci:'Lepomis', cat:'Fish', fact:'Small, bony, and everywhere. Fish traps catch lots of them.'},
   grub:{name:'June beetle grubs', sci:'Phyllophaga', cat:'Small things', fact:'Fat, pale larvae in rotting logs and soil. Excellent fish bait.'},
   hopper:{name:'Grasshoppers', sci:'Acrididae', cat:'Small things', fact:'Protein-rich in late summer. Cook them first; they can carry parasites.'},
@@ -905,6 +976,7 @@ D.ACH = {
   roof:{name:'A roof', how:'Build a shelter'},
   water:{name:'Safe water', how:'Drink boiled, rain, or spring water'},
   fish:{name:'Fish on', how:'Catch a fish'},
+  legendgar:{name:'Legend of the river', how:'Land an alligator gar'},
   hunt:{name:'Hunter', how:'Bring home game'},
   jerky:{name:'Pantry', how:'Smoke meat or dry fruit'},
   d7:{name:'One week', how:'Survive 7 days'},
@@ -1098,6 +1170,9 @@ const LV = s => D.LEVELS[s.opt.diff] || D.LEVELS.hard;
    1 as well as it can be done. The screen passes it in; set only while one job runs. */
 let SK = 0.5;
 const skillOf = o => o && typeof o.skill === 'number' && Number.isFinite(o.skill) ? Math.max(0, Math.min(1, o.skill)) : 0.5;
+// what a hunting or fishing game actually caught, when one was played (otherwise the dice decide, as for the robot players)
+let PLAY = null, ACTSK = null;
+const playOf = o => o && o.play && typeof o.play === 'object' && !Array.isArray(o.play) ? o.play : null;
 const skm = () => 0.55 + 0.9 * SK;
 
 /* ---------- seeded random numbers, so a saved game keeps its own dice ---------- */
@@ -1304,7 +1379,33 @@ function perf(s){
   return p;
 }
 E.perf = perf;
-function yieldM(s){ return perf(s) * (s.P > 1 ? 1.8 : 1) * LV(s).yield; }
+function yieldM(s){ return perf(s) * (s.P > 1 ? 1.8 : 1) * LV(s).yield * (ACTSK ? perk(s, ACTSK) : 1); }
+
+/* ---------- skills: points for doing things, levels for points ---------- */
+function lvl(s, k){ const p = (s.xp && s.xp.pts[k]) || 0; let L = 1; for (let i = 1; i < D.SKILL_LEVELS.length; i++) if (p >= D.SKILL_LEVELS[i]) L = i + 1; return L; }
+// each level makes its jobs go 4% better
+function perk(s, k){ return 1 + 0.04 * (lvl(s, k) - 1); }
+// which skill a job trains
+const SKILL_OF = [[/^hunt_/, 'hunting'], [/^snare/, 'tracking'], [/^(fish_|spear$|frogs$|trapset$|trapcheck$|crawfish$|turtle$)/, 'fishing'],
+  [/^(forage_|pick$|shake$|pecans$|cattail_|grubs$|grass$|yucca$|vines$)/, 'foraging'], [/^explore_/, 'exploring'],
+  [/^(firestart|addwood|stock|bank|uncover|cook|boil)$/, 'fire'], [/^(poles|bark|wood[COK]|stones|clay|cane|crate|stave)$/, 'building']];
+function skillFor(id){ for (const [re, k] of SKILL_OF) if (re.test(id)) return k; return null; }
+// n points in skill k for doing job key. The same job again and again in one day stops teaching you anything.
+function skillUp(s, R, k, n, key){
+  if (!k || !D.SKILLS[k] || !(n > 0)) return;
+  const d = dayIdx(s.t); if (!s.xp.today || s.xp.today.d !== d) s.xp.today = {d, c: {}};
+  const c = s.xp.today.c[key] = (s.xp.today.c[key] || 0) + 1;
+  if (c > 3){ if (R && c === 4) R.skills.push({k, n: 0, tired: true}); return; }
+  const before = lvl(s, k); s.xp.pts[k] = (s.xp.pts[k] || 0) + n; const after = lvl(s, k);
+  if (R){ const g = R.skills.find(x => x.k === k && !x.tired); if (g){ g.n += n; g.lvl = after; g.up = g.up || after > before; } else R.skills.push({k, n, lvl: after, up: after > before}); }
+}
+// the catch log: every kind of fish and game you've brought home, how many, and the biggest
+function logCatch(s, R, sp, kg, n){
+  const c = s.catch[sp] || (s.catch[sp] = {n: 0, kg: 0, d: dayIdx(s.t) + 1});
+  const first = c.n === 0, best = kg > c.kg;
+  c.n += n || 1; if (best) c.kg = r2(kg);
+  if (R) R.catches.push({sp, kg: r2(kg), n: n || 1, first, best: best && !first});
+}
 function dmgM(s){ return LV(s).dmg; }
 function hurt(s, amt, cause){
   if (s.dead || amt <= 0) return;
@@ -1714,7 +1815,7 @@ E.newGame = function(opt){
     body: {hp: 100, hyd: 96, res: RES_MAX, en: 92},
     cond: {wet: 0, inc: 0, sick: 0, venom: 0, venomT: 0, rash: 0, sprain: 0, protein: 0},
     inv: {poles: 0, planks: 0, bark: 0, wood: 0, vines: 0, cord: 0, yucca: 0, fiber: 0, grass: 0, stones: 0, clay: 0, cane: 0, grubs: 0, hides: 0, feathers: 0, stave: 0, arrows: 0},
-    gear: {crates: 2, tarp: 50, knives: 2, rounds: 50, laces: 2, bars: duo && opt.rations !== 'shared' ? 200 : 100},
+    gear: {crates: 2, tarp: 50, knives: 2, rounds: 99, laces: 2, hooks: 8, bars: duo && opt.rations !== 'shared' ? 200 : 100},
     tools: {bowdrill: false, spear: false, fishtrap: false, snares: 0, rack: false, bowl: false, pot: false, bags: 0, rain: false, hang: false, bedding: false, blanket: false, bow: false, club: false, seep: false, workbench: false, woodstore: false, cache: false, hearth: false, lookout: false},
     shelter: 0,
     fire: {st: 'out', fuel: 0, at: 0, wet: false},
@@ -1734,7 +1835,7 @@ E.newGame = function(opt){
     day: {kcal: 0, lean: 0}, leanDays: 0,
     stats: {kcal: 0, bars: 0, fish: 0, game: 0, cleanL: 0, rawL: 0, fires: 0},
     flags: {}, msgs: [], pendingNotes: [], pendingAch: [], log: [], pending: null,
-    did: {}, quest: {done: {}, open: {}},
+    did: {}, quest: {done: {}, open: {}}, xp: {pts: {}, today: null}, catch: {},
     dead: false, cause: null, deathT: 0, dmg: {}, startSeason: D.SEASON_OF[st.m]
   };
   s.t = s.t0 = Math.round((D.SUNRISE[st.m] + 0.5) * 4) / 4;
@@ -1760,15 +1861,15 @@ E.intro = function(s){
   return [
     who + ' up in a wide clearing in North Texas. It is ' + D.MONTH_FULL[st.m] + ' ' + st.d + '. No roads, no fences, no contrails. In this world, humans never existed.',
     'Dagr\'s rules: real-world physics, and survive as long as you can.',
-    'Your kit: two wooden crates, two 5-by-5-meter tarps, ' + s.gear.bars + ' ration bars (about 150 Calories each; 15 a day just keeps a person even), two boning knives, and a rifle with 50 rounds.',
+    'Your kit: two wooden crates, two 5-by-5-meter tarps, ' + s.gear.bars + ' ration bars (about 150 Calories each; 15 a day just keeps a person even), two boning knives, a rifle that never runs out (each hunt gives you three shots), and a little fishing kit: line and 8 hooks.',
     'Water is the first problem. The river is a short walk south of the boulders, but untreated water is a gamble.'
   ];
 };
 
 /* ---------- results ---------- */
 function snapshot(s){ return {hp: s.body.hp, hyd: s.body.hyd, food: foodPct(s), en: s.body.en, t: s.t}; }
-function newR(title, icon){ return {title, icon, lines: [], gains: [], notes: [], ach: [], quests: [], opened: [], delta: null}; }
-function errR(text){ return {err: true, title: 'Not yet', icon: '✋', lines: [text], gains: [], notes: [], ach: [], quests: [], opened: []}; }
+function newR(title, icon){ return {title, icon, lines: [], gains: [], notes: [], ach: [], quests: [], opened: [], skills: [], catches: [], delta: null}; }
+function errR(text){ return {err: true, title: 'Not yet', icon: '✋', lines: [text], gains: [], notes: [], ach: [], quests: [], opened: [], skills: [], catches: []}; }
 // what you've done, counted, so quests can ask "have you speared a fish?"
 function did(s, k, n){ s.did[k] = (s.did[k] || 0) + (n || 1); }
 function begin(s){ s.flags.soaked = false; }
@@ -1979,7 +2080,7 @@ E.travel = function(s, k){
     R.lines.push('In the dark you step in a hole and roll your ankle. Walking will be slow for a couple of days.');
   }
   if (!s.visited[k]){
-    s.visited[k] = true;
+    s.visited[k] = true; skillUp(s, R, 'exploring', 2, 'go:' + k);
     const f = FIRST[k];
     if (f){ if (f[0]) unlock(s, f[0], R); R.lines.push(f[1]); }
   }
@@ -2020,7 +2121,7 @@ function fireChance(s){
   p *= perf(s);
   if (!s.tools.woodstore){ if (rainNow(s, s.t)) p *= 0.7; else if (rainedEarlierToday(s)) p *= 0.85; }
   if (bowstring(s) === 'cord') p *= 0.9;
-  p *= skm();
+  p *= skm() * (1 + 0.03 * (lvl(s, 'fire') - 1));
   if (s.P > 1) p = 1 - (1 - p) * (1 - p * 0.5);
   return clamp(p, 0.05, 0.95);
 }
@@ -2229,7 +2330,7 @@ function collectSnares(s, R){
   }
   s.snare.catches = [];
   if (s.snare.broke){ const nb = s.snare.broke; add(s, R, 'snares', -nb); s.snare.broke = 0; R.lines.push(nb > 1 ? nb + ' snares were snapped and ruined.' : 'One snare was snapped and ruined.'); }
-  if (got.length){ s.stats.game += got.length; ach(s, R, 'hunt'); R.lines.push('Caught: ' + got.map(k => D.GAME[k].name).join(', ') + '.'); }
+  if (got.length){ s.stats.game += got.length; ach(s, R, 'hunt'); R.lines.push('Caught: ' + got.map(k => D.GAME[k].name).join(', ') + '.'); for (const k of got) logCatch(s, R, k, D.GAME[k].kg[1]); skillUp(s, R, 'tracking', got.length, 'snare+'); }
   if (lost.length) R.lines.push('Something got to ' + (lost.length > 1 ? lost.length + ' of your catches' : 'a catch') + ' before you did: just fur and bones.');
   if (!got.length && !lost.length) R.lines.push('Nothing yet. One loop is sprung and empty, so you reset it.');
   if (s.tools.snares <= 0) s.snare.set = false;
@@ -2404,7 +2505,7 @@ act({id: 'spear', loc: 'pond', name: 'Spear fish', icon: '🔱', h: 1.5, work: '
     pass(s, 1.5, 'moderate', R, {wading: true}); if (s.dead) return;
     const m = monthNow(s), h = hourOf(s.t);
     const warmMid = m >= 4 && m <= 8 && h > 11 && h < 17;
-    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * (s.P > 1 ? 1.5 : 1) * LV(s).catch * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1) * skm();
+    const base = (0.11 + 0.01 * Math.min(10, s.skill.spear)) * perk(s, 'fishing') * perf(s) * Math.sqrt(dens(s, 'pondfish')) * aware(s, 'pondfish') * (s.P > 1 ? 1.5 : 1) * LV(s).catch * ([11, 0, 1].indexOf(m) >= 0 ? 0.6 : 1) * (s.world.dry > 20 ? 1.3 : 1) * skm();
     s.skill.spear++;
     const got = [];
     for (let i = 0; i < 6; i++){
@@ -2511,8 +2612,67 @@ function explore(s, R, loc){
   else R.lines.push(pick(s, ['Just more country: oaks, briars, and quiet.', 'You find old wolf scat full of hair and a turkey feather, but nothing useful.', 'You climb a rise and look out over miles of trees and grass. Not a road, not a fence, not one chimney. Nobody, anywhere.']));
 }
 
+/* ---------- fishing with hook and line ---------- */
+// what's biting here right now: how often (bites a minute of the fishing game) and which fish, by how likely
+function fishPool(s, loc){
+  const m = monthNow(s), h = hourOf(s.t), eco = loc === 'pond' ? 'pondfish' : 'riverfish';
+  const cold = [11, 0, 1].indexOf(m) >= 0, dusk = twilight(s), night = isDark(s), hot = m >= 5 && m <= 7 && h > 11 && h < 17;
+  const list = [];
+  for (const sp in D.FISH){
+    const F = D.FISH[sp]; let w = F.where[loc] || 0; if (!w) continue;
+    if (F.run) w *= F.run.indexOf(m) >= 0 ? 6 : 0.35;
+    if (F.warm && cold) w *= 0.35;
+    if (F.night) w *= night || dusk ? 2 : 0.6; else if (night) w *= 0.4;
+    list.push([sp, r3(w)]);
+  }
+  const rate = Math.sqrt(dens(s, eco)) * Math.sqrt(aware(s, eco)) * (dusk ? 1.4 : hot ? 0.7 : 1) * (cold ? 0.55 : 1) * (s.inv.grubs > 0 ? 1.4 : 1) * LV(s).catch * perk(s, 'fishing');
+  return {loc, rate: r3(clamp(rate, 0.15, 2)), list, bait: s.inv.grubs > 0, hooks: s.gear.hooks, level: lvl(s, 'fishing'), night};
+}
+function pickWeighted(s, list){ let t = 0; for (const x of list) t += x[1]; let r = rnd(s) * t; for (const x of list){ r -= x[1]; if (r <= 0) return x[0]; } return list[list.length - 1][0]; }
+function fishSub(s, loc){
+  const P = fishPool(s, loc), hk = s.gear.hooks;
+  return (hk > 0 ? hk + (hk === 1 ? ' hook' : ' hooks') + ' left. ' : '') + (twilight(s) ? 'Dusk and dawn: the fish are feeding.' : P.rate < 0.5 ? 'Slow fishing right now.' : 'Cast, wait for the bite, and reel.') + (P.bait ? ' Grubs for bait.' : ' Grubs make better bait.');
+}
+function fishGo(s, R, loc){
+  pass(s, 1, 'light', R); if (s.dead) return;
+  const P = fishPool(s, loc), eco = loc === 'pond' ? 'pondfish' : 'riverfish';
+  const caught = []; let lost = 0;
+  if (PLAY && Array.isArray(PLAY.fish)){
+    for (const f of PLAY.fish.slice(0, 8)){ const F = f && D.FISH[f.sp]; if (!F || !(F.where[loc] > 0)) continue; caught.push({sp: f.sp, kg: clamp(+f.kg || F.kg[0], F.kg[0], F.kg[1])}); }
+    lost = clamp(Math.round(+PLAY.lost || 0), 0, s.gear.hooks);
+  } else {
+    // no game played (the robot players, or a skip): an ordinary hour on the bank
+    for (let i = 0; i < 5; i++){
+      if (!chance(s, clamp(0.32 * P.rate * skm(), 0.02, 0.8))) continue;
+      const sp = pickWeighted(s, P.list), F = D.FISH[sp];
+      if (chance(s, 0.3 * F.fight * (1.6 - skm() * 0.6))){ lost++; continue; }
+      caught.push({sp, kg: F.kg[0] + (F.kg[1] - F.kg[0]) * rnd(s) * rnd(s)});
+    }
+    lost = Math.min(lost, s.gear.hooks);
+  }
+  if (lost) add(s, R, 'hooks', -lost);
+  if (P.bait && (caught.length || lost)) add(s, R, 'grubs', -1);
+  let n = 0;
+  for (const c of caught){
+    if (!harvest(s, eco)) break;
+    const F = D.FISH[c.sp];
+    addFood(s, R, F.food, c.kg * 0.45);   // about 45% of a fish is meat
+    logCatch(s, R, c.sp, c.kg); n++;
+    if (F.legend){ ach(s, R, 'legendgar'); R.lines.push('The alligator gar! Longer than you are tall, armored like a dinosaur. A fish people would talk about for the rest of their lives, if there were any people.'); }
+  }
+  if (n){ s.stats.fish += n; ach(s, R, 'fish'); skillUp(s, R, 'fishing', n, 'fish+'); }
+  R.lines.push(n ? (n === 1 ? 'One fish on the stringer.' : n + ' fish on the stringer.') : pick(s, ['Not a bite worth having. Some days the fish win.', 'Nibbles, a stolen worm, and nothing to show for it.']));
+  if (lost) R.lines.push((lost > 1 ? lost + ' big ones snapped the line and took the hooks.' : 'A big one snapped the line and took a hook.') + ' ' + (s.gear.hooks > 0 ? s.gear.hooks + ' left.' : 'That was your last hook: whittle gorge hooks (Craft tab).'));
+}
+for (const L of ['pond', 'river', 'creek']){
+  act({id: 'fish_' + L, loc: L, name: 'Fish with hook and line', icon: '🎣', h: 1, work: 'light',
+    can: s => s.gear.hooks > 0 ? true : 'No hooks left. Whittle gorge hooks (Craft tab).',
+    sub: s => fishSub(s, L), run(s, R){ fishGo(s, R, L); }});
+}
+E.fishPool = fishPool;
+
 /* ---------- hunting ---------- */
-function canHunt(s){ return s.gear.rounds > 0 || (s.tools.bow && s.inv.arrows > 0) ? true : 'No rounds left, and no bow and arrows.'; }
+function canHunt(s){ return true; }   // the rifle never runs out
 function huntSub(s, loc){
   let t = twilight(s) ? 'Good timing: animals move most at dawn and dusk.' : 'Animals move most at dawn and dusk.';
   if ((s.world.scare[loc] || 0) > s.t) t += ' Game here is still spooked by your last shot.';
@@ -2526,7 +2686,7 @@ function huntRoll(s, loc, bigOnly){
   const tf = twilight(s) ? 1.6 : (h > 11 && h < 15 ? 0.6 : 1);
   const scare = (s.world.scare[loc] || 0) > s.t ? 0.35 : 1;
   const wet = rainNow(s, s.t) ? 0.75 : 1;
-  const base = tf * scare * wet * Math.sqrt(perf(s)) * (s.P > 1 ? 1.35 : 1) * LV(s).hunt;
+  const base = tf * scare * wet * Math.sqrt(perf(s)) * (s.P > 1 ? 1.35 : 1) * LV(s).hunt * perk(s, 'tracking');
   const list = D.HUNT[loc].slice();
   if (s.world.pigeons > 0 && loc !== 'prairie') list.unshift(['pigeon', 0.7]);
   for (const [sp, p0] of list){
@@ -2545,9 +2705,11 @@ function huntGo(s, R, loc){
   pass(s, 2, 'moderate', R); if (s.dead) return;
   const sp = huntRoll(s, loc, false);
   if (!sp){ R.lines.push(pick(s, ['Two hours of stillness. Tracks, droppings, and birdsong, but nothing in range.', 'You ease along the trail, but whatever was here heard you first.', 'Nothing moves but the wind in the grass.'])); return; }
-  s.pending = {type: 'hunt', sp, loc, waited: false};
+  s.pending = {type: 'hunt', sp, loc, waited: false, n: huntFlock(s, sp)};
   R.lines.push('Something moves. You freeze.');
 }
+// how many come together: a covey of quail, a pair of doves, or one animal
+function huntFlock(s, sp){ const f = D.GAME[sp].flock; return f ? ri(s, f[0], f[1]) : 1; }
 const SPOT = {
   deer: 'A white-tailed doe steps out of the brush sixty yards away, ears swiveling.',
   turkey: 'A big gobbler struts along the tree line, three hens pecking behind him.',
@@ -2555,7 +2717,10 @@ const SPOT = {
   rabbit: 'A cottontail freezes in the grass twenty yards out.',
   raccoon: 'A fat raccoon waddles along a fallen log, busy with something.',
   bison: 'A young bison cow grazes at the edge of the herd, eighty yards out. The bulls are watching you.',
-  pigeon: 'The flock is so thick that branches bend under the roosting pigeons.'
+  pigeon: 'The flock is so thick that branches bend under the roosting pigeons.',
+  quail: 'A covey of bobwhites is feeding in the grass. You can hear them whistling to each other.',
+  dove: 'Mourning doves are coming in low over the grass, fast and twisting.',
+  duck: 'Wood ducks are dabbling in the still water under the trees.'
 };
 const KILL = {
   squirrel: 'A clean shot. Not much meat on a squirrel, but it counts.',
@@ -2564,15 +2729,18 @@ const KILL = {
   raccoon: 'A fat raccoon: rich, fatty meat and a good hide.',
   deer: 'A clean kill. Field dressing and butchering takes two hours. It\'s far more meat than you can eat before it spoils, so smoke it on a drying rack or lose most of it.',
   bison: 'The cow drops and the herd thunders off. Butchering takes the rest of your strength. You take all you can carry; the carcass will draw every wolf and coyote for miles.',
-  pigeon: 'One shot into the roost brings down a handful of birds.'
+  pigeon: 'One shot into the roost brings down a handful of birds.',
+  quail: 'Bobwhite: small, but sweet meat.',
+  dove: 'Doves: a mouthful each, but good eating.',
+  duck: 'Wood duck: rich, dark meat with real fat on it.'
 };
 function huntView(s){
   const p = s.pending, G = D.GAME[p.sp], o = [];
-  if (s.gear.rounds > 0) o.push({k: 'shoot', label: 'Shoot', sub: s.gear.rounds + ' rounds left.'});
+  o.push({k: 'shoot', label: 'Shoot', sub: 'Three shots. The rifle never runs out.'});
   if (s.tools.bow && s.inv.arrows > 0) o.push({k: 'arrow', label: 'Loose an arrow', sub: 'Quiet, so other game won\'t spook. Arrows sometimes break.'});
   if (G.small && !p.waited) o.push({k: 'wait', label: 'Wait for bigger game', sub: 'Another hour, still as a stump.'});
-  o.push({k: 'pass', label: 'Let it go', sub: G.small ? 'Save the ammunition.' : ''});
-  return {title: cap1(G.name), icon: D.FOODS[G.food].icon, text: SPOT[p.sp], opts: o};
+  o.push({k: 'pass', label: 'Let it go', sub: G.small ? 'Not this one.' : ''});
+  return {title: cap1(G.name), icon: D.FOODS[G.food].icon, text: SPOT[p.sp], opts: o, game: {sp: p.sp, loc: p.loc, n: p.n || 1, fly: !!G.fly, small: !!G.small, level: lvl(s, 'hunting')}};
 }
 function huntResolve(s, R, k){
   const p = s.pending; s.pending = null;
@@ -2581,19 +2749,21 @@ function huntResolve(s, R, k){
   if (k === 'wait'){
     pass(s, 1, 'moderate', R); if (s.dead) return;
     const sp2 = huntRoll(s, p.loc, true);
-    if (sp2){ s.pending = {type: 'hunt', sp: sp2, loc: p.loc, waited: true}; R.lines.push('You wait, barely breathing. Then something bigger appears.'); }
+    if (sp2){ s.pending = {type: 'hunt', sp: sp2, loc: p.loc, waited: true, n: huntFlock(s, sp2)}; R.lines.push('You wait, barely breathing. Then something bigger appears.'); skillUp(s, R, 'tracking', 1, 'wait'); }
     else R.lines.push('You wait a full hour. Nothing bigger shows.');
     return;
   }
-  if (k === 'shoot' && s.gear.rounds < 1) return;
   if (k === 'arrow' && !(s.tools.bow && s.inv.arrows > 0)) return;
-  let hit = (k === 'arrow' ? 0.58 : 0.84) * Math.sqrt(perf(s)) * Math.sqrt(G.eco ? aware(s, G.eco) : 1) * skm();
+  const game = PLAY && Number.isFinite(+PLAY.hits) ? PLAY : null, most = G.flock ? Math.min(3, p.n || 1) : 1;
+  if (game && !(+game.shots > 0)){ R.lines.push('You never get a clean shot, and it slips away.'); return; }
+  let hit = (k === 'arrow' ? 0.58 : 0.84) * Math.sqrt(perf(s)) * Math.sqrt(G.eco ? aware(s, G.eco) : 1) * skm() * perk(s, 'hunting');
   if (p.sp === 'pigeon') hit = 0.95;
-  if (k === 'shoot'){ add(s, R, 'rounds', -1); s.world.scare[p.loc] = s.t + 18; }
-  else {
-    s.world.scare[p.loc] = Math.max(s.world.scare[p.loc] || 0, s.t + 3);
-  }
-  const hitIt = chance(s, clamp(hit, 0.05, 0.97));
+  if (k === 'shoot') s.world.scare[p.loc] = s.t + 18;
+  else s.world.scare[p.loc] = Math.max(s.world.scare[p.loc] || 0, s.t + 3);
+  // the game's own shots decide it when it was played; otherwise the dice, with a chance at a second bird in a flock
+  let hits = game ? clamp(Math.round(+game.hits), 0, most) : (chance(s, clamp(hit, 0.05, 0.97)) ? 1 : 0);
+  if (!game && hits && most > 1) while (hits < most && chance(s, 0.3 * skm())) hits++;
+  const hitIt = hits > 0;
   if (k === 'arrow'){
     if (!hitIt && chance(s, 0.45)){ add(s, R, 'arrows', -1); R.lines.push('The arrow hisses past and is lost in the brush.'); }
     else if (hitIt && chance(s, 0.2)){ add(s, R, 'arrows', -1); R.lines.push('The arrow snaps in the carcass.'); }
@@ -2604,14 +2774,17 @@ function huntResolve(s, R, k){
     return;
   }
   if (G.eco) harvest(s, G.eco);
-  let kg = rr(s, G.kg[0], G.kg[1]);
+  let kg = 0; for (let i = 0; i < hits; i++) kg += rr(s, G.kg[0], G.kg[1]);
   if (p.sp === 'bison'){ kg = s.P > 1 ? 70 : 40; s.world.carcass = 3; }
   if (p.sp === 'pigeon') kg = ri(s, 3, 8) * 0.15;
-  pass(s, G.clean, G.clean >= 2 ? 'heavy' : 'moderate', R);
+  pass(s, G.clean * (G.flock ? Math.max(1, hits * 0.6) : 1), G.clean >= 2 ? 'heavy' : 'moderate', R);
   addFood(s, R, G.food, kg);
   if (G.hides) add(s, R, 'hides', G.hides);
   if (G.feathers) add(s, R, 'feathers', G.feathers);
-  s.stats.game++; ach(s, R, 'hunt');
+  s.stats.game += hits; ach(s, R, 'hunt');
+  logCatch(s, R, p.sp, kg / hits, hits);
+  skillUp(s, R, 'hunting', hits + (game ? 1 : 0), 'shot+');
+  if (hits > 1) R.lines.push(hits + ' birds down with your three shots.');
   R.lines.push(KILL[p.sp]);
   if (p.sp === 'deer' && s.opt.party === 'solo' && !s.tools.rack) R.lines.push('Tip: a drying rack (Craft tab) turns meat into jerky that keeps for weeks.');
 }
@@ -2631,19 +2804,19 @@ function encOpts(s, id){
     o.push({k: 'back', label: 'Back away slowly', sub: 'The safe choice.'});
     if (s.tools.club) o.push({k: 'kill', label: 'Kill it with the nailed plank', sub: 'Snake meat, but you have to get close.'});
     else if (s.tools.spear || s.inv.poles > 0) o.push({k: 'kill', label: 'Pin it with a pole and kill it', sub: 'Snake meat, but you have to get close.'});
-    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'Uses 1 round.'});
+    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'Loud: game here will hide for a while.'});
   } else if (id === 'gator'){
     o.push({k: 'back', label: 'Back out of the water slowly', sub: 'Keep your eyes on it.'});
-    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'Uses up to 2 rounds. Lots of meat if it works.'});
+    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'Lots of meat if it works.'});
   } else if (id === 'wolves'){
     o.push({k: 'back', label: 'Stand tall and back away', sub: 'Don\'t run. Don\'t turn your back.'});
-    if (gun) o.push({k: 'shoot', label: 'Shoot at the pack', sub: 'Uses 1 round.'});
+    if (gun) o.push({k: 'shoot', label: 'Shoot at the pack', sub: 'Loud: game here will hide for a while.'});
   } else if (id === 'bear'){
     o.push({k: 'back', label: 'Talk calmly and back away', sub: 'Let it know you\'re a person, not prey.'});
-    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'Uses up to 2 rounds. A wounded bear is dangerous.'});
+    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'A wounded bear is dangerous.'});
   } else if (id === 'cougar'){
     o.push({k: 'back', label: 'Face it, look big, and shout', sub: 'Never run from a big cat.'});
-    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'Uses 1 round.'});
+    if (gun) o.push({k: 'shoot', label: 'Shoot it', sub: 'Loud: game here will hide for a while.'});
   }
   return o;
 }
@@ -2665,7 +2838,7 @@ function encResolve(s, R, k){
   pass(s, 0.25, 'light', R); if (s.dead) return;
   if (id === 'rattler' || id === 'cotton'){
     if (k === 'back'){ unlock(s, id, R); if (chance(s, 0.97)) R.lines.push('One slow step at a time. It stops ' + (id === 'rattler' ? 'rattling' : 'gaping') + ' and slides away.'); else snakeBite(s, R, id); return; }
-    if (k === 'shoot' && s.gear.rounds > 0){ add(s, R, 'rounds', -1); if (chance(s, 0.93)) snakeMeat(s, R, id); else { unlock(s, id, R); R.lines.push('You miss, and it vanishes into the brush.'); } return; }
+    if (k === 'shoot'){ if (chance(s, 0.93)) snakeMeat(s, R, id); else { unlock(s, id, R); R.lines.push('You miss, and it vanishes into the brush.'); } return; }
     const p = (s.tools.club ? 0.88 : s.tools.spear ? 0.84 : 0.76) * pf * (0.8 + 0.4 * SK);
     if (chance(s, p)) snakeMeat(s, R, id); else snakeBite(s, R, id);
     return;
@@ -2677,8 +2850,7 @@ function encResolve(s, R, k){
       else { hurt(s, rr(s, 18, 32) * dm, 'mauled'); s.cond.sprain = Math.max(s.cond.sprain, 48); R.lines.push('It lunges! Jaws clamp onto your leg, then let go as you kick free and scramble up the bank. Your leg is torn and badly bruised.'); }
       return;
     }
-    const n = Math.min(2, s.gear.rounds); add(s, R, 'rounds', -n);
-    if (chance(s, (n === 2 ? 0.72 : 0.5) * pf)){
+    if (chance(s, 0.72 * pf)){
       addFood(s, R, 'gator', rr(s, 9, 14)); add(s, R, 'hides', 1); s.stats.game++; ach(s, R, 'hunt');
       pass(s, 1.5, 'heavy', R);
       R.lines.push('It thrashes, then goes still. You drag it up the bank and spend a long time cutting out the tail meat.');
@@ -2692,7 +2864,6 @@ function encResolve(s, R, k){
       else { hurt(s, rr(s, 8, 15) * dm, 'mauled'); R.lines.push('One darts in and bites your calf before the pack pulls back. It hurts, but you\'re on your feet.'); }
       return;
     }
-    add(s, R, 'rounds', -1);
     if (chance(s, 0.75 * pf)){ s.world.wolvesAway = 12; R.lines.push('One wolf drops and the pack scatters into the timber. It\'s thin and ragged, probably starving, so you leave it where it fell. The pack will keep its distance for a while.'); }
     else { s.world.wolvesAway = 3; R.lines.push('The shot misses, but the crack sends the pack scattering.'); }
     return;
@@ -2704,8 +2875,7 @@ function encResolve(s, R, k){
       else { s.body.en = Math.max(0, s.body.en - 15); R.lines.push('It bluff-charges and stops ten feet short, then crashes off into the trees. Your heart won\'t stop pounding.'); }
       return;
     }
-    const n = Math.min(2, s.gear.rounds); add(s, R, 'rounds', -n);
-    if (chance(s, (n === 2 ? 0.6 : 0.4) * pf)){
+    if (chance(s, 0.6 * pf)){
       addFood(s, R, 'bear', rr(s, 35, 50)); add(s, R, 'hides', 2); s.stats.game++; ach(s, R, 'hunt');
       pass(s, 4, 'heavy', R);
       R.lines.push('The bear goes down. Butchering it takes hours: rich, fatty meat and a heavy hide. Fat is exactly what a wild diet lacks.');
@@ -2719,7 +2889,6 @@ function encResolve(s, R, k){
       else { hurt(s, rr(s, 25, 45) * dm, 'mauled'); R.lines.push('It leaps anyway. You fight back hard and it breaks off, but you\'re clawed and bleeding.'); }
       return;
     }
-    add(s, R, 'rounds', -1);
     if (chance(s, 0.65 * pf)){ add(s, R, 'hides', 1); R.lines.push('The shot knocks it off the limb. You take the hide.'); }
     else { hurt(s, rr(s, 25, 45) * dm, 'mauled'); R.lines.push('You miss, and it comes straight at you. You fight it off, but you\'re clawed and bleeding.'); }
   }
@@ -2804,7 +2973,8 @@ const RMAP = {}; D.RECIPES.forEach(r => { RMAP[r.id] = r; });
 function matName(k){ if (k === 'tarp') return 'tarp'; return ((D.MATS[k] || D.GEAR[k] || {}).name || k).toLowerCase(); }
 function recBaseTotal(s, r){ return r2(r.hours * (s.P > 1 ? 0.6 : 1)); }
 function benchApplies(s, r){ return !!s.tools.workbench && s.loc === 'camp' && r.special !== 'firepot' && r.special !== 'leach'; }
-function recTotal(s, r){ return r2(recBaseTotal(s, r) * (benchApplies(s, r) ? 0.8 : 1)); }
+const recSkill = r => r.group === 'Shelter' || r.group === 'Camp' ? 'building' : 'crafting';
+function recTotal(s, r){ return r2(recBaseTotal(s, r) * (benchApplies(s, r) ? 0.8 : 1) * Math.max(0.75, 1 - 0.03 * (lvl(s, recSkill(r)) - 1))); }
 function recipeBuilt(s, id){
   const r = RMAP[id]; if (!r) return false;
   if (r.flag) return !!s.tools[r.flag];
@@ -2899,6 +3069,7 @@ function complete(s, R, r){
   if (r.group === 'Camp'){ ach(s, R, 'camp1'); if (campUpgrades(s) >= 5) ach(s, R, 'camp5'); }
   if (r.id === 'bow') ach(s, R, 'bow');
   did(s, 'craft:' + r.id);
+  skillUp(s, R, recSkill(r), r.hours >= 3 || r.session ? 2 : 1, 'craft:' + r.id);
   if (r.special === 'pot'){ s.flags.potShaped = true; s.pot.stage = 'drying'; s.pot.dried = 0; R.lines.push('You coil and smooth a pot from river clay, then set it under the roof to dry. Three days, and don\'t rush it.'); return; }
   if (r.special === 'firepot'){
     const p = clamp(0.55 + 0.1 * s.pot.tries, 0, 0.85) * LV(s).pot;
@@ -2978,9 +3149,10 @@ E.run = function(s, id, o){
   if (ok !== true) return errR(ok);
   const snap = snapshot(s); begin(s);
   const R = newR(typeof a.name === 'function' ? a.name(s) : a.name, a.icon);
-  SK = skillOf(o);
-  try { a.run(s, R); } finally { SK = 0.5; }
+  SK = skillOf(o); PLAY = playOf(o); ACTSK = skillFor(id);
+  try { a.run(s, R); } finally { SK = 0.5; PLAY = null; ACTSK = null; }
   did(s, id); if (R.gains.some(g => g.food)) did(s, id + '+');
+  if (!s.dead) skillUp(s, R, skillFor(id), 1, id);
   if (!s.dead && !s.pending) rollHazards(s, a, R);
   return finish(s, R, snap);
 };
@@ -2996,8 +3168,8 @@ E.choose = function(s, k, o){
   if (!pv.opts.some(x => x.k === k)) return null;
   const snap = snapshot(s); begin(s);
   const R = newR(pv.title, pv.icon);
-  SK = skillOf(o);
-  try { if (s.pending.type === 'hunt') huntResolve(s, R, k); else encResolve(s, R, k); } finally { SK = 0.5; }
+  SK = skillOf(o); PLAY = playOf(o);
+  try { if (s.pending.type === 'hunt') huntResolve(s, R, k); else encResolve(s, R, k); } finally { SK = 0.5; PLAY = null; }
   did(s, 'choose:' + k);
   return finish(s, R, snap);
 };
@@ -3140,7 +3312,12 @@ function foodGoals(s, goal, any){
   if (s.crops.acorn.ripe > 8 && safeBoil && bitter < 3 * s.P && (s.fire.st === 'lit' || bowstring(s))) goal('Acorns are falling in the Oak Woods. Leached, they\'re a staple.', {go: 'oak', act: 'forage_oak'});
   const armed = s.gear.rounds > 0 || (s.tools.bow && s.inv.arrows > 0), lean = any || wildKcal(s) < 2200 * s.P;
   if (armed && s.world.bison > 0) goal('A bison herd is on the Prairie. One animal is weeks of meat if you smoke it.', {go: 'prairie', act: 'hunt_prairie'});
-  if (armed && (lean || twilight(s) || h < D.SUNRISE[monthNow(s)] + 3)) goal((twilight(s) ? 'Game is moving right now.' : 'Hunting brings in more food than anything else, and dawn and dusk are the best times.') + ' Hunt the Oak Woods, and smoke what you can\'t eat in a day.', {go: 'oak', act: 'hunt_oak'});
+  // mornings are for hunting; evenings, or when food is short, for fishing: the steadiest food there is
+  const hooks = s.gear.hooks > 0, morning = h < D.SUNRISE[monthNow(s)] + 3;
+  const fishGoal = () => goal((twilight(s) && !morning ? 'The fish feed at dusk.' : 'Fishing is the steadiest food there is.') + ' Nobody has ever fished this river: catfish and sunfish bite at the River Bank.', {go: 'river', act: 'fish_river'});
+  if (hooks && !morning && (lean || twilight(s))) fishGoal();
+  if (armed && (lean || twilight(s) || morning)) goal((twilight(s) ? 'Game is moving right now.' : 'Dawn and dusk are the best times to hunt.') + ' Hunt the Oak Woods: mostly squirrels and rabbits, now and then a turkey or a deer. Smoke what you can\'t eat in a day.', {go: 'oak', act: 'hunt_oak'});
+  if (hooks && lean) fishGoal();
   if (!lean) return;
   if (!s.tools.spear) goal('A fishing spear takes one cedar pole and an hour, and the pond is full of fish.', {recipe: 'spear'});
   else goal('Wild food stretches the ration bars. Try spearing fish at the Pond.', {go: 'pond', act: 'spear'});
@@ -3318,6 +3495,7 @@ const plan1 = (s, id, text) => { const p = E.plan(s, id, 1); return p && !p.done
 function foodToRack(s){
   if (s.trap.set) return {how: 'You need fresh meat, fish or fruit to put on it. Check the fish trap.', go: 'river', act: 'trapcheck'};
   if (ripeTotal(s) >= 1) return {how: 'You need fresh meat, fish or fruit to put on it. Fruit is ripe at the Berry Thicket.', go: 'berry', act: 'pick'};
+  if (s.gear.hooks > 0) return {how: 'You need fresh meat, fish or fruit to put on it. Fish at the River Bank.', go: 'river', act: 'fish_river'};
   if (canHunt(s) === true) return {how: 'You need fresh meat, fish or fruit to put on it. Hunt the Oak Woods, best at dawn or dusk.', go: 'oak', act: 'hunt_oak'};
   if (s.tools.spear) return {how: 'You need fresh meat, fish or fruit to put on it. Spear fish at the Pond.', go: 'pond', act: 'spear'};
   return null;
@@ -3519,6 +3697,8 @@ E.load = function(str){
     if (arrays.some(k => !Array.isArray(s[k])) || !Array.isArray(s.trap.catch) || !Array.isArray(s.snare.catches)) return null;
     if (!Object.prototype.hasOwnProperty.call(D.LOCS, s.loc) || !Number.isFinite(s.t) || !Number.isFinite(s.t0) || !Number.isFinite(s.doy0) || !Number.isFinite(s.rng)) return null;
     if ((s.P !== 1 && s.P !== 2) || !Number.isInteger(s.shelter) || s.shelter < 0 || s.shelter > 3) return null;
+    if (!Number.isFinite(s.gear.hooks)) s.gear.hooks = 8;   // saves from before hook-and-line fishing
+    s.gear.rounds = 99;                                      // the rifle never runs out now
     const numeric = {body:['hp','hyd','res','en'], water:['clean','raw','risk'], inv:Object.keys(D.MATS), gear:Object.keys(D.GEAR).filter(k => k !== 'snares'), tools:['bags','snares'], fire:['fuel','at'], pot:['dried','tries'], skill:['fireOK','fireFail','spear']};
     if (Object.keys(numeric).some(k => numeric[k].some(field => !Number.isFinite(s[k][field])))) return null;
     if (!object(s.world.scare) || ['out','lit','banked'].indexOf(s.fire.st) < 0 || ['none','drying','dry'].indexOf(s.pot.stage) < 0) return null;
@@ -3543,12 +3723,25 @@ E.load = function(str){
     if (!object(s.quest) || !object(s.quest.done) || !object(s.quest.open)) s.quest = {done: {}, open: {}};
     if (Object.keys(s.quest.done).some(k => !QMAP[k] || !num(s.quest.done[k])) || Object.keys(s.quest.open).some(k => !QMAP[k] || !object(s.quest.open[k]))) s.quest = {done: {}, open: {}};
     if (s.quest.follow != null && !QMAP[s.quest.follow]) delete s.quest.follow;
+    if (!object(s.xp) || !object(s.xp.pts) || Object.keys(s.xp.pts).some(k => !D.SKILLS[k] || !num(s.xp.pts[k]))) s.xp = {pts: {}, today: null};
+    if (s.xp.today != null && !(object(s.xp.today) && num(s.xp.today.d) && object(s.xp.today.c))) s.xp.today = null;
+    if (!object(s.catch) || Object.keys(s.catch).some(k => !(D.FISH[k] || D.GAME[k]) || !object(s.catch[k]) || !num(s.catch[k].n) || !num(s.catch[k].kg) || !num(s.catch[k].d))) s.catch = {};
+    if (s.pending && s.pending.type === 'hunt' && !(Number.isInteger(s.pending.n) && s.pending.n >= 1 && s.pending.n <= 12)) s.pending.n = 1;
     if (s.opt.diff === 'real') s.opt.diff = 'hard';   // the old "Real" level is today's Hard
     if (!D.LEVELS[s.opt.diff]) s.opt.diff = 'medium';
     return s;
   } catch (e) { return null; }
 };
 E.isDark = isDark; E.isEvening = isEvening;
+E.skills = function(s){
+  return Object.keys(D.SKILLS).map(k => { const L = lvl(s, k), p = (s.xp && s.xp.pts[k]) || 0, next = D.SKILL_LEVELS[L] == null ? null : D.SKILL_LEVELS[L], from = D.SKILL_LEVELS[L - 1];
+    return {k, name: D.SKILLS[k].name, icon: D.SKILLS[k].icon, lvl: L, title: D.SKILL_TITLES[L - 1], pts: p, from, next, frac: next == null ? 1 : (p - from) / (next - from)}; });
+};
+E.catchLog = function(s){
+  const one = (sp, kind, X) => { const c = s.catch[sp]; return {sp, kind, name: X.name ? cap1(X.name) : sp, sci: X.sci || '', fact: X.fact || '', legend: !!X.legend, where: X.where ? Object.keys(X.where) : null, n: c ? c.n : 0, kg: c ? c.kg : 0, day: c ? c.d : 0}; };
+  return {fish: Object.keys(D.FISH).map(k => one(k, 'fish', D.FISH[k])), game: Object.keys(D.GAME).filter(k => k !== 'pigeon' && k !== 'raccoon').map(k => one(k, 'game', D.GAME[k]))};
+};
+E.lvl = lvl;
 E._t = {pass, tempAt, rainNow, moonPhase, meanW, aware, dens, capacity, perf, sleepQ, AMAP, RMAP, dayIdx, hourOf, today, fireChance, ripeTotal, cropDay, harvest, huntRoll, cachedFood, recTotal, campUpgrades, CAMP_UPGRADES, adviceGoals, doable, checkAct};
 
 root.Engine = E;
@@ -3574,6 +3767,9 @@ root.Engine = E;
 <script src="living/life.js"></script>
 <script src="living/things.js"></script>
 <script src="living/beasts.js"></script>
+<script src="living/sound.js"></script>
+<script src="living/hunt.js"></script>
+<script src="living/fishing.js"></script>
 <script>
 /* ===== 4. SCENE ===== */
 /* THE CLEARING: the scene. A picture of where you are, drawn from the real game state.
@@ -5056,8 +5252,8 @@ const PLACES = {
     spots: {
       cattails: {name: 'Cattails', acts: ['cattail_river'], say: 'Cattails in the shallows: starchy roots all year.'},
       mudflat: {name: 'Mud flat', acts: ['crawfish'], say: 'Crawfish chimneys: little towers of mud pellets.'},
-      edge: {name: 'The water\'s edge', at: [48, 66], acts: ['drink_river', 'fill_river'], say: 'The river: slow, brown, and deep.'},
-      sandbar: {name: 'Sandbar', at: [60, 74], acts: ['seep', 'drink_seep', 'fill_seep'], say: 'A sandbar. Water seeps up through sand cleaner than the river.'},
+      edge: {name: 'The water\'s edge', at: [48, 66], acts: ['drink_river', 'fill_river', 'fish_river'], say: 'The river: slow, brown, and deep.'},
+      sandbar: {name: 'Sandbar', at: [60, 74], acts: ['fish_river', 'seep', 'drink_seep', 'fill_seep'], say: 'A sandbar. Water seeps up through sand cleaner than the river.'},
       snag: {name: 'Snag', acts: ['trapset', 'trapcheck'], say: 'A fallen log in the current. Fish shelter behind it.'},
       claybank: {name: 'Clay bank', acts: ['clay'], say: 'A cut bank of slick gray clay.'},
       canebrake: {name: 'Canebrake', acts: ['cane'], say: 'River cane: North America\'s own bamboo.'}
@@ -5071,7 +5267,7 @@ const PLACES = {
     marks: {shallows: [50, 74], pondedge: [64, 76]},
     scatter: [['reeds', 10, 'wet'], ['oak', 6, 'g'], ['fern', 4, 'g'], ['rock', 2, 'g']],
     spots: {
-      pondedge: {name: 'Gravelly edge', at: [64, 76], acts: ['drink_pond', 'fill_pond'], say: 'Still, warm water. Something big rolls under the surface.'},
+      pondedge: {name: 'Gravelly edge', at: [64, 76], acts: ['fish_pond', 'drink_pond', 'fill_pond'], say: 'Still, warm water. Something big rolls under the surface.'},
       shallows: {name: 'Shallows', at: [50, 74], acts: ['spear', 'frogs', 'turtle'], say: 'Knee-deep shallows over mud. Fish shadows slide by.'},
       cattailsP: {name: 'Cattails', acts: ['cattail_pond'], say: 'The pond edge is thick with cattails.'}
     },
@@ -5089,6 +5285,7 @@ const PLACES = {
       hardwood: {name: 'Fallen hardwood', acts: ['woodK'], say: 'Big fallen limbs of pecan and hackberry, dry and heavy.'},
       osage: {name: 'Bois d\'arc grove', acts: ['stave'], say: 'Thorny trees dropping bumpy green fruit the size of softballs.'},
       stand: {name: 'White sycamore', acts: ['hunt_creek'], say: 'A white-barked sycamore over a game crossing.'},
+      fishhole: {name: 'Pool below the riffle', at: [66, 74], acts: ['fish_creek'], say: 'A deep, clear pool below the riffle. Sunfish hang in the current.'},
       down: {name: 'Downstream', at: [88, 96], acts: ['explore_creek'], say: 'The creek runs on through the bottomland for miles.'}
     },
     beasts: {deer: [4, 10, 50, 60], squirrel: [4, 4, 50, 60], turkey: [10, 50, 50, 90]}},
@@ -5902,7 +6099,8 @@ function wchoose(i){
 function wkick(){ if (WV.raf || !WV.box) return; WV.raf = requestAnimationFrame(wframe); }
 function wframe(now){
   WV.raf = 0;
-  if (!WV.box || !WV.box.isConnected || !WV.S || !WV.vis || document.hidden || WV.box.offsetParent === null){ WV.last = 0; return; }
+  // nothing to draw while it's hidden, or while the hunting or fishing game is up over it
+  if (!WV.box || !WV.box.isConnected || !WV.S || !WV.vis || document.hidden || WV.box.offsetParent === null || document.getElementById('hunt') || document.getElementById('fishing')){ WV.last = 0; return; }
   const busy = WV.moving || WV.auto || WV.held || WV.tap || WV.path.length || WV.fade > 0;
   if (!busy && !WV.calm && WV.last && now - WV.last < 45){ WV.raf = requestAnimationFrame(wframe); return; }   // idle: about 20 frames a second is plenty for water and grazing
   const dt = WV.last ? Math.min(0.08, (now - WV.last) / 1000) : 0.016; WV.last = now;
@@ -6125,20 +6323,41 @@ function lvReady(){
   return true;
 }
 // the game's sky, as the stage's weather
-function lvSky(){
-  const S = LV.S, F = WV.F, h = WV.h || {}, rain = F.raining, sky = F.sky, wind = +h.wind || 6;
+function lvWeather(){
+  const F = WV.F, h = WV.h || {}, rain = F.raining, sky = F.sky, wind = +h.wind || 6;
   let w = 'clear';
   if (rain) w = sky === 'storm' ? 'storm' : sky === 'snow' ? 'snow' : 'rain';
   else if (sky === 'cloudy') w = 'overcast';
   else if (wind > 15 || h.norther || sky === 'partly') w = wind > 12 || h.norther ? 'breezy' : 'clear';
-  S.setWeather(w);
+  return w;
+}
+function lvSky(){
+  const S = LV.S, F = WV.F;
+  S.setWeather(lvWeather());
   S.setHour(F.hour); S.setMonth(F.month + ((F.dom || 15) - 15) / 31);
+}
+// where you stand, for the hunting and fishing games: the place's painting and trace, your spot on it, the hour and sky.
+// It waits for the painting if it isn't loaded yet.
+function wscene(k){
+  k = k || (WV.map && WV.map.k);
+  const T = lvTrace(k), F = WV.F || {month: 3, hour: 10, dom: 15};
+  if (!T) return Promise.resolve(null);
+  return new Promise(res => {
+    const tryIt = n => {
+      const a = lvArt(k, F.month);
+      if (!a){ if (n > 120) return res(null); return setTimeout(() => tryIt(n + 1), 50); }
+      const here = WV.map && WV.map.k === k && WV.pos;
+      res({k, img: a.img, trace: T, spot: here ? [(WV.pos.x + 0.5) * 32, (WV.pos.y + 0.62) * 32] : (T.hub || [T.size[0] / 2, T.size[1] / 2]),
+        month: F.month + ((F.dom || 15) - 15) / 31, hour: F.hour, weather: WV.F ? lvWeather() : 'clear', live: lvSupported(), name: D.LOCS[k] ? D.LOCS[k].name : '', mon: F.month});
+    };
+    tryIt(0);
+  });
 }
 // what the survivor is doing, as a move to play while the game works it out
 const LV_MOVES = [
   [/^firestart$/, 'drill', 4], [/^(addwood|stock|bank|uncover|cook|boil|hearth)/, 'work', 3], [/^drink_/, 'drink', 5], [/^fill_/, 'work', 3],
   [/^(forage_|pick|shake|grass|yucca|cattail|crawfish|clay|cane|stones|pecans|grubs|vines|bark|stave|seep)/, 'gather', 0], [/^(poles|wood[A-Z])/, 'snap', 0],
-  [/^hunt_|^shoot/, 'aim', 3], [/^(spear|frogs)$/, 'spear', 0], [/^(trapset|trapcheck|snareset|snarecheck|snarepull|turtle)/, 'work', 3],
+  [/^hunt_|^shoot/, 'aim', 3], [/^fish_/, 'sit', 6], [/^(spear|frogs)$/, 'spear', 0], [/^(trapset|trapcheck|snareset|snarecheck|snarepull|turtle)/, 'work', 3],
   [/^sleep$/, 'sleep', 0], [/^rest$/, 'sit', 6], [/^explore_/, 'look', 0]];
 function lvAct(a){
   if (!LV.hero || !LV.shown) return;
@@ -6243,7 +6462,7 @@ function lvTile(cx, cy){ const [px, py] = LV.S.paintAt(cx, cy), g = LV.S.groundA
 function lvClient(x, y){ const S = LV.S, p = S.toPaint(lvW(x, y)), v = S.view, r = LV.cv.getBoundingClientRect(); return {cx: r.left + (p[0] - (v.cx - v.w / 2)) / v.w * r.width, cy: r.top + (p[1] - (v.cy - v.h / 2)) / v.h * r.height}; }
 
 root.World = {mount: wmount, sync: wsync, gb: wsetgb, walkTo: (x, y) => wtap(x, y), goTo: k => { if (PLACES[k]) wgo(k); }, closeMenu: () => { if (WV.menuOpen) wmenuClose(); }, places: PLACES, map: k => wmap(k), _v: WV,
-  living: () => !!LV.shown, client: (x, y) => LV.shown ? lvClient(x, y) : null, _lv: LV};
+  living: () => !!LV.shown, client: (x, y) => LV.shown ? lvClient(x, y) : null, scene: wscene, _lv: LV};
 function wsetgb(on){ root.__gb = !!on; WV.Z = null; VIEWS.forEach(v => { if (v.S) v.draw(performance.now()); }); wkick(); }
 
 root.Scene = {show, light, dayRibbon};
@@ -6714,7 +6933,7 @@ function titleScreen(){
 <div class="plate" id="plate"></div>
 <h1>Stranded</h1>
 <p class="by">The Clearing. A survival game. Rules by Dagr.</p>
-<p class="lede">You wake up in a clearing in North Texas, in a world where people never existed. You have two crates, two tarps, a box of ration bars, two knives, and a rifle with 50 rounds. Real plants, real animals, real weather. Walk the land, learn it, and survive as long as you can.</p>
+<p class="lede">You wake up in a clearing in North Texas, in a world where people never existed. You have two crates, two tarps, a box of ration bars, two knives, fishing hooks, and a rifle that never runs out of rounds. Real plants, real animals, real weather. Walk the land, learn it, and survive as long as you can.</p>
 <div class="optset"><p>When do you arrive?</p>${choice('start', Object.keys(D.STARTS).map(k => [k, D.STARTS[k].label, D.STARTS[k].sub]))}</div>
 <div class="optset"><p>Who's out there?</p>${choice('party', [['solo', 'Just you', 'Every job is yours'], ['duo', 'You and a partner', 'Two sets of hands, two mouths to feed']])}</div>
 ${opt.party === 'duo' ? `<div class="optset"><p>Ration bars</p>${choice('rations', [['each', '100 each', 'As in Dagr\'s game'], ['shared', '100 to share', 'Harder: half the food']])}</div>` : ''}
@@ -6849,6 +7068,7 @@ function renderPanel(){
   const p = $('#panel');
   if (tab === 'journal'){ seenGuide = Object.keys(S.guide).length; seenAch = Object.keys(S.ach).length; }
   p.innerHTML = tab === 'pack' ? packTab() : tab === 'craft' ? craftTab() : tab === 'journal' ? journalTab() : hereTab();
+  if (tab === 'journal' && jtab === 'catch') drawCatches(p);
 }
 
 /* ---------- guidance: one card, one voice ----------
@@ -6939,7 +7159,7 @@ function packTab(){
 </ul><p class="note">${w.cap ? 'Your containers hold ' + w.cap + ' liters.' : 'No containers yet. Fold a tarp water bag in the Craft tab.'}</p></div>`;
   const mats = Object.keys(D.MATS).filter(k => S.inv[k] > 0);
   h += '<div class="sect"><h3>Materials</h3>' + (mats.length ? '<div class="grid">' + mats.map(k => `<div><span>${D.MATS[k].icon}</span>${esc(D.MATS[k].name)}<b>${fmtN(S.inv[k])}</b></div>`).join('') + '</div>' : '<p class="note">Nothing yet. The Cedar Stand, the Prairie, and the River Bank have plenty.</p>') + '</div>';
-  const t = S.tools, gear = [['📦', 'Wooden crates', S.gear.crates], ['🟦', 'Tarp', S.gear.tarp + ' m²'], ['🔪', 'Boning knives', S.gear.knives], ['🎯', 'Rifle rounds', S.gear.rounds], ['👟', 'Bootlaces', S.gear.laces]];
+  const t = S.tools, gear = [['📦', 'Wooden crates', S.gear.crates], ['🟦', 'Tarp', S.gear.tarp + ' m²'], ['🔪', 'Boning knives', S.gear.knives], ['🎯', 'Rifle', 'never runs out'], ['🪝', 'Fish hooks', S.gear.hooks], ['👟', 'Bootlaces', S.gear.laces]];
   const tools = [[t.bowdrill, '🔥', 'Bow drill'], [t.club, '🪚', 'Nailed plank'], [t.spear, '🔱', 'Fishing spear'], [t.fishtrap, '🧺', 'Fish trap'], [t.snares, '➰', 'Snares', t.snares], [t.bags, '🎒', 'Water bags', t.bags], [t.bowl, '🥣', 'Wooden bowl'], [t.pot, '🏺', 'Clay pot'], [t.rain, '🌧️', 'Rain catcher'], [t.rack, '🪜', 'Drying rack'], [t.hang, '🪢', 'Food hang'], [t.bedding, '🌾', 'Grass bed'], [t.blanket, '🐾', 'Hide blanket'], [t.bow, '🏹', 'Bois d\'arc bow'], [t.seep, '⛏️', 'Seep well']];
   h += '<div class="sect"><h3>Gear</h3><div class="grid">' + gear.map(([i, n, v]) => `<div><span>${i}</span>${esc(n)}<b>${esc(v)}</b></div>`).join('') +
     tools.filter(x => x[0]).map(([, i, n, c]) => `<div><span>${i}</span>${esc(n)}<b>${c ? c : ''}</b></div>`).join('') + '</div></div>';
@@ -7048,15 +7268,44 @@ function openPlan(id, back){
 function journalTab(){
   const gc = E.guideCount(S);
   const qd = E.quests(S);
-  const segs = [['quests', 'Quests ' + qd.done + '/' + qd.total], ['log', 'Log'], ['camp', 'Camp'], ['guide', 'Guide ' + gc.found + '/' + gc.total], ['wild', 'Wildlife'], ['badges', 'Badges ' + Object.keys(S.ach).length + '/' + Object.keys(D.ACH).length]];
+  const cl = E.catchLog(S), cn = cl.fish.filter(f => f.n).length + cl.game.filter(f => f.n).length;
+  const segs = [['quests', 'Quests ' + qd.done + '/' + qd.total], ['skills', 'Skills'], ['catch', 'Catches ' + cn + '/' + (cl.fish.length + cl.game.length)], ['log', 'Log'], ['camp', 'Camp'], ['guide', 'Guide ' + gc.found + '/' + gc.total], ['wild', 'Wildlife'], ['badges', 'Badges ' + Object.keys(S.ach).length + '/' + Object.keys(D.ACH).length]];
   let h = '<div class="seg">' + segs.map(([k, l]) => `<button type="button" data-j="${k}" aria-pressed="${jtab === k}">${esc(l)}</button>`).join('') + '</div>';
   if (jtab === 'quests') h += questLog();
   else if (jtab === 'camp') h += campView();
   else if (jtab === 'guide') h += guideView();
   else if (jtab === 'wild') h += wildView();
   else if (jtab === 'badges') h += badgeView();
+  else if (jtab === 'skills') h += skillsView();
+  else if (jtab === 'catch') h += catchView(cl);
   else h += logView();
   return h;
+}
+// what a level in each skill does for you
+const SKILL_DOES = {exploring: 'You find more when you explore.', hunting: 'Steadier sights, and more hits.', tracking: 'Game turns up more often when you hunt.',
+  fishing: 'More bites, a longer moment to strike, and a surer hand on the line.', foraging: 'More from every bush, tree and patch of ground.',
+  fire: 'Fires catch more easily.', building: 'Shelters and camp things go up faster.', crafting: 'Tools and gear take less time to make.'};
+function skillsView(){
+  return '<div class="skl-list"><p class="road-intro">Every job earns points in its skill, and points make levels. Each level makes those jobs go a little better. The same job more than three times in one day teaches you nothing new, so mix it up.</p>' +
+    E.skills(S).map(k => `<div class="skl"><span class="ic" aria-hidden="true">${k.icon}</span><div class="sk-b"><div class="sk-h"><b>${esc(k.name)}</b><span>Level ${k.lvl} · ${esc(k.title)}</span></div><div class="sk-d">${esc(SKILL_DOES[k.k] || '')}</div><div class="bar"><i style="width:${Math.round(100 * Math.max(0, Math.min(1, k.frac)))}%"></i></div><div class="sk-s">${k.next == null ? 'The top level.' : k.pts + ' points. ' + (k.next - k.pts) + ' more for level ' + (k.lvl + 1) + '.'}</div></div></div>`).join('') + '</div>';
+}
+// every kind of fish and game you've brought home, with the biggest one; the ones still to catch show as shadows
+function catchView(cl){
+  const where = w => { const L = (w || []).map(x => ({pond: 'the pond', river: 'the river', creek: 'the creek'})[x] || x); return L.length > 1 ? L.slice(0, -1).join(', ') + ' and ' + L[L.length - 1] : L.join(''); };
+  const nf = cl.fish.filter(f => f.n).length, ng = cl.game.filter(f => f.n).length;
+  let h = '<div class="catches"><p class="road-intro">Every kind of fish and game you bring home goes here, with the biggest one. The shadows are still out there.</p>';
+  h += `<h3>Fish<span>${nf}/${cl.fish.length}</span></h3><div class="cgrid">` + cl.fish.map(f => `<div class="ccard${f.n ? '' : ' unk'}${f.legend ? ' legend' : ''}"><canvas data-fish="${f.sp}" data-murk="${f.n ? 0 : 1}" width="300" height="120" aria-hidden="true"></canvas>` +
+    (f.n ? `<b>${esc(f.name)}</b><span>${f.n} caught · biggest ${esc(E.lb(f.kg))}</span><p>${esc(f.fact)}</p>` : `<b>${f.legend ? 'A legend' : 'Not caught yet'}</b><span>${f.legend ? 'Something huge, deep in the river.' : 'Lives in ' + esc(where(f.where)) + '.'}</span>`) + '</div>').join('') + '</div>';
+  h += `<h3>Game<span>${ng}/${cl.game.length}</span></h3><div class="cgrid">` + cl.game.map(g => { const G = D.GAME[g.sp];
+    return `<div class="ccard${g.n ? '' : ' unk'}"><span class="gic" aria-hidden="true">${D.FOODS[G.food].icon}</span>` + (g.n ? `<b>${esc(g.name)}</b><span>${g.n} taken · biggest ${esc(E.lb(g.kg))}</span>` : `<b>Not taken yet</b><span>${esc(capF(G.name))}</span>`) + '</div>'; }).join('') + '</div></div>';
+  return h;
+}
+function drawCatches(root){
+  if (!window.Fishing) return;
+  root.querySelectorAll('canvas[data-fish]').forEach(c => { const g = c.getContext('2d'), sp = c.dataset.fish; g.clearRect(0, 0, c.width, c.height); g.save(); g.translate(c.width / 2, c.height / 2);
+    Fishing.drawFish(g, sp, Fishing.fitLen(sp, c.width, c.height), {ph: 0.6, seed: 7}); g.restore();
+    // one still to catch is only its shadow
+    if (+c.dataset.murk){ g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(24,34,32,.94)'; g.fillRect(0, 0, c.width, c.height); g.globalCompositeOperation = 'source-over'; } });
 }
 function questLog(){
   const Q = E.quests(S), cur = Q.current && Q.current.id;
@@ -7179,19 +7428,33 @@ function deathBlock(){
 <div><span>Field guide</span><b>${m.guide} of ${m.guideTotal}</b></div><div><span>Badges</span><b>${m.ach} of ${m.achTotal}</b></div></div></div>
 <div class="foot"><button type="button" class="btn" data-m="title">Title screen</button><button type="button" class="btn hot" data-m="again">Play again</button></div>`;
 }
+// points earned in each skill, and a level reached
+function skillChips(R){
+  const L = (R.skills || []).filter(g => g.n > 0 || g.tired); if (!L.length) return '';
+  return '<div class="skillgot">' + L.map(g => { const K = D.SKILLS[g.k];
+    return g.tired ? `<p class="tired">${K.icon} No more ${esc(K.name)} points from this job today. Try something different.</p>`
+      : `<p class="${g.up ? 'up' : ''}">${K.icon} <b>+${g.n} ${esc(K.name)}</b>${g.up ? ` · Level ${g.lvl}: ${esc(D.SKILL_TITLES[g.lvl - 1])}!` : ''}</p>`; }).join('') + '</div>';
+}
+// a kind of fish or game you've never caught before, or the biggest one yet
+function catchNews(R){
+  return (R.catches || []).filter(c => c.first || c.best).map(c => { const X = D.FISH[c.sp] || D.GAME[c.sp] || {name: c.sp};
+    return `<p>${c.first ? '📖 First ever' : '🏆 Biggest yet'}: <b>${esc(capF(X.name))}</b>, ${esc(E.lb(c.kg))}. It's in the Journal, under Catches.</p>`; }).join('');
+}
+const capF = t => t.charAt(0).toUpperCase() + t.slice(1);
 function showResult(R){
   if (S.dead && !R.lines.length) R.lines.push('Your body gives out.');
   let h = `<div class="sh-head"><span class="ic">${R.icon || ''}</span><h2>${esc(R.title)}</h2><span class="dur">${esc(elapsed(R.t1 - R.t0))}</span></div>`;
   h += '<div class="story">' + R.lines.map(l => `<p>${esc(l)}</p>`).join('') + '</div>';
   if (R.gains.length) h += '<div class="gains">' + R.gains.map(gainChip).join('') + '</div>';
-  h += deltas(R.delta);
+  h += deltas(R.delta) + skillChips(R);
   if ((R.quests || []).length){
     const next = E.quests(S).current;
     h += '<div class="qdone">' + R.quests.map(id => { const q = E.quest(S, id); return `<p class="qd-h">Quest done: <b>${esc(q.title)}</b></p><p>${esc(q.doneText)}</p>`; }).join('') +
       (next && !next.side && R.quests.indexOf(next.id) < 0 ? `<p class="qd-h">Next: <b>${esc(next.title)}</b></p><p>${esc(next.story)}</p>` : '') + '</div>';
   }
-  if (R.notes.length || R.ach.length || (R.opened || []).length){
-    h += '<div class="news">' + (R.opened || []).map(id => `<p>New side quest: <b>${esc(E.quest(S, id).title)}</b>. See the Journal.</p>`).join('') + R.notes.map(k => `<p>New in your field guide: <b>${esc(D.GUIDE[k].name)}</b></p>`).join('') +
+  const caught = catchNews(R);
+  if (R.notes.length || R.ach.length || (R.opened || []).length || caught){
+    h += '<div class="news">' + caught + (R.opened || []).map(id => `<p>New side quest: <b>${esc(E.quest(S, id).title)}</b>. See the Journal.</p>`).join('') + R.notes.map(k => `<p>New in your field guide: <b>${esc(D.GUIDE[k].name)}</b></p>`).join('') +
       R.ach.map(k => `<p>🏅 Badge earned: <b>${esc(D.ACH[k].name)}</b></p>`).join('') + '</div>';
   }
   if (S.dead) h += deathBlock();
@@ -7217,6 +7480,8 @@ function menuSheet(){
   const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   openSheet(`<div class="sh-head"><span class="ic">🧭</span><h2>Menu</h2></div><div class="menu-list">
 <button type="button" data-m="help">How to play<span>The basics in two minutes.</span></button>
+<button type="button" data-m="phunt">Practice shooting<span>As many animals as you like. Nothing is kept, and no time passes.</span></button>
+<button type="button" data-m="pfish">Practice fishing<span>The practice pond. Every fish goes back, and no time passes.</span></button>
 <button type="button" data-m="export">Copy a save code<span>Keep this game, or move it to another device.</span></button>
 <button type="button" data-m="import">Load a save code<span>Pick up a game from a code.</span></button>
 <button type="button" data-m="theme">Switch to ${dark ? 'light' : 'dark'} mode<span>${dark ? 'Paper map colors.' : 'Easier on the eyes at night.'}</span></button>
@@ -7256,6 +7521,55 @@ function importSheet(){
   };
 }
 
+/* ---------- the hunting and fishing games ---------- */
+// what each animal is called in the hunting game: one of them, and more than one
+const HUNT_NAME = {quail: ['bobwhite quail', 'quail'], dove: ['mourning dove', 'doves'], duck: ['wood duck', 'ducks'], pigeon: ['passenger pigeon', 'pigeons']};
+const huntNames = () => { const o = {}; for (const k in D.GAME) o[k] = HUNT_NAME[k] || [D.GAME[k].name, D.GAME[k].name]; return o; };
+// Shoot: the hunting game on this place's painting when the phone can draw it, or the old aiming moment when it can't
+function playHunt(k){
+  const pv = E.pendingView(S), g = pv && pv.game;
+  const old = () => { const kind = window.Skill && Skill.forChoice(k, S); if (kind) return Skill.play(kind, S, skill => handle(E.choose(S, k, skill == null ? undefined : {skill}))); handle(E.choose(S, k)); };
+  if (!g || k !== 'shoot' || !window.Hunt || !World.scene) return old();
+  closeSheet(true);
+  World.scene(g.loc).then(sc => {
+    if (!sc || !sc.live) return old();
+    try {
+      Hunt.play({painting: sc.img, trace: sc.trace, month: sc.month, hour: sc.hour, weather: sc.weather, sp: g.sp, n: g.n, level: g.level, spot: sc.spot, names: huntNames()},
+        res => handle(E.choose(S, k, {play: {shots: res.shots, hits: res.hits}})));
+    } catch (e){ if (window.console) console.error(e); old(); }
+  });
+}
+// Fish with hook and line: the fishing game. Put the rod down before casting and no time passes.
+function playFish(id){
+  const loc = id.replace('fish_', '');
+  if (!window.Fishing || !E.actions(S).some(a => a.id === id && a.ok)) return handle(E.run(S, id));
+  const P = E.fishPool(S, loc), seen = {};
+  for (const sp in S.catch) if (S.catch[sp].n > 0 && D.FISH[sp]) seen[sp] = S.catch[sp].kg;
+  World.scene().then(sc => {
+    Fishing.play({painting: sc && sc.img, spot: sc && sc.spot, place: loc, month: sc ? sc.mon : 4, hour: sc ? sc.hour : 12, name: sc ? sc.name : '', pool: P, fish: D.FISH, seen, lb: E.lb},
+      res => { if (!res.casts && !res.fish.length) return; handle(E.run(S, id, {play: {fish: res.fish, lost: res.lost}})); });
+  });
+}
+function practiceHunt(){
+  sheetReturnFocus = null; closeSheet(true);
+  const k = S && ['oak', 'prairie', 'creek'].indexOf(S.loc) >= 0 ? S.loc : 'prairie';
+  if (!window.Hunt || !World.scene) return;
+  World.scene(k).then(sc => {
+    if (!sc || !sc.live) return toast('Practice shooting needs a phone that can draw 3D.');
+    Hunt.practice({painting: sc.img, trace: sc.trace, month: sc.month, hour: Math.min(17, Math.max(8, sc.hour)), weather: 'clear', level: S ? E.lvl(S, 'hunting') : 1, spot: sc.trace.hub, names: huntNames()},
+      r => { if (S) render(); toast(r.shots ? 'Practice: ' + r.hits + (r.hits === 1 ? ' hit' : ' hits') + ' from ' + r.shots + (r.shots === 1 ? ' shot.' : ' shots.') : 'Practice over.'); });
+  });
+}
+function practiceFish(){
+  sheetReturnFocus = null; closeSheet(true);
+  if (!window.Fishing) return;
+  World.scene('pond').then(sc => {
+    const sp = sc && sc.trace.spots && sc.trace.spots.pondedge ? sc.trace.spots.pondedge[0] : sc && sc.spot;
+    Fishing.practice({painting: sc && sc.img, spot: sp, month: sc ? sc.mon : 4, hour: 10, fish: D.FISH, seen: {}, lb: E.lb, level: S ? E.lvl(S, 'fishing') : 1},
+      r => { if (S) render(); toast(r.practiced ? 'Practice: ' + r.practiced + ' fish landed and let go.' : 'Practice over.'); });
+  });
+}
+
 /* ---------- input ---------- */
 function setTab(t){
   tab = t; $('#game').dataset.panel = t; renderTabs(); renderPanel();
@@ -7264,6 +7578,7 @@ function setTab(t){
 // A job from the world: the skill ones get a skill moment first, and how it went changes the odds.
 function runAct(id){
   if (!S) return;
+  if (/^fish_/.test(id)) return playFish(id);
   const go = skill => handle(E.run(S, id, skill == null ? undefined : {skill}));
   if (window.Skill && Skill.for(id) && E.actions(S).some(a => a.id === id && a.ok)) Skill.play(Skill.for(id), S, go); else go();
 }
@@ -7290,6 +7605,8 @@ document.addEventListener('click', e => {
     const m = d.m;
     if (m === 'menu') return menuSheet();
     if (m === 'help') return helpSheet();
+    if (m === 'phunt') return practiceHunt();
+    if (m === 'pfish') return practiceFish();
     if (m === 'export') return S ? exportSheet() : null;
     if (m === 'import') return importSheet();
     if (m === 'theme'){
@@ -7316,6 +7633,7 @@ document.addEventListener('click', e => {
   if (S.pending || S.dead){
     if (!d.choose) return;
     const k = d.choose, kind = window.Skill && Skill.forChoice(k, S);
+    if (k === 'shoot' && S.pending && S.pending.type === 'hunt') return playHunt(k);
     if (kind){ closeSheet(true); return Skill.play(kind, S, skill => handle(E.choose(S, k, skill == null ? undefined : {skill}))); }
     return handle(E.choose(S, k));
   }
