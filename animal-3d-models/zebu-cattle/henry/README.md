@@ -1,12 +1,17 @@
 # Henry
 
 A big white Zebu bull: tall hump over the shoulders, loose folded skin down the throat (the
-dewlap), long droopy ears, dark nose, dark hooves, and a black tuft at the end of his tail.
+dewlap) with fine upright wrinkles down the neck, dark nose, dark hooves, and a black tuft at the end of his tail.
+
+His ears are short and stick straight out to the sides, pink inside with dark hair down the middle. (The character
+sheets draw them long and droopy; the photos win.)
 
 ## His horns (this matters)
 
-- His **left** horn is whole. It is dark and curves up and back.
-- His **right** horn is **broken off short**: a pinkish stump with dark spots.
+- His **left** horn is whole. It is pale at the base and dark from the middle up, curving up and back, and its tip
+  curls inward.
+- His **right** horn is **broken off**: a long pink stub, about two thirds as long as the whole horn, pointing out and
+  up, with a blunt end and dark spots on it.
 - So when Henry faces you, the broken stump is on **your left**.
 - When his head points left (you see his left side), the whole horn is in front and the stump is behind it.
 - When his head points right (you see his right side), the stump is in front and the whole horn is behind it.

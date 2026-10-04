@@ -14,7 +14,7 @@ alike. The first part is for Chris; the second part is the checklist for whoever
 
   | Look | What it's for | How many triangles | File |
   |---|---|---|---|
-  | **Full detail** | close-ups, cutscenes, the animal you're looking at | 100,000 and up (Henry: about 140,000) | `zebu-cattle/zebu-hd.js` |
+  | **Full detail** | close-ups, cutscenes, the animal you're looking at; in envoi's style or the storybook's | 100,000 and up (Henry: about 140,000) | `zebu-cattle/zebu-hd.js` |
   | **Storybook** | games in What the Map Forgot's 3D look | about 20,000 | `makeZebuStorybook` in `zebu-cattle/zebu.js` |
   | **Ranch game** | the whole herd walking the map at once | about 10,000 to 20,000 | `makeZebu` in `zebu-cattle/zebu.js` |
 
@@ -22,8 +22,8 @@ alike. The first part is for Chris; the second part is the checklist for whoever
   the animal's folder (like `zebu-cattle/henry/`) and say what the sheet gets wrong. Henry's notes are the example: the
   broken horn is his right one, and poses 7, 10, 11 and 12 on his sheet are wrong. The real animal and your word
   always win over a drawing.
-- **How you check one:** open the Henry page on your phone (the link is in the chat), turn him with your finger and try
-  each move. For any animal there are also turnaround pictures from every side, made by
+- **How you check one:** open Henry in Motion on your phone (the link is in the chat), walk round him with your finger
+  and try every button. For any animal there are also turnaround pictures from every side, made by
   `tools/turnaround.mjs` (see below).
 
 ## Making a new animal (the checklist)
@@ -34,8 +34,8 @@ alike. The first part is for Chris; the second part is the checklist for whoever
   image files: textures are painted on a canvas in code.
 - Metres; y is up; the animal **faces +z** with its feet at y = 0; its **left side is +x**. (So with the animal facing
   you, its right side is on your left. That's how Henry's broken right horn ends up on the viewer's left.)
-- One function makes it: `makeZebu(look)`, `makeZebuHD(look, {detail})`, `makeZebuStorybook(look)`, or for a new kind of
-  animal `make<Name>(opts)` in its own file.
+- One function makes it: `makeZebu(look)`, `makeZebuHD(look, {style: 'envoi' | 'storybook', detail})`,
+  `makeZebuStorybook(look)`, or for a new kind of animal `make<Name>(opts)` in its own file.
 - It returns the same handle in every look, so a game can swap one look for another:
   - `root`: put this in the scene; set its position and `rotation.y`.
   - `animate(dt, t, speed)` every frame: `dt` seconds since the last frame, `t` the clock, `speed` in metres a second
@@ -45,6 +45,10 @@ alike. The first part is for Chris; the second part is the checklist for whoever
     where it is.
   - `pose(name)` jumps straight to a pose (for pictures); `anchor('head' | 'mouth' | 'poll')` gives a world position
     (for a camera or a name tag); `tris` is the triangle count.
+  - The full-detail animals also have `update(dt, t, {speed, turn})` (`turn` in radians a second, for leaning into a
+    curve), `act('graze' | 'lie' | 'sleep' | 'stand')`, `play(move)` for the moves (`MOVES` lists them: moo, shake, swat,
+    paw, toss, buck, hop, stretch, lick), `lookAt(position, seconds)`, and `events`: what just happened that a game
+    should hear or see (`moo`, `snort`, `step`, `thump`, `dust`, `land`, `tear` when grazing), each with where.
 
 ### 2. Building the shape
 
@@ -72,16 +76,35 @@ alike. The first part is for Chris; the second part is the checklist for whoever
 - **Walking:** four beats (left hind, left fore, right hind, right fore), each foot on the ground about two thirds of
   the time; the knee folds and the hoof lifts as the leg swings forward.
 - **Poses that touch the ground** (eating, kneeling, lying) are worked out from where the joints should rest, not by
-  guessing angles: say where the knees, hocks and fetlocks go, and let a small solver find the angles. Then check the
-  pictures.
+  guessing angles: say where the knees, hocks and fetlocks go (a job in `tools/poses/`), and let `tools/solve-pose.mjs`
+  find the angles. Then check the pictures.
+- **How the full-detail animals move** (`zebu-moves.js`, the way envoi animates its characters): every joint is a
+  channel. A held pose sets the channels; a move is keyed channel changes laid on top, with a wind-up before it and an
+  overshoot after (a moo pulls the head back, then stretches it out with the jaw open). Lying down and getting up are
+  short sequences of poses (cattle: a sniff at the ground, front knees down, then the back end; up, back end first,
+  then one front leg and a heave). Under it all runs a quiet life: breathing, shifting weight, looking about, ear
+  flicks, tail swats, blinks and chewing. The ears, tail, dewlap and hump are springs, so they swing after the body.
+  Walking is four beats and trotting two, with the stride matched to the length of the legs.
 
 ### 4. The three looks, and what makes each one
 
 - **Full detail** (envoi's top level, from `envoi-on-the-longest-night 3d-model-main-characters/io` and the Emberback):
   `MeshPhysicalMaterial` with sheen on the coat, a painted normal map for the hair, a little light carried round into
-  the shade (soft white hair and skin), a wet nose, ringed horns, glossy eyes under a clear cornea. It needs a renderer
-  with `outputEncoding = sRGBEncoding` and `ACESFilmicToneMapping`, a sky to reflect (`scene.environment` from a PMREM
-  of a simple gradient sky) and a sun with soft shadows. The Henry page sets all of this up.
+  the shade (soft white hair and skin), a wet nose, ringed horns, glossy eyes under a clear cornea with lids that
+  blink. It needs a sky to reflect (`scene.environment` from a PMREM) and a light with soft shadows. Henry Three Ways
+  renders it straight (`outputEncoding = sRGBEncoding`, `ACESFilmicToneMapping`); Henry in Motion films it through
+  envoi's camera, `viewer/cinema.js` (depth of field, bloom, light shafts and a film grade).
+- **The place round it, the envoi way** (`viewer/henry-meadow.js`, after envoi's *Colossus in the Meadow*,
+  `living-battlefields/field.js`): grass painted into an atlas of four kinds of tuft, each tuft stood up on a card that
+  turns to the camera, bends from its root with one shared wind and catches the moon from behind; mipmaps that keep
+  their cover so far grass stays full; trees painted white with their shading in the red, on cards, rimmed with
+  moonlight on the moon's side and lost in haze far off; a sky with the moon, stars, low hills and drifting clouds that
+  dim the moonlight as they pass; mist in layers; fireflies. Its colours are given as they should look on screen and
+  taken back through the film camera's curve, so they come out right after it. Envoi's page never moves its camera and
+  paints the far-off things once into one picture; Henry's camera moves, so everything there is live.
+- **Storybook at full detail** (`makeZebuHD(look, {style: 'storybook'})`): the full-detail body squeezed to storybook
+  proportions as it is bound to its skeleton (shorter legs, a shorter, rounder body, a head half as big again), painted
+  eyes that blink, and the same ink outline, so it moves like the envoi one.
 - **Storybook** (What the Map Forgot's `wren-3d`): flat warm colours from that game's palette (ink `#1d1b2c`, paper
   `#f4efe2`), three-step cel shading (ramp 120, 200, 255), a cool rim of light, and an ink outline that follows
   averaged normals so it doesn't split at seams. Proportions are chunky: a bigger, rounder head, shorter legs, a wider
@@ -102,11 +125,13 @@ Henry at full detail is about 140,000 triangles in 8 draws, and takes a second o
 ### 6. Checking it
 
 ```
-node animal-3d-models/tools/turnaround.mjs --look henry --model hd --poses stand,eat,lie
+node animal-3d-models/tools/turnaround.mjs --look henry --model hd --poses stand,graze,lie
+node animal-3d-models/tools/turnaround.mjs --look henry --model hd --style storybook --poses stand,graze,lie,sleep
 node animal-3d-models/tools/turnaround.mjs --look henry --model hd --close        # the head up close
-node animal-3d-models/tools/turnaround.mjs --look henry --model storybook
+node animal-3d-models/tools/turnaround.mjs --look henry --model storybook          # the lighter storybook look
 node animal-3d-models/tools/turnaround.mjs --look tan-cow                          # the ranch game look
-node animal-3d-models/tools/build-viewer.mjs && node animal-3d-models/tools/viewer-check.mjs
+node animal-3d-models/tools/build-viewer.mjs --page henry-motion && node animal-3d-models/tools/henry-motion-check.mjs
+node animal-3d-models/tools/build-viewer.mjs --page henry && node animal-3d-models/tools/viewer-check.mjs
 ```
 
 Each ends with "all good" and leaves pictures in `animal-3d-models/shots/`. Lay them next to the photos and the

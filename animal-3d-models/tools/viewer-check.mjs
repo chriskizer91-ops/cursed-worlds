@@ -32,7 +32,8 @@ check(Math.abs(await page.evaluate(() => HENRY.view.yaw) - yaw0) > 0.5, 'draggin
 await shot('02-turned', 600);
 for (const [btn, state] of [['Eat', 'eat'], ['Lie down', 'lie']]) {
   await page.locator('[data-act]', {hasText: btn}).tap();
-  check(await until(state === 'lie' ? () => HENRY.cow.state === 'lie' : () => HENRY.cow.state === 'eat'), `${btn} makes him ${state === 'lie' ? 'lie down' : 'eat'}`);
+  // full detail calls eating 'graze' (zebu-moves.js); the other looks call it 'eat'
+  check(await until(state === 'lie' ? () => HENRY.cow.state === 'lie' : () => ['eat', 'graze'].includes(HENRY.cow.state)), `${btn} makes him ${state === 'lie' ? 'lie down' : 'eat'}`);
   await shot('03-' + state, 200);
 }
 await page.locator('#faceBtn').tap(); await shot('04-face', 6000); await page.locator('#faceBtn').tap();

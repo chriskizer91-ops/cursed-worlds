@@ -14,8 +14,8 @@ const require = createRequire(import.meta.url);
 let pw; try { pw = require('playwright'); } catch (e) { pw = require('/opt/node22/lib/node_modules/playwright'); }
 const here = path.dirname(fileURLToPath(import.meta.url)), top = path.join(here, '..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i >= 0 ? process.argv[i + 1] : d; };
-const look = arg('look', 'henry'), model = arg('model', 'game'), detail = +arg('detail', 1), close = process.argv.includes('--close');
-const out = path.resolve(arg('out', path.join(top, 'shots', look + (model === 'game' ? '' : '-' + model))));
+const look = arg('look', 'henry'), model = arg('model', 'game'), detail = +arg('detail', 1), close = process.argv.includes('--close'), hstyle = arg('style', 'envoi');
+const out = path.resolve(arg('out', path.join(top, 'shots', look + (model === 'game' ? '' : '-' + model + (model === 'hd' ? '-' + hstyle : '')))));
 const poses = arg('poses', 'stand').split(','), views = arg('views', 'front,frontleft,left,backleft,back,right,frontright').split(',');
 const [W, H] = arg('size', '640x520').split('x').map(Number);
 fs.mkdirSync(out, {recursive: true});
@@ -23,13 +23,13 @@ fs.mkdirSync(out, {recursive: true});
 // the camera goes round the animal: the angle is measured from straight in front of it, towards its left side
 const VIEW = {front: 0, frontleft: 40, left: 90, backleft: 140, back: 180, backright: 220, right: 270, frontright: 320, top: 'top'};
 const src = f => pathToFileURL(path.join(top, f)).href;
-const scripts = ['vendor/three.r128.min.js', 'zebu-cattle/zebu.js'].concat(model === 'hd' ? ['zebu-cattle/zebu-hd.js'] : []);
-const make = model === 'hd' ? `makeZebuHD('${look}', {detail: ${detail}})` : model === 'storybook' ? `makeZebuStorybook('${look}')` : `makeZebu('${look}')`;
+const scripts = ['vendor/three.r128.min.js', 'zebu-cattle/zebu.js'].concat(model === 'hd' ? ['zebu-cattle/zebu-moves.js', 'zebu-cattle/zebu-hd.js'] : []);
+const make = model === 'hd' ? `makeZebuHD('${look}', {detail: ${detail}, style: '${hstyle}'})` : model === 'storybook' ? `makeZebuStorybook('${look}')` : `makeZebu('${look}')`;
 const page0 = path.join(out, '_turnaround.html');
 fs.writeFileSync(page0, `<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#ddd}</style><body>
 ${scripts.map(s => `<script src="${src(s)}"></script>`).join('\n')}
 <script>
-const W = ${W}, H = ${H}, MODEL = '${model}';
+const W = ${W}, H = ${H}, MODEL = '${model}' === 'hd' && '${hstyle}' === 'storybook' ? 'storybook' : '${model}';
 const r = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true}); r.setSize(W, H); document.body.appendChild(r.domElement);
 const scene = new THREE.Scene();
 if (MODEL === 'hd') {

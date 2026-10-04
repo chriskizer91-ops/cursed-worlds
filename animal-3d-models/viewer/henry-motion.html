@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Henry in Motion</title>
+<style>
+/* Henry in Motion: Henry fills the screen; the look on top, what he does at the bottom.
+   Each look dresses the page its own way: the storybook in What the Map Forgot's paper and ink, envoi in its night-blue glass. */
+:root {
+  --panel: #f4efe2; --panel-2: #e9e1cd; --ink: #1d1b2c; --ink-dim: #5a5466; --edge: #1d1b2c; --edge-w: 3px; --accent: #e8b248; --accent-ink: #1d1b2c;
+  --shadow: 0 3px 0 rgba(29, 27, 44, 0.9); --radius: 14px; --page: #e9e6d6;
+  --ui: ui-rounded, "Trebuchet MS", "Segoe UI", system-ui, sans-serif; --title: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: light;
+}
+body[data-style="envoi"] {
+  --panel: rgba(18, 20, 44, 0.78); --panel-2: rgba(40, 44, 86, 0.75); --ink: #eef0ff; --ink-dim: #b9bde0; --edge: rgba(190, 198, 255, 0.28); --edge-w: 1px;
+  --accent: #e3c27a; --accent-ink: #1a1526; --shadow: 0 6px 20px rgba(0, 0, 0, 0.35); --radius: 12px; --page: #120f1c;
+  --title: Georgia, "Times New Roman", serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--page); }
+body { font: 600 14px/1.25 var(--ui); color: var(--ink); -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+#top { position: fixed; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; pointer-events: none; }
+#top .grow { flex: 1; }
+.seg, .chip, #status, #moves { background: var(--panel); border: var(--edge-w) solid var(--edge); box-shadow: var(--shadow); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; pointer-events: auto; }
+.seg button { border: 0; background: none; padding: 7px 14px; border-radius: 999px; font-family: var(--title); font-weight: 700; font-size: 15px; letter-spacing: 0.01em; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.chip { pointer-events: auto; border-radius: 999px; padding: 8px 13px; font-size: 13px; }
+.chip[aria-pressed="false"] { opacity: 0.7; }
+#status { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 62px); transform: translateX(-50%); padding: 5px 13px; border-radius: 999px; font-family: var(--title); font-size: 15px; white-space: nowrap; pointer-events: none; }
+#hint { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 98px); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); text-align: center; font-size: 12.5px; color: var(--ink-dim); pointer-events: none; transition: opacity 0.8s; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4); }
+body[data-style="envoi"] #hint { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+#hint.gone { opacity: 0; }
+#moves { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); transform: translateX(-50%); width: min(560px, calc(100% - 24px)); box-sizing: border-box;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 7px; border-radius: calc(var(--radius) + 4px); }
+#moves button { min-width: 0; padding: 8px 0; letter-spacing: -0.02em; border-radius: var(--radius); border: var(--edge-w) solid var(--edge); background: var(--panel-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: transform 0.12s; }
+body[data-style="storybook"] #moves button { border-width: 2px; box-shadow: 0 2px 0 var(--edge); }
+#moves button:active { transform: translateY(2px); }
+#moves button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+#busy { position: fixed; inset: 0; display: grid; place-items: center; background: var(--page); font-family: var(--title); font-size: 19px; color: var(--ink); }
+#busy[hidden] { display: none; }
+@media (min-width: 700px) { #moves { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+@media (max-width: 360px) { #moves button { font-size: 12px; } .seg button { padding: 7px 10px; font-size: 14px; } }
+@media (prefers-reduced-motion: reduce) { #hint, #moves button { transition: none; } }
+</style>
+</head>
+<body data-style="storybook">
+<canvas id="view" aria-label="Henry, the white Zebu bull, in 3D"></canvas>
+<header id="top">
+  <div class="seg" role="group" aria-label="Look">
+    <button id="lookSB" data-look="storybook" aria-pressed="true">Storybook</button><button id="lookEV" data-look="envoi" aria-pressed="false">Envoi</button>
+  </div>
+  <div class="grow"></div>
+  <button id="timeBtn" class="chip" hidden aria-label="Time of day">Night</button>
+  <button id="soundBtn" class="chip" aria-pressed="true">Sound on</button>
+</header>
+<div id="status" aria-live="polite">Henry is standing</div>
+<div id="hint">Drag to walk round him · pinch to come closer · pat his head</div>
+<nav id="moves" aria-label="What Henry does">
+  <button data-go="walk">Walk</button><button data-go="trot">Trot</button><button data-go="graze">Graze</button><button data-go="moo">Moo</button><button data-go="shake">Shake</button>
+  <button data-go="swat">Swat</button><button data-go="paw">Paw</button><button data-go="toss">Toss</button><button data-go="hop" id="hopBtn">Hop</button><button data-go="stretch">Stretch</button>
+  <button data-go="lick">Lick</button><button data-go="look">Look at me</button><button data-go="lie">Lie down</button><button data-go="sleep">Sleep</button><button data-go="stand">Get up</button><button data-go="face">Close up</button>
+</nav>
+<div id="busy">Drawing Henry…</div>
+<script src="../vendor/three.r128.min.js"></script>
+<script src="cinema.js"></script>
+<script src="../zebu-cattle/zebu.js"></script>
+<script src="../zebu-cattle/zebu-moves.js"></script>
+<script src="../zebu-cattle/zebu-hd.js"></script>
+<script src="henry-meadow.js"></script>
+<script src="henry-scenes.js"></script>
+<script src="henry-motion.js"></script>
+</body>
+</html>

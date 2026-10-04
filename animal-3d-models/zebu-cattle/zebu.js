@@ -128,7 +128,9 @@
   // the storybook colours: warmer and flatter, from What the Map Forgot's palette (ink #1d1b2c, paper #f4efe2)
   const STORYBOOK = {
     henry: {coat: 0xf4efe2, shade: 0xd9ccb4, belly: 0xf8f4ea, fold: 0xd6c8ae, knee: 0xe0d4be, muzzle: 0x3b3344, hoof: 0x2b2733, tuft: 0x2b2733,
-      earIn: 0xeab7ab, earRim: 0xcdbca5, hornBase: 0xcdb59b, hornMid: 0x6d5c54, hornTip: 0x2b2733, stump: 0xeaa999, stumpSpot: 0x94564d, stumpTop: 0xf6ded4, eye: 0x1d1b2c}
+      earIn: 0xeab7ab, earRim: 0xcdbca5, hornBase: 0xcdb59b, hornMid: 0x6d5c54, hornTip: 0x2b2733, stump: 0xeaa999, stumpSpot: 0x94564d, stumpTop: 0xf6ded4, eye: 0x1d1b2c,
+      // for the storybook look of zebu-hd.js: Henry's grey neck and hump in the game's cool shadow colour, and his cheeks
+      grey: 0xcfc8d8, blush: 0xf2b4ab, iris: 0x3d2c2a}
   };
 
   function makeZebu(look, opts) {
@@ -494,6 +496,6 @@
     return {root: R, look, act, animate, anchor, joints: J, POSES: P, pose: name => { st.seq = null; st.state = name; cur.set(P[name]); tgt.set(P[name]); },
       get state() { return st.state; }, get busy() { return !!st.seq; }, get tris() { return TRIS; }};
   }
-  root.makeZebu = makeZebu; root.ZEBU_LOOKS = LOOKS;
+  root.makeZebu = makeZebu; root.ZEBU_LOOKS = LOOKS; root.ZEBU_STORYBOOK = STORYBOOK;
   root.makeZebuStorybook = (look, opts) => makeZebu(look, Object.assign({style: 'storybook'}, opts || {}));
 })(typeof window !== 'undefined' ? window : globalThis);
