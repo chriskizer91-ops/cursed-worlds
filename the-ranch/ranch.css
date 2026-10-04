@@ -1,0 +1,77 @@
+/* The Ranch: a map of the real ranch, seen from the sky, with the herd and the day's work standing up out of it.
+   Layout: the map fills the screen; a thin bar of chips on top, a sheet that slides up from the bottom. */
+:root {
+  --ink: #f6f1e4;          /* text on the dark panels */
+  --ink-dim: #c9c0aa;
+  --panel: rgba(34, 30, 24, 0.86);
+  --panel-edge: rgba(246, 241, 228, 0.14);
+  --hay: #e3b04b;          /* the accent: round-bale gold */
+  --hay-ink: #2a2116;
+  --done: #9cc56b;
+  --sign: #fbf6e8;
+  --sign-ink: #3a2c1c;
+  --sky: #b9d3df;
+  --font: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; background: #556b3b; overflow: hidden; }
+body { font: 15px/1.4 var(--font); color: var(--ink); -webkit-tap-highlight-color: transparent; }
+#app { position: fixed; inset: 0; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; background: var(--sky); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--hay); outline-offset: 2px; }
+
+#bar { position: absolute; left: 0; right: 0; top: 0; display: flex; gap: 8px; align-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; pointer-events: none; }
+#bar .spacer { flex: 1; }
+.chip { pointer-events: auto; background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 999px;
+  padding: 7px 13px; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.chip span { color: var(--hay); font-variant-numeric: tabular-nums; margin-left: 4px; }
+.chip[aria-pressed="true"] { background: var(--hay); color: var(--hay-ink); }
+
+#today { position: absolute; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 54px); width: min(320px, calc(100% - 24px));
+  background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 14px; padding: 12px 14px; box-sizing: border-box; }
+#today h2, #sheet h2 { margin: 0; font-size: 17px; text-wrap: balance; }
+#today ol { margin: 8px 0 6px; padding: 0; list-style: none; display: grid; gap: 7px; }
+#today li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; align-items: start; }
+#today li .box { width: 16px; height: 16px; margin-top: 2px; border-radius: 5px; border: 2px solid var(--ink-dim); box-sizing: border-box; }
+#today li.done .box { background: var(--done); border-color: var(--done); }
+#today li.done .what { color: var(--ink-dim); text-decoration: line-through; }
+#today li .how { display: block; color: var(--ink-dim); font-size: 13px; }
+.fine { margin: 6px 0 0; color: var(--ink-dim); font-size: 12.5px; }
+
+#sheet { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 520px; box-sizing: border-box;
+  background: var(--panel); border: 1px solid var(--panel-edge); border-bottom: 0; border-radius: 18px 18px 0 0;
+  padding: 14px 16px calc(env(safe-area-inset-bottom, 0px) + 14px); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  animation: rise 0.28s cubic-bezier(.2, 1.3, .4, 1); }
+@keyframes rise { from { transform: translateY(40px); opacity: 0; } }
+.sheet-head { display: flex; align-items: center; gap: 10px; }
+.sheet-head h2 { flex: 1; }
+.x { background: none; border: 0; font-size: 26px; line-height: 1; padding: 0 4px; color: var(--ink-dim); }
+#sheetText { margin: 6px 0 12px; color: var(--ink-dim); }
+#sheetBtns { display: flex; flex-wrap: wrap; gap: 8px; }
+#sheetBtns button { flex: 1 1 calc(50% - 8px); min-width: 0; padding: 11px 10px; border-radius: 12px; border: 1px solid var(--panel-edge);
+  background: rgba(246, 241, 228, 0.08); font-weight: 600; }
+#sheetBtns button.main { background: var(--hay); color: var(--hay-ink); border-color: transparent; }
+#sheetBtns button[aria-pressed="true"] { background: rgba(227, 176, 75, 0.25); border-color: var(--hay); }
+#sheetBtns button:disabled { opacity: 0.45; cursor: default; }
+
+#signs { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.pin { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.sign { position: absolute; left: 0; bottom: 12px; translate: -50% 0; transform-origin: 50% 100%; pointer-events: auto;
+  background: var(--sign); color: var(--sign-ink); border: 0; border-radius: 9px; padding: 5px 10px 6px; font-size: 13px; font-weight: 700;
+  box-shadow: 0 2px 0 rgba(58, 44, 28, 0.35), 0 6px 14px rgba(0, 0, 0, 0.25); white-space: nowrap;
+  transition: transform 0.38s cubic-bezier(.2, 1.7, .4, 1), opacity 0.2s; }
+.sign::after { content: ""; position: absolute; left: 50%; top: 100%; width: 3px; height: 12px; margin-left: -1.5px; background: #7a5a36; border-radius: 0 0 2px 2px; }
+.sign.cow { background: rgba(34, 30, 24, 0.82); color: var(--ink); font-weight: 600; font-size: 12px; padding: 3px 8px 4px; bottom: 8px; }
+.sign.cow::after { background: rgba(34, 30, 24, 0.6); height: 8px; width: 2px; margin-left: -1px; }
+.sign.done { background: #e7f0d6; }
+.sign.done::before { content: "✓ "; color: #4f7a24; }
+.sign.off { opacity: 0; transform: scale(0.15) translateY(10px); pointer-events: none; transition: transform 0.2s, opacity 0.15s; }
+
+#hint { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px);
+  background: var(--panel); border-radius: 999px; padding: 8px 14px; font-size: 13px; color: var(--ink-dim); text-align: center; pointer-events: none; transition: opacity 0.6s; }
+#hint.gone { opacity: 0; }
+#loading { position: absolute; inset: 0; display: grid; place-items: center; background: #556b3b; font-size: 17px; font-weight: 600; }
+#loading.gone { display: none; }
+@media (prefers-reduced-motion: reduce) { .sign, #sheet { transition: none; animation: none; } }

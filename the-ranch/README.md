@@ -5,6 +5,24 @@ The name of this folder is only a placeholder until the game has a real one.
 
 The animals are kept in [`animal-3d-models/zebu-cattle/`](../animal-3d-models/zebu-cattle/).
 
+## Try it
+
+The first playable look (October 4, 2026) is the ranch from the sky, in 3D. The link is in the chat where it was made;
+`The_Ranch.html` is the same page as one file, built with `node the-ranch/tools/build.mjs` (it isn't kept in the
+repository, because it's rebuilt every time).
+
+- Zoomed all the way out you look straight down at your map of the ranch. Drag to move, pinch to zoom, twist with two
+  fingers to turn.
+- Zoom in and the view tips over, and the trees, the houses and sheds, the barn, the fences and the things you work
+  with stand up out of the map around you, with a little bounce. Pull back out and they sink back into the painting.
+- The herd (Henry and the five others) grazes along the cow trails, wanders, and lies down now and then.
+- **Today's work** (top left) has the first four jobs of your day: put out a bale in the hay ring (the herd walks in
+  along the trails to eat), fill the troughs (thirsty cattle come to drink), let the chickens out and feed them, and
+  look the cattle over (tap each one to see it up close, walk round it, and make it walk, eat, lie down or stand).
+- **1×** makes time go four times faster. **Whole ranch** goes back to the full map.
+
+Signs for the bull pens, the fence line, the salt, the pond, the barn and the house are there, but those jobs come later.
+
 ## A day on the ranch (Chris, October 4, 2026)
 
 This is the real job, in the order Chris does it. The game is built from it.
@@ -27,7 +45,7 @@ From Chris's satellite picture (`reference/ranch-satellite-marked.jpg`, his mark
   railroad along the east (right) side running corner to corner, the road along the bottom, and a narrow point at
   the top.
 - **The cow trails** run across the pasture and all lead back to where the hay is set out, so they spread out from
-  that spot.
+  that spot: the bare dirt by the first house, in the bottom-left corner.
 - **Blue circle: the pond**, near the bottom right.
 - **Blue line: a little creek**, running down to the road west of the pond.
 - **Three homes**, each with its own outbuildings, along the bottom.
@@ -35,14 +53,32 @@ From Chris's satellite picture (`reference/ranch-satellite-marked.jpg`, his mark
 
 The street address on the satellite picture is covered, because this repository is public.
 
+## How the map works
+
+- `map/tiles/`: the six pieces of the map from the sky (the `straight-down` set), compressed for the game.
+- `map/trace.js`: where the cattle can walk, made by `tools/make-trace.mjs`. It reads the painting's colours (the
+  dirt of the trails, the grass, the dark green of the trees) and adds what was measured by hand: the pasture's edge,
+  the buildings, the yards, the pond, the fences and the places of the day's work. The cattle prefer the trails, the
+  way real cattle do, and walk round the trees.
+- Each painted tree gets a 3D tree in the same spot, coloured from the painting under it.
+
+## Checking a change
+
+```
+node the-ranch/tools/make-trace.mjs      # after changing the map or the places
+node the-ranch/tools/trace-check.mjs     # draws the trace over the map into the-ranch/shots/; ends with "trace ok"
+node the-ranch/tools/build.mjs           # builds The_Ranch.html
+node the-ranch/tools/ranch-check.mjs     # plays it on a phone-sized screen; must end with "all good"
+```
+
 ## Reference pictures
 
 - `reference/ranch-satellite-marked.jpg`: the real ranch from a satellite, with Chris's marks.
 - `reference/ranch-from-the-sky.png`: a cartoon of the ranch seen from above. Chris says it's very close
   to how the real ranch looks.
-- `reference/barn-sheet.png`: the barn (corrugated metal, rusty) from the front, both sides, the back and the top, with its fences and gates.
-- `reference/barn-background.png`: a painting of the barn and corrals with the sun going down behind the trees.
 - `reference/sky-tiles/`: the ranch from above in six pieces, closer up (Chris, October 4, 2026).
   `six-tiles-together.png` shows how they fit. `straight-down/` are the six pieces of the cartoon map, larger
-  (they line up with it exactly). `detailed/` are richer repaintings of the pieces, two or more tries each,
-  for the close-up places.
+  (they line up with it exactly, and the game uses them). `detailed/` are richer repaintings of the pieces, two or
+  more tries each, for the close-up places later.
+- `reference/barn-sheet.png`: the barn (corrugated metal, rusty) from the front, both sides, the back and the top, with its fences and gates.
+- `reference/barn-background.png`: a painting of the barn and corrals with the sun going down behind the trees.
