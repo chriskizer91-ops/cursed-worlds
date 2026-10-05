@@ -692,11 +692,18 @@ D.FOODS = {
   duck:       {name:'Duck', kcal:200, spoil:1, icon:'🦆', cook:true, meat:true, g:'duck'}
 };
 D.BAR_KCAL = 150; // Dagr's ruling: 15 bars a day is maintenance
+// The two starting kits. The realistic kit buys a few days to learn, then runs out: matches, a length of nylon cord, one
+// tarp, a water bottle, a fishing kit, a first-aid kit, and a few days of food (more on easier levels). Dagr's first kit
+// is the one his own game began with: two crates, two tarps, and a big box of ration bars.
+D.KITS = {
+  real: {gear: {crates: 0, tarp: 25, knives: 1, rounds: 99, laces: 2, hooks: 8, matches: 10, bottle: 1, firstaid: 3}, inv: {paracord: 6}, days: {easy: 6, medium: 4, hard: 3}},
+  first: {gear: {crates: 2, tarp: 50, knives: 2, rounds: 99, laces: 2, hooks: 8, matches: 0, bottle: 0, firstaid: 0}, inv: {}, bars: 100}
+};
 
 D.MATS = {
   poles:{name:'Cedar poles', icon:'🪵'}, planks:{name:'Crate planks', icon:'🪚'},
   bark:{name:'Cedar bark tinder', icon:'🟫'}, wood:{name:'Firewood', icon:'🔥'},
-  vines:{name:'Vines', icon:'🌿'}, cord:{name:'Vine cordage', icon:'➰'},
+  vines:{name:'Vines', icon:'🌿'}, cord:{name:'Vine cordage', icon:'➰'}, paracord:{name:'Nylon cord', icon:'🪢'},
   yucca:{name:'Yucca leaves', icon:'🌱'}, fiber:{name:'Yucca cord', icon:'🧵'},
   grass:{name:'Dry grass', icon:'🌾'}, stones:{name:'Cooking stones', icon:'🪨'},
   clay:{name:'Clay', icon:'🟤'}, cane:{name:'River cane', icon:'🎋'},
@@ -708,6 +715,7 @@ D.GEAR = {
   crates:{name:'Wooden crates', icon:'📦'}, tarp:{name:'Tarp (square meters)', icon:'🟦'},
   knives:{name:'Boning knives', icon:'🔪'}, rounds:{name:'Rifle rounds (never run out)', icon:'🎯'}, hooks:{name:'Fish hooks', icon:'🪝'},
   laces:{name:'Bootlaces', icon:'👟'}, bars:{name:'Ration bars', icon:'🍫'},
+  matches:{name:'Matches', icon:'🔥'}, bottle:{name:'Water bottle', icon:'🧴'}, firstaid:{name:'First-aid kit (uses)', icon:'🩹'},
   snares:{name:'Snares', icon:'➰'}
 };
 
@@ -1030,11 +1038,13 @@ D.QUESTS = [
    done:'Muddy, but wet. Every sip of untreated water is a gamble: animals upstream shed giardia into it. Making it safe comes later. First, fire.'},
   {id:'fire', ch:1, title:'Fire',
    story:'Fire is warmth, safety, cooked food and safe water. There are no matches here, so you will make it the old way: a cedar bow drill, cedar-bark tinder, and dry wood.',
+   storyKit:{real:'Fire is warmth, safety, cooked food and safe water. You have a box of matches. Use one now, and don\'t waste the rest: when they\'re gone, it\'s the bow drill.'},
    steps:[
-     {text:'Carve a bow-drill kit from a cedar pole', recipe:'bowdrill'},
-     {text:'Strip cedar bark for tinder', any:[{inv:'bark', n:1}, {stat:'fires', n:1}], at:['cedar', 'bark'], hint:'The stringy bark peels off the cedars at the Cedar Stand.'},
+     {kit:'first', text:'Carve a bow-drill kit from a cedar pole', recipe:'bowdrill'},
+     {kit:'first', text:'Strip cedar bark for tinder', any:[{inv:'bark', n:1}, {stat:'fires', n:1}], at:['cedar', 'bark'], hint:'The stringy bark peels off the cedars at the Cedar Stand.'},
      {text:'Gather an armload of firewood', any:[{inv:'wood', n:1}, {stat:'fires', n:1}], at:['cedar', 'woodC'], hint:'Dry deadwood: the pile at the Cedar Stand, or fallen limbs in the Oak Woods.'},
-     {text:'Light a fire in the ring at camp', stat:'fires', n:1, at:['camp', 'firestart'], hint:'Saw the bow drill steady and fast until it smokes, then blow the coal into the bark.'}],
+     {kit:'first', text:'Light a fire in the ring at camp', stat:'fires', n:1, at:['camp', 'firestart'], hint:'Saw the bow drill steady and fast until it smokes, then blow the coal into the bark.'},
+     {kit:'real', text:'Light a fire in the ring at camp', stat:'fires', n:1, at:['camp', 'match'], hint:'Strike a match and hold it under a nest of dry twigs, out of the wind.'}],
    done:'Smoke, a coal, a flame. You made fire with your hands. Keep it fed: an armload of wood burns about four hours.'},
   {id:'roof', ch:1, title:'A roof',
    story:'A night soaked to the skin can kill, even in spring. Lean poles against the tallest boulder and stretch half a tarp over them.',
@@ -1157,6 +1167,11 @@ D.QUESTS = [
    story:'Snares work while you do other things. Set them on the rabbit runs and check them every day, before a coyote does.',
    steps:[{text:'Set your snares', did:'snareset', at:['prairie', 'snareset'], hint:'The Prairie has good rabbit runs.'}, {text:'Bring home a catch', did:'snarecheck+', at:['prairie', 'snarecheck'], hint:'Check the line every day.'}],
    done:'A rabbit, for an hour of work days ago.'},
+  {id:'drill', side:true, kit:'real', title:'Fire without matches', when:{flag:'matchesLow'},
+   story:'Your matches are almost gone. People made fire for a hundred thousand years without them: a cedar bow drill, cedar-bark tinder, dry wood, and patience.',
+   steps:[{text:'Carve a bow-drill kit from a cedar pole', recipe:'bowdrill'}, {text:'Strip cedar bark for tinder', any:[{inv:'bark', n:1}, {stat:'drillFires', n:1}], at:['cedar', 'bark'], hint:'The stringy bark peels off the cedars at the Cedar Stand.'},
+     {text:'Start a fire with the bow drill', stat:'drillFires', n:1, at:['camp', 'firestart'], hint:'Let the fire go out first, or bank it. Saw steady and fast until it smokes, then blow the coal into the bark.'}],
+   done:'Smoke, a coal, a flame, and no match. You can make fire with your hands now, anywhere, for the rest of your life.'},
   {id:'village', side:true, title:'A little village', when:{shelter:1},
    story:'There\'s open ground all round the boulders: room for a hut to sleep in, a storehouse, a smokehouse and a workshop. Each one takes a lot of poles and grass, and each one makes camp better for good.',
    steps:[{text:'Build a sleeping hut', recipe:'hutsleep'}, {text:'Build a storehouse', recipe:'hutstore'}, {text:'Build a smokehouse', recipe:'hutsmoke'}, {text:'Build a workshop', recipe:'hutshop'}],
@@ -1342,11 +1357,13 @@ function add(s, R, k, n){
   else return;
   if (R){ const g = R.gains.find(x => x.k === k); if (g) g.n = r2(g.n + n); else R.gains.push({k, n}); }
 }
+const CORDS = {cord: 1, fiber: 1};   // nylon cord from the kit does for vine or yucca cordage
 function missing(s, need, planksOk){
   const out = [];
   for (const k in need){
     let h = have(s, k);
     if (k === 'poles' && planksOk) h += s.inv.planks;
+    if (CORDS[k]) h += s.inv.paracord || 0;
     if (h < need[k] - 1e-9) out.push(k);
   }
   return out;
@@ -1355,10 +1372,11 @@ function consume(s, R, need, planksOk){
   for (const k in need){
     let n = need[k];
     if (k === 'poles' && planksOk){ const p = Math.min(s.inv.planks, n); if (p > 0) add(s, R, 'planks', -p); n -= p; }
+    if (CORDS[k] && n > (s.inv[k] || 0)){ const c = Math.min(s.inv.paracord || 0, n - (s.inv[k] || 0)); if (c > 0) add(s, R, 'paracord', -c); n -= c; }   // your own cordage first, then the nylon
     if (n > 0) add(s, R, k, -n);
   }
 }
-function capacity(s){ return s.tools.bags * 5 + (s.tools.bowl ? 3 : 0) + (s.tools.pot ? 6 : 0) + (s.tools.rain ? 20 : 0); }
+function capacity(s){ return (s.gear.bottle || 0) * 1 + s.tools.bags * 5 + (s.tools.bowl ? 3 : 0) + (s.tools.pot ? 6 : 0) + (s.tools.rain ? 20 : 0); }
 
 /* ---------- food lots ---------- */
 const FISH = {sunfish:1, bass:1, catfish:1, gar:1};
@@ -1841,14 +1859,14 @@ E.newGame = function(opt){
   const seed = (opt.seed != null ? opt.seed : Math.floor(Math.random() * 4294967295)) >>> 0;
   const s = {
     v: 1, seed, rng: seed,
-    opt: {party: duo ? 'duo' : 'solo', rations: opt.rations === 'shared' ? 'shared' : 'each', diff: D.LEVELS[opt.diff] ? opt.diff : opt.diff === 'real' ? 'hard' : 'medium', start},
+    opt: {party: duo ? 'duo' : 'solo', rations: opt.rations === 'shared' ? 'shared' : 'each', diff: D.LEVELS[opt.diff] ? opt.diff : opt.diff === 'real' ? 'hard' : 'medium', start, kit: opt.kit === 'first' ? 'first' : 'real'},
     P: duo ? 2 : 1,
     doy0: CUM[st.m] + st.d - 1,
     t: 0, t0: 0, loc: 'camp',
     body: {hp: 100, hyd: 96, res: RES_MAX, en: 92},
     cond: {wet: 0, inc: 0, sick: 0, venom: 0, venomT: 0, rash: 0, sprain: 0, protein: 0},
-    inv: {poles: 0, planks: 0, bark: 0, wood: 0, vines: 0, cord: 0, yucca: 0, fiber: 0, grass: 0, stones: 0, clay: 0, cane: 0, grubs: 0, hides: 0, feathers: 0, stave: 0, arrows: 0},
-    gear: {crates: 2, tarp: 50, knives: 2, rounds: 99, laces: 2, hooks: 8, bars: duo && opt.rations !== 'shared' ? 200 : 100},
+    inv: {poles: 0, planks: 0, bark: 0, wood: 0, vines: 0, cord: 0, paracord: 0, yucca: 0, fiber: 0, grass: 0, stones: 0, clay: 0, cane: 0, grubs: 0, hides: 0, feathers: 0, stave: 0, arrows: 0},
+    gear: {crates: 0, tarp: 0, knives: 0, rounds: 99, laces: 0, hooks: 0, matches: 0, bottle: 0, firstaid: 0, bars: 0},
     tools: {bowdrill: false, spear: false, fishtrap: false, snares: 0, rack: false, bowl: false, pot: false, bags: 0, rain: false, hang: false, bedding: false, blanket: false, bow: false, club: false, seep: false, workbench: false, woodstore: false, cache: false, hearth: false, lookout: false, hutSleep: false, hutStore: false, hutSmoke: false, hutShop: false},
     shelter: 0,
     fire: {st: 'out', fuel: 0, at: 0, wet: false},
@@ -1871,6 +1889,12 @@ E.newGame = function(opt){
     did: {}, quest: {done: {}, open: {}}, xp: {pts: {}, today: null}, catch: {}, huts: [],
     dead: false, cause: null, deathT: 0, dmg: {}, startSeason: D.SEASON_OF[st.m]
   };
+  // the kit
+  const KIT = D.KITS[s.opt.kit], perHead = KIT.bars || 15 * KIT.days[s.opt.diff];
+  Object.assign(s.gear, KIT.gear); Object.assign(s.inv, KIT.inv);
+  // two people each packed a realistic kit (Dagr's first kit was one kit for the camp)
+  if (duo && s.opt.kit === 'real'){ for (const k of ['tarp', 'knives', 'matches', 'bottle', 'firstaid']) s.gear[k] *= 2; s.inv.paracord *= 2; }
+  s.gear.bars = perHead * (duo && opt.rations !== 'shared' ? 2 : 1);
   s.t = s.t0 = Math.round((D.SUNRISE[st.m] + 0.5) * 4) / 4;
   s.wx = {today: null, next: null, prevHi: 0, prevRain: null};
   s.wx.today = genWx(s, 0); s.wx.next = genWx(s, 1); s.wx.prevHi = s.wx.today.hi - 3;
@@ -1895,7 +1919,8 @@ E.intro = function(s){
   return [
     who + ' up in a wide clearing in North Texas. It is ' + D.MONTH_FULL[st.m] + ' ' + st.d + '. No roads, no fences, no contrails. In this world, humans never existed.',
     'Dagr\'s rules: real-world physics, and survive as long as you can.',
-    'Your kit: two wooden crates, two 5-by-5-meter tarps, ' + s.gear.bars + ' ration bars (about 150 Calories each; 15 a day just keeps a person even), two boning knives, a rifle that never runs out (each hunt gives you three shots), and a little fishing kit: line and 8 hooks.',
+    kitOf(s) === 'real' ? (s.P > 1 ? 'Your kits (one each): ' : 'Your kit: ') + s.gear.bars + ' ration bars (about 150 Calories each; 15 a day just keeps a person even, so that\'s ' + Math.round(s.gear.bars / 15 / s.P) + ' days of food' + (s.P > 1 ? ' each' : '') + '), ' + (s.P > 1 ? 'two boxes of 10 matches, two lengths of 50 feet of nylon cord, two 5-by-5-meter tarps, two one-liter water bottles, two boning knives, two small first-aid kits' : 'a box of 10 matches, 50 feet of nylon cord, one 5-by-5-meter tarp, a one-liter water bottle, a boning knife, a small first-aid kit') + ', a little fishing kit (line and 8 hooks), and a rifle that never runs out (each hunt gives you three shots). The food and the matches won\'t last. Learn fast.'
+    : 'Your kit: two wooden crates, two 5-by-5-meter tarps, ' + s.gear.bars + ' ration bars (about 150 Calories each; 15 a day just keeps a person even), two boning knives, a rifle that never runs out (each hunt gives you three shots), and a little fishing kit: line and 8 hooks.',
     'Water is the first problem. The river is a short walk south of the boulders, but untreated water is a gamble.'
   ].concat(s.mate && s.mate.job ? ['Your partner has ideas of his own and works on his own: "' + s.mate.job.say + '" You can follow along and watch, or get on with your own work.'] : []);
 };
@@ -2150,7 +2175,7 @@ function ivyCheck(s, R, p){
     R.lines.push('Later your forearms start to itch and blister. Some of those vines were poison ivy. It will take about a week to clear up.');
   }
 }
-function bowstring(s){ return s.inv.fiber > 0 ? 'fiber' : s.inv.cord > 0 ? 'cord' : s.gear.laces > 0 ? 'laces' : null; }
+function bowstring(s){ return s.inv.paracord > 0 ? 'paracord' : s.inv.fiber > 0 ? 'fiber' : s.inv.cord > 0 ? 'cord' : s.gear.laces > 0 ? 'laces' : null; }
 function fireChance(s){
   let p = 0.35 + LV(s).fire;
   p += Math.min(0.45, 0.12 * s.skill.fireOK) + Math.min(0.2, 0.05 * s.skill.fireFail);
@@ -2202,7 +2227,7 @@ act({id: 'firestart', loc: 'camp', name: 'Start a fire with the bow drill', icon
     add(s, R, 'bark', -1);
     if (chance(s, p)){
       s.fire = {st: 'lit', fuel: woodHours(s) * 0.75, at: s.t, wet: false}; add(s, R, 'wood', -1);
-      s.skill.fireOK++; s.stats.fires++;
+      s.skill.fireOK++; s.stats.fires++; s.stats.drillFires = (s.stats.drillFires || 0) + 1;
       R.lines.push(s.skill.fireOK === 1 ? 'Smoke curls up from the fireboard. A glowing coal drops into the notch. You fold it into the cedar bark and blow, gently, then harder, and the bundle bursts into flame. Fire!' : 'The spindle smokes, a coal forms, and the bark bundle catches. The fire is lit.');
       R.lines.push('Keep it fed: each armload of firewood burns about ' + woodHours(s) + ' hours.');
       ach(s, R, 'fire'); unlock(s, 'cedar', R);
@@ -2210,11 +2235,43 @@ act({id: 'firestart', loc: 'camp', name: 'Start a fire with the bow drill', icon
       s.skill.fireFail++;
       R.lines.push(pick(s, ['You saw until your arms burn. Plenty of smoke, but no coal.', 'A coal forms, then crumbles to nothing when you try to move it.', 'The spindle keeps popping out of the socket. No coal this time.']) + ' Every try teaches your hands something.');
     }
-    const sp = {fiber: 0.06, cord: 0.25, laces: 0.05}[str] || 0;
+    const sp = {paracord: 0.02, fiber: 0.06, cord: 0.25, laces: 0.05}[str] || 0;
     if (chance(s, sp)){
       if (str === 'laces'){ add(s, R, 'laces', -1); R.lines.push('Your bootlace bowstring snapped.'); }
-      else { add(s, R, str, -1); R.lines.push(str === 'cord' ? 'The vine bowstring snapped. Vines are weak for this job; yucca cord lasts much longer.' : 'Your yucca-cord bowstring finally wore through.'); }
+      else { add(s, R, str, -1); R.lines.push(str === 'cord' ? 'The vine bowstring snapped. Vines are weak for this job; yucca cord lasts much longer.' : str === 'paracord' ? 'Your nylon bowstring finally frayed through.' : 'Your yucca-cord bowstring finally wore through.'); }
     }
+  }});
+act({id: 'match', loc: 'camp', name: 'Light a fire with a match', icon: '🔥', h: 0.25, work: 'light', dark: 'ok',
+  show: s => s.fire.st === 'out' && s.gear.matches > 0,
+  can(s){
+    if (s.inv.wood < 1) return 'You need firewood.';
+    if (rainNow(s, s.t) && s.shelter < 1 && !s.tools.woodstore) return 'Everything is soaked. Build a shelter to work under.';
+    return true;
+  },
+  sub: s => s.gear.matches + (s.gear.matches === 1 ? ' match left. ' : ' matches left. ') + 'About a ' + Math.round(matchChance(s) * 100) + '% chance. Shield it from the wind.',
+  run(s, R){
+    const p = matchChance(s);
+    pass(s, 0.25, 'light', R, {camp: true}); if (s.dead) return;
+    add(s, R, 'matches', -1);
+    if (chance(s, p)){
+      s.fire = {st: 'lit', fuel: woodHours(s) * 0.75, at: s.t, wet: false}; add(s, R, 'wood', -1); s.stats.fires++;
+      R.lines.push('You cup your hands round the match and hold it under a nest of dry twigs and grass. It catches, and the wood takes. Fire!');
+      R.lines.push('Keep it fed: each armload of firewood burns about ' + woodHours(s) + ' hours.');
+    } else R.lines.push(pick(s, ['A gust snuffs the match before the twigs catch.', 'The match head crumbles: a little damp got into the box.', 'The twigs smoke and go out. They weren\'t dry enough.']));
+    if (s.gear.matches <= 3 && !s.flags.matchesLow){ s.flags.matchesLow = true; R.lines.push(s.gear.matches ? 'Only ' + s.gear.matches + ' matches left. Time to learn the bow drill.' : 'That was your last match. From now on, fire the old way: a bow drill.'); }
+  }});
+function matchChance(s){ let p = 0.9; const rain = rainNow(s, s.t); if (rain && !s.tools.woodstore) p = rain.kind === 'storm' ? 0.45 : 0.6; else if (rainedEarlierToday(s) && !s.tools.woodstore) p = 0.78; if (s.body.en < 15) p *= 0.85; return p; }
+act({id: 'firstaid', loc: '*', name: 'Use the first-aid kit', icon: '🩹', h: 0.25, work: 'rest', dark: 'ok',
+  show: s => s.gear.firstaid > 0 && (s.body.hp < 85 || s.cond.sprain > 0 || s.cond.rash > 0),
+  sub: s => s.gear.firstaid + (s.gear.firstaid === 1 ? ' use left' : ' uses left') + ': bandages, a wrap for a sprain, and itch cream.',
+  run(s, R){
+    pass(s, 0.25, 'rest', R); if (s.dead) return;
+    add(s, R, 'firstaid', -1);
+    const bits = [];
+    if (s.body.hp < 95){ s.body.hp = Math.min(100, s.body.hp + 15); bits.push('clean and bandage the scrapes and cuts'); }
+    if (s.cond.sprain > 0){ s.cond.sprain *= 0.4; bits.push('wrap the ankle tight'); }
+    if (s.cond.rash > 0){ s.cond.rash *= 0.5; bits.push('smear itch cream on the rash'); }
+    R.lines.push('You ' + (bits.length > 1 ? bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1] : bits[0] || 'check yourself over') + '.' + (s.gear.firstaid ? '' : ' That was the last of the first-aid kit.'));
   }});
 act({id: 'addwood', loc: 'camp', name: 'Add firewood', icon: '🪵', h: 0.25, work: 'light', dark: 'ok', haz: false,
   show: s => s.fire.st === 'lit',
@@ -3071,7 +3128,7 @@ E.recipes = function(s){
       totalHours: tot, remaining: r2(remaining), prereq, prerequisites: prereq,
       materialReserved: !!pj, savings: pj ? 0 : r2(recBaseTotal(s, r) - tot),
       anywhere: !!r.anywhere, planks: !!r.planks,
-      need: r.need ? Object.keys(r.need).map(k => ({k, name: matName(k), n: r.need[k], have: (k === 'poles' && r.planks) ? s.inv.poles + s.inv.planks : have(s, k), reserved: !!pj})) : [],
+      need: r.need ? Object.keys(r.need).map(k => ({k, name: matName(k), n: r.need[k], have: (k === 'poles' && r.planks) ? s.inv.poles + s.inv.planks : CORDS[k] ? have(s, k) + (s.inv.paracord || 0) : have(s, k), reserved: !!pj})) : [],
       status: st.status, why: st.why || '', prog: st.prog || 0, started: !!pj,
       count: r.count ? s.tools[r.count] : null};
   });
@@ -3394,12 +3451,17 @@ E.foodTip = s => s.dead || s.pending ? null : foodTip(s);
 function adviceGoals(s){
   const G = [], b = s.body, cap = capacity(s);
   const goal = (text, x) => { G.push(lead('goal', text, x)); };
+  if (s.gear.firstaid > 0 && (b.hp < 55 || s.cond.sprain > 24)) goal(b.hp < 55 ? 'You\'re hurt. Use your first-aid kit.' : 'Wrap that ankle: use your first-aid kit.', {act: 'firstaid'});
   if (isEvening(s) && s.loc === 'camp'){
     if (s.fire.st === 'lit' && s.fire.fuel < 8 && s.inv.wood >= 2) goal('Stock the fire so it lasts until dawn.', {go: 'camp', act: 'stock'});
     else if (s.fire.st === 'lit' && s.fire.fuel < 4 && s.inv.wood === 1) goal('Put your last armload on the fire before you sleep.', {go: 'camp', act: 'addwood'});
     if (isDark(s) || b.en < 35) goal(isDark(s) ? 'It\'s dark. Sleep until morning' + (s.fire.st === 'lit' ? ', or work a while by firelight.' : '.') : 'You\'re tired and the light is going. Sleep until morning.', {go: 'camp', act: 'sleep'});
   }
-  if (!s.tools.bowdrill) goal('Fire first. Carve a bow-drill kit from a cedar pole.', {recipe: 'bowdrill'});
+  if (s.gear.matches > 0 && s.fire.st === 'out' && !s.stats.fires){
+    if (s.inv.wood < 1){ const w = nearestWood(s); goal('Fire first. Gather an armload of firewood, then strike a match in the fire ring.', {go: w[0], act: w[1]}); }
+    else goal('Fire first. You have firewood: strike a match in the fire ring at camp.', {go: 'camp', act: 'match'});
+  }
+  else if (!s.tools.bowdrill && (!s.gear.matches || s.flags.matchesLow)) goal(s.gear.matches ? 'Your matches are running out. Carve a bow-drill kit from a cedar pole while you still have some.' : 'Fire first. Carve a bow-drill kit from a cedar pole.', {recipe: 'bowdrill'});
   else if (s.fire.st === 'out' && !s.stats.fires){
     if (s.inv.bark < 1) goal('A fire needs tinder. Strip cedar bark at the Cedar Stand.', {go: 'cedar', act: 'bark'});
     else if (s.inv.wood < 1){ const w = nearestWood(s); goal('A fire needs fuel. Gather an armload or two of firewood.', {go: w[0], act: w[1]}); }
@@ -3407,8 +3469,8 @@ function adviceGoals(s){
     else if (rainNow(s, s.t) && s.shelter < 1) goal('Everything is soaked. A lean-to gives you a dry place to work the bow drill.', {recipe: 'leanto'});
     else goal('You have a bow drill, bark, and firewood. Start a fire at camp.', {go: 'camp', act: 'firestart'});
   }
-  if (!s.shelter) goal('Build a lean-to at camp: poles or crate planks, vine cordage, and half a tarp.', {recipe: 'leanto'});
-  if (!cap) goal('Fold a tarp water bag so you can carry water.', {recipe: 'bag'});
+  if (!s.shelter) goal('Build a lean-to at camp: poles, cordage, and half a tarp.', {recipe: 'leanto'});
+  if (!s.tools.bags && cap < 5) goal(cap ? 'Your bottle holds a single liter. Fold a tarp water bag so you can carry real water.' : 'Fold a tarp water bag so you can carry water.', {recipe: 'bag'});
   const otherWater = s.tools.pot || s.tools.rain || s.found.spring;
   if (!s.tools.bowl && !otherWater) goal('Untreated water is a gamble. Burn out a wooden bowl so you can boil it safe.', {recipe: 'bowl'});
   if (s.tools.bowl && s.inv.stones < 4 && !otherWater) goal('Boiling in a wooden bowl takes four hot stones. Collect dry ones on the Prairie.', {go: 'prairie', act: 'stones'});
@@ -3530,15 +3592,19 @@ function whenOK(s, w){
   return cond(s, w);
 }
 const qBase = (s, q) => q.side && s.quest.open[q.id] ? s.quest.open[q.id].base : null;
+// a quest's steps (and story) for the kit you started with
+const kitOf = s => (s.opt && s.opt.kit) || 'first';
+const stepsOf = (s, q) => q.steps.filter(st => !st.kit || st.kit === kitOf(s));
+const kitQuest = (s, q) => !q.kit || q.kit === kitOf(s);
 function checkQuests(s, R){
   const day = dayIdx(s.t) + 1;
   for (const q of D.QUESTS){
-    if (s.quest.done[q.id]) continue;
+    if (s.quest.done[q.id] || !kitQuest(s, q)) continue;
     if (q.side && !s.quest.open[q.id]){
       if (!whenOK(s, q.when)) continue;
       s.quest.open[q.id] = {day, base: Object.assign({}, s.did)}; R.opened.push(q.id); continue;
     }
-    if (q.steps.every(st => cond(s, st, qBase(s, q)))){ s.quest.done[q.id] = day; R.quests.push(q.id); if (s.quest.follow === q.id) delete s.quest.follow; }
+    if (stepsOf(s, q).every(st => cond(s, st, qBase(s, q)))){ s.quest.done[q.id] = day; R.quests.push(q.id); if (s.quest.follow === q.id) delete s.quest.follow; }
   }
 }
 // What a job needs before it can be done, as the step that gets it: so a quest never sends you somewhere to fail.
@@ -3552,6 +3618,7 @@ function foodToRack(s){
   return null;
 }
 const NEEDS = {
+  match(s){ if (s.inv.wood < 1){ const w = nearestWood(s); return {how: 'A fire needs fuel. Gather firewood.', go: w[0], act: w[1]}; } return null; },
   boil(s){
     if (!capacity(s)) return plan1(s, 'bag', 'You need something to carry water in.');
     if (s.water.raw < 0.1) return {how: 'Fill your bag with river water first, then bring it back to boil.', go: 'river', act: s.tools.seep ? 'fill_seep' : 'fill_river'};
@@ -3608,10 +3675,10 @@ function stepGuide(s, st){
   return out;
 }
 function questView(s, q){
-  const base = qBase(s, q), ok = q.steps.map(st => cond(s, st, base)), i = ok.indexOf(false);
-  return {id: q.id, title: q.title, ch: q.ch || 0, chapter: q.ch ? D.CHAPTERS[q.ch] : 'Side quest', side: !!q.side, story: q.story, doneText: q.done,
-    finished: !!s.quest.done[q.id], steps: q.steps.map((st, j) => ({text: st.text, done: ok[j]})), progress: ok.filter(Boolean).length, total: ok.length,
-    step: i >= 0 ? Object.assign({text: q.steps[i].text}, stepGuide(s, q.steps[i])) : null};
+  const base = qBase(s, q), steps = stepsOf(s, q), ok = steps.map(st => cond(s, st, base)), i = ok.indexOf(false);
+  return {id: q.id, title: q.title, ch: q.ch || 0, chapter: q.ch ? D.CHAPTERS[q.ch] : 'Side quest', side: !!q.side, story: (q.storyKit && q.storyKit[kitOf(s)]) || q.story, doneText: q.done,
+    finished: !!s.quest.done[q.id], steps: steps.map((st, j) => ({text: st.text, done: ok[j]})), progress: ok.filter(Boolean).length, total: ok.length,
+    step: i >= 0 ? Object.assign({text: steps[i].text}, stepGuide(s, steps[i])) : null};
 }
 // The quest you're following: one you picked, or else the next main quest not yet done.
 E.quests = function(s){
@@ -3633,6 +3700,10 @@ function fireStep(s){
   if (s.fire.st === 'banked'){
     if (s.inv.bark < 1 && s.inv.wood < 1){ const w = nearestWood(s); return {text: 'The banked coals need something to catch on. Gather firewood first.', go: w[0], act: w[1]}; }
     return {text: 'Uncover the banked coals to get the fire going.', go: 'camp', act: 'uncover'};
+  }
+  if (s.gear.matches > 0){
+    if (s.inv.wood < 1){ const w = nearestWood(s); return {text: 'A fire needs fuel. Gather firewood.', go: w[0], act: w[1]}; }
+    return {text: 'This needs a burning fire. Strike a match in the fire ring at camp.', go: 'camp', act: 'match'};
   }
   if (!s.tools.bowdrill) return null;
   if (s.inv.bark < 1) return {text: 'A fire needs tinder. Strip cedar bark at the Cedar Stand.', go: 'cedar', act: 'bark'};
@@ -3681,7 +3752,7 @@ E.plan = function(s, id, depth){
   }
   if (!pj && r.need){
     for (const k of missing(s, r.need, r.planks)){
-      const got = have(s, k) + (k === 'poles' && r.planks ? s.inv.planks : 0), short = r.need[k] - got, more = got > 0 ? ' more ' : ' ';
+      const got = have(s, k) + (k === 'poles' && r.planks ? s.inv.planks : 0) + (CORDS[k] ? s.inv.paracord || 0 : 0), short = r.need[k] - got, more = got > 0 ? ' more ' : ' ';
       if (D.MAKES[k]){
         const step = via(E.plan(s, D.MAKES[k], depth + 1), D.MAKES[k]);
         if (step) return step;
@@ -3707,18 +3778,18 @@ E.plan = function(s, id, depth){
 };
 function fmtShort(n){ return String(Math.round(n * 10) / 10); }
 function durShort(h){ const m = Math.round(h * 60); if (m < 60) return m + ' min'; const hh = Math.floor(m / 60), mm = m % 60; return hh + ' h' + (mm ? ' ' + mm + ' min' : ''); }
-const UNIT1 = {poles: 'cedar pole', bark: 'bundle of bark', wood: 'armload of firewood', vines: 'vine', cord: 'length of vine cord', yucca: 'yucca leaf', fiber: 'length of yucca cord', grass: 'armload of grass',
+const UNIT1 = {poles: 'cedar pole', paracord: 'length of nylon cord', bark: 'bundle of bark', wood: 'armload of firewood', vines: 'vine', cord: 'length of vine cord', yucca: 'yucca leaf', fiber: 'length of yucca cord', grass: 'armload of grass',
   stones: 'cooking stone', clay: 'lump of clay', cane: 'cane stem', grubs: 'grub', hides: 'hide', feathers: 'feather', stave: 'bois d\'arc stave', arrows: 'arrow'};
-const UNITN = {poles: 'cedar poles', bark: 'bundles of bark', wood: 'armloads of firewood', vines: 'vines', cord: 'lengths of vine cord', yucca: 'yucca leaves', fiber: 'lengths of yucca cord', grass: 'armloads of grass',
+const UNITN = {poles: 'cedar poles', paracord: 'lengths of nylon cord', bark: 'bundles of bark', wood: 'armloads of firewood', vines: 'vines', cord: 'lengths of vine cord', yucca: 'yucca leaves', fiber: 'lengths of yucca cord', grass: 'armloads of grass',
   stones: 'cooking stones', clay: 'lumps of clay', cane: 'cane stems', grubs: 'grubs', hides: 'hides', feathers: 'feathers', stave: 'bois d\'arc staves', arrows: 'arrows'};
 function unitOf(k, n){ return (Math.abs(n) === 1 ? UNIT1[k] : UNITN[k]) || matName(k); }
 E.progression = function(s){
   const goal = (id, label, done, recipe) => ({id, label, done: !!done, recipe: recipe || null});
   const stages = [
     {name:'First foothold', desc:'Make a dry place to sleep and a dependable way to drink.', checklist:[
-      goal('fire','Light your first fire',s.stats.fires > 0,s.tools.bowdrill ? null : 'bowdrill'),
+      goal('fire','Light your first fire',s.stats.fires > 0,s.tools.bowdrill || s.gear.matches > 0 ? null : 'bowdrill'),
       goal('shelter','Build a lean-to',s.shelter >= 1,'leanto'),
-      goal('carry','Make a water container',capacity(s) > 0,'bag'),
+      goal('carry','Make a water container',s.tools.bags > 0 || capacity(s) >= 5,'bag'),
       goal('water',s.tools.bowl && s.inv.stones < 4 && !s.tools.pot && !s.tools.rain && !s.found.spring ? 'Collect four cooking stones on the Prairie' : 'Secure a way to get safe water',(s.tools.bowl && s.inv.stones >= 4) || s.tools.pot || s.tools.rain || s.found.spring,s.tools.bowl ? null : 'bowl'),
       goal('bed','Make a grass bed',s.tools.bedding,'bedding')]},
     {name:'A working camp', desc:'Protect the fire, gather wild food, and preserve the surplus.', checklist:[
@@ -3752,6 +3823,10 @@ E.load = function(str){
     if (!Object.prototype.hasOwnProperty.call(D.LOCS, s.loc) || !Number.isFinite(s.t) || !Number.isFinite(s.t0) || !Number.isFinite(s.doy0) || !Number.isFinite(s.rng)) return null;
     if ((s.P !== 1 && s.P !== 2) || !Number.isInteger(s.shelter) || s.shelter < 0 || s.shelter > 3) return null;
     if (!Number.isFinite(s.gear.hooks)) s.gear.hooks = 8;   // saves from before hook-and-line fishing
+    if (s.opt.kit !== 'real' && s.opt.kit !== 'first') s.opt.kit = 'first';   // saves from before the realistic kit
+    for (const k of ['matches', 'bottle', 'firstaid']) if (!Number.isFinite(s.gear[k])) s.gear[k] = 0;
+    if (!Number.isFinite(s.inv.paracord)) s.inv.paracord = 0;
+    if (!Number.isFinite(s.stats.drillFires)) s.stats.drillFires = s.opt.kit === 'first' ? s.stats.fires || 0 : 0;
     s.gear.rounds = 99;                                      // the rifle never runs out now
     const numeric = {body:['hp','hyd','res','en'], water:['clean','raw','risk'], inv:Object.keys(D.MATS), gear:Object.keys(D.GEAR).filter(k => k !== 'snares'), tools:['bags','snares'], fire:['fuel','at'], pot:['dried','tries'], skill:['fireOK','fireFail','spear']};
     if (Object.keys(numeric).some(k => numeric[k].some(field => !Number.isFinite(s[k][field])))) return null;
@@ -3802,7 +3877,7 @@ E.skills = function(s){
    eats and drinks when you do. (His jobs are the same jobs you do, worked out with MATE on: no time passes for you.) */
 let MATE = false;
 // one person alone, carrying what one person can carry, with a long walk each way: about this much of what you'd get
-const MATE_YIELD = 0.6;
+const MATE_YIELD = 0.7;
 const newMate = () => ({job: null, news: [], lastK: null, n: 0});
 function mateOK(M){
   const o = x => !!x && typeof x === 'object' && !Array.isArray(x), num = x => typeof x === 'number' && Number.isFinite(x);
@@ -3847,7 +3922,7 @@ function mateNeed(s){
 }
 function mateJobs(s){
   const L = [], cap = capacity(s), water = s.water.clean + s.water.raw, wood = s.inv.wood, cold = [10, 11, 0, 1, 2].indexOf(monthNow(s)) >= 0;
-  const kcal = wildKcal(s) + s.gear.bars * D.BAR_KCAL, hungry = clamp(1 - kcal / (2200 * s.P) / 8, 0, 1);
+  const kcal = wildKcal(s) + s.gear.bars * D.BAR_KCAL, hungry = clamp(1 - kcal / (2200 * s.P) / 6, 0, 1);   // under six days of food for the two of you, food comes first
   const job = (k, at, act, score, say, more) => L.push(Object.assign({k, at, act, score, say}, more || {}));
   if (cap >= 2 && water < cap * 0.6){ const w = mateWater(s); job('water', w.at, w.act, 30 + 50 * (1 - water / cap), 'We\'re low on water. I\'m taking the bags to ' + placeTo(w.at) + '.'); }
   if (s.water.raw >= 1 && s.fire.st === 'lit' && (s.tools.pot || (s.tools.bowl && s.inv.stones >= 4)) && s.water.clean < 3 * s.P) job('boil', 'camp', 'boil', 55, 'I\'ll boil the river water so it\'s safe to drink.');
@@ -7038,7 +7113,7 @@ let S = null, tab = 'here', jtab = 'quests', sel = null, seenGuide = 0, seenAch 
 let view = 'map';   // the walk; the side view is a look around
 if (window.World) World.gb(store.get('clearing.gb.v1') === '1');
 let craftGroup = 'All', planTrail = [], planOpen = '';
-let opt = {start: 'spring', party: 'solo', rations: 'each', diff: 'medium'};
+let opt = {start: 'spring', party: 'solo', rations: 'each', diff: 'medium', kit: 'real'};
 try { const o = JSON.parse(store.get(KEY.opt) || 'null'); if (o) opt = Object.assign(opt, o); } catch (e) {}
 if (opt.diff === 'real') opt.diff = 'hard'; if (!D.LEVELS[opt.diff]) opt.diff = 'medium';
 const savedTheme = store.get(KEY.theme);
@@ -7072,7 +7147,7 @@ function spoilText(h){
 }
 const shortPlace = k => D.LOCS[k].name.replace(/^The /, '');
 
-const UNIT = {poles: ['cedar pole', 'cedar poles'], planks: ['crate plank', 'crate planks'], bark: ['bundle of bark', 'bundles of bark'],
+const UNIT = {poles: ['cedar pole', 'cedar poles'], planks: ['crate plank', 'crate planks'], bark: ['bundle of bark', 'bundles of bark'], paracord: ['length of nylon cord', 'lengths of nylon cord'], matches: ['match', 'matches'], firstaid: ['first-aid kit use', 'first-aid kit uses'],
   wood: ['armload of firewood', 'armloads of firewood'], vines: ['vine', 'vines'], cord: ['length of vine cord', 'lengths of vine cord'],
   yucca: ['yucca leaf', 'yucca leaves'], fiber: ['length of yucca cord', 'lengths of yucca cord'], grass: ['armload of grass', 'armloads of grass'],
   stones: ['cooking stone', 'cooking stones'], clay: ['lump of clay', 'lumps of clay'], cane: ['cane stem', 'cane stems'], grubs: ['grub', 'grubs'],
@@ -7250,7 +7325,8 @@ function titleScreen(){
 <p class="lede">You wake up in a clearing in North Texas, in a world where people never existed. You have two crates, two tarps, a box of ration bars, two knives, fishing hooks, and a rifle that never runs out of rounds. Real plants, real animals, real weather. Walk the land, learn it, and survive as long as you can.</p>
 <div class="optset"><p>When do you arrive?</p>${choice('start', Object.keys(D.STARTS).map(k => [k, D.STARTS[k].label, D.STARTS[k].sub]))}</div>
 <div class="optset"><p>Who's out there?</p>${choice('party', [['solo', 'Just you', 'Every job is yours'], ['duo', 'You and a partner', 'He picks his own jobs. Two mouths to feed']])}</div>
-${opt.party === 'duo' ? `<div class="optset"><p>Ration bars</p>${choice('rations', [['each', '100 each', 'As in Dagr\'s game'], ['shared', '100 to share', 'Harder: half the food']])}</div>` : ''}
+<div class="optset"><p>What's in your pack?</p>${choice('kit', [['real', 'A realistic kit', 'Matches, cord, one tarp, a few days of food'], ['first', 'Dagr\'s first kit', 'Two crates, two tarps, 100 ration bars']])}</div>
+${opt.party === 'duo' ? `<div class="optset"><p>Ration bars</p>${choice('rations', [['each', 'Food for each of you', 'Twice as many bars'], ['shared', 'One share for two', 'Harder: half the food']])}</div>` : ''}
 <div class="optset"><p>How hard?</p>${choice('diff', D.LEVEL_ORDER.map(k => [k, D.LEVELS[k].name, D.LEVELS[k].sub]))}</div>
 <div class="startbtns">
 ${savedS && !savedS.dead ? `<button type="button" class="btn hot" id="resume">Keep playing: day ${E.hud(savedS).day} at ${esc(D.LOCS[savedS.loc].name)}</button>` : ''}
@@ -7533,10 +7609,15 @@ function packTab(){
 </ul><p class="note">${w.cap ? 'Your containers hold ' + w.cap + ' liters.' : 'No containers yet. Fold a tarp water bag in the Craft tab.'}</p></div>`;
   const mats = Object.keys(D.MATS).filter(k => S.inv[k] > 0);
   h += '<div class="sect"><h3>Materials</h3>' + (mats.length ? '<div class="grid">' + mats.map(k => `<div><span>${D.MATS[k].icon}</span>${esc(D.MATS[k].name)}<b>${fmtN(S.inv[k])}</b></div>`).join('') + '</div>' : '<p class="note">Nothing yet. The Cedar Stand, the Prairie, and the River Bank have plenty.</p>') + '</div>';
-  const t = S.tools, gear = [['📦', 'Wooden crates', S.gear.crates], ['🟦', 'Tarp', S.gear.tarp + ' m²'], ['🔪', 'Boning knives', S.gear.knives], ['🎯', 'Rifle', 'never runs out'], ['🪝', 'Fish hooks', S.gear.hooks], ['👟', 'Bootlaces', S.gear.laces]];
+  const t = S.tools, gear = [S.gear.crates > 0 && ['📦', 'Wooden crates', S.gear.crates], ['🟦', 'Tarp', S.gear.tarp + ' m²'], ['🔪', S.gear.knives === 1 ? 'Boning knife' : 'Boning knives', S.gear.knives], ['🎯', 'Rifle', 'never runs out'], ['🪝', 'Fish hooks', S.gear.hooks], ['👟', 'Bootlaces', S.gear.laces],
+    S.gear.matches > 0 && ['🔥', 'Matches', S.gear.matches], S.gear.bottle > 0 && ['🧴', 'Water bottle', '1 liter'], S.gear.firstaid > 0 && ['🩹', 'First-aid kit', S.gear.firstaid + (S.gear.firstaid === 1 ? ' use' : ' uses')]].filter(Boolean);
   const tools = [[t.bowdrill, '🔥', 'Bow drill'], [t.club, '🪚', 'Nailed plank'], [t.spear, '🔱', 'Fishing spear'], [t.fishtrap, '🧺', 'Fish trap'], [t.snares, '➰', 'Snares', t.snares], [t.bags, '🎒', 'Water bags', t.bags], [t.bowl, '🥣', 'Wooden bowl'], [t.pot, '🏺', 'Clay pot'], [t.rain, '🌧️', 'Rain catcher'], [t.rack, '🪜', 'Drying rack'], [t.hang, '🪢', 'Food hang'], [t.bedding, '🌾', 'Grass bed'], [t.blanket, '🐾', 'Hide blanket'], [t.bow, '🏹', 'Bois d\'arc bow'], [t.seep, '⛏️', 'Seep well']];
   h += '<div class="sect"><h3>Gear</h3><div class="grid">' + gear.map(([i, n, v]) => `<div><span>${i}</span>${esc(n)}<b>${esc(v)}</b></div>`).join('') +
-    tools.filter(x => x[0]).map(([, i, n, c]) => `<div><span>${i}</span>${esc(n)}<b>${c ? c : ''}</b></div>`).join('') + '</div></div>';
+    tools.filter(x => x[0]).map(([, i, n, c]) => `<div><span>${i}</span>${esc(n)}<b>${c ? c : ''}</b></div>`).join('') + '</div>';
+  // the first-aid kit, when you need it
+  const fa = E.actions(S).find(a => a.id === 'firstaid');
+  if (fa) h += `<ul class="rows"><li class="row"><span class="ic">🩹</span><div><div class="nm">First-aid kit</div><div class="sub">${esc(fa.sub)}</div></div><button type="button" class="btn" data-act="firstaid"${fa.ok ? '' : ' disabled'}>Use it</button></li></ul>`;
+  h += '</div>';
   return h;
 }
 

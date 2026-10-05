@@ -317,6 +317,12 @@ a long, patient fight. Muddy river water shows shadows; the clear creek shows co
 ### Doing one thing a lot builds something you can see
 
 - Huts aren't one each. With enough wood you build another, and another, on the open ground round the boulders.
+  **Built October 5, 2026:** four hut plots round the boulders (camp trace sites `hut1` to `hut4`), and four huts, one
+  of each, built from the work ground in sessions (the partner helps): a **sleeping hut** (a beehive of bent poles
+  under thatch: better sleep at camp, warmer nights), a **storehouse** up on posts (raiders can't reach the food, a bear
+  only rarely; fresh food keeps a quarter longer), a **smokehouse** (meat smokes half again as fast, even in rain), and
+  a **workshop** (projects at camp 15% faster). Poles also come from oak saplings in the Oak Woods once the cedars run
+  short. A side quest, "A little village", and two badges.
 - Any job you keep doing turns into something lasting. *Proposal:* the camp has building plots, and each skill
   has things to build. Wood gives woodpiles, more huts, a palisade and a lodge. Fishing gives fish weirs and a
   smokehouse. Hunting gives a hide-tanning frame and a hide tent.
@@ -335,7 +341,15 @@ a long, patient fight. Muddy river water shows shadows; the clear creek shows co
 
 ### A starting kit that buys time to learn, then runs out
 
-*Proposal*, in place of two crates, two big tarps, 100 ration bars, two knives and 50 rounds:
+**Built October 5, 2026,** as the "realistic kit", the default on the title screen. Dagr's first kit (two crates, two
+tarps, 100 ration bars each) stays as the other choice. In the two-person game each person packed a kit, so the gear
+comes in twos. The food is ration bars: 6 days' worth on Easy, 4 on Medium, 3 on Hard. The matches light a fire with
+one tap (a little less often in rain); with three left, a side quest, "Fire without matches", teaches the bow drill.
+The nylon cord does for any cordage (and makes the best bowstring). The bottle holds a liter, and can't go on a fire.
+The first-aid kit has three uses: it heals cuts, wraps a sprain, and calms poison ivy. Not built yet: the tarp wearing out.
+Robot players with the realistic kit: one person lasts 134 days on average, two people 126.
+
+The plan, as it was proposed:
 
 | Item | Why | How it runs out |
 |---|---|---|

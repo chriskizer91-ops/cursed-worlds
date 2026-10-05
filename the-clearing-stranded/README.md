@@ -10,6 +10,13 @@ light from dawn to night, the weather and the seasons. The camp and the Cedar St
 paintings; the other places are turned toward the season in code. If a phone can't do 3D, the game falls back to its
 own pixel drawing on top of the painting. The camp on its own, to play with: https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT
 
+**More huts, and a realistic kit (October 5, 2026).** There's open ground round the boulders for four huts: a
+sleeping hut, a storehouse up on posts, a smokehouse, and a workshop. Build them from the work ground at camp; each
+one makes camp better for good, and they're drawn in camp as you build them. New games start with a realistic kit:
+a few days of ration bars (fewer on harder levels), a box of 10 matches, 50 feet of nylon cord, one tarp, a water
+bottle, a knife, a first-aid kit and the fishing kit. When the matches run low, a side quest teaches the bow drill.
+Dagr's first kit (two crates, two tarps, 100 bars) is still there to pick on the title screen.
+
 **Your partner is a helper (October 4, 2026).** In the two-person game your partner works on his own. He looks at
 what camp needs (water, firewood, food, materials for what you're building, a fire that's burning low), says what
 he'll do in a bubble over his head, and goes. His day runs on the game clock, so if you follow him you'll find him on
@@ -79,6 +86,7 @@ node tools/phone-check.mjs                               # plays the first quest
 node tools/minigames-check.mjs                           # plays practice, an hour of fishing and a hunt in Stranded.html; "all good"
 node tools/partner-check.mjs                             # the two-person game: follows the partner to his job; "all good"
 node tools/autoplay.mjs --mate                           # what the partner does each day, and how long two people last
+node tools/autoplay.mjs --kit first                      # the same with Dagr's first kit
 node tools/places-check.mjs                              # every painted place: its spots and ways out can be reached; "all good"
 node tools/living-tour.mjs                               # screenshots of every place, the seasons and night; "all good"
 node tools/trace-check.mjs camp                          # draws one place's trace over its painting, to check by eye

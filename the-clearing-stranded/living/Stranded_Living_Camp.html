@@ -362,7 +362,9 @@ window.TRACES.camp = {
   ring: [767, 552, 40, 24],     // the fire ring: centre, and its half width and half height
   pocket: [784, 364],           // the sheltered pocket between the boulders
   sites: {ring: [767, 552], wood: [884, 586], rack: [462, 520], rain: [500, 452], bench: [870, 716], cache: [1080, 420], look: [1100, 540],
-    crate: [640, 548], pot: [812, 576], work: [640, 690], hang: [404, 412]}
+    crate: [640, 548], pot: [812, 576], work: [640, 690], hang: [404, 412],
+    // the hut plots: open ground round the boulders, in the order huts go up (each the middle of a hut's floor)
+    hut1: [340, 470], hut2: [575, 785], hut3: [1160, 480], hut4: [905, 800]}
 };
 
 </script>
@@ -1245,7 +1247,8 @@ window.TRACES.camp = {
 // them; then the tarp moved up across all three boulders; then the gaps woven shut with cedar withes and clay, and a
 // door), a grass bed and a hide blanket, the drying rack, the woodpile, the rain catcher, the food hang from the big oak's
 // limb, and the two wooden crates. Everything stands where the camp's trace puts it (living/traces/camp.js).
-// camp.set({ fire: 'out' | 'coals' | 'lit' | 'big', shelter: 0 to 3, bed, blanket, rack, meat, wood: 0 to 1, rain, hang, crates: 0 to 2 })
+// camp.set({ fire: 'out' | 'coals' | 'lit' | 'big', shelter: 0 to 3, bed, blanket, rack, meat, wood: 0 to 1, rain, hang, crates: 0 to 2,
+//   huts: ['sleep' | 'store' | 'smoke' | 'shop', ...] in the order they were built, each on the next plot (sites hut1 to hut4) })
 // camp.update(t, dt) every frame, camp.stoke() for a shower of sparks, camp.fire (where the fire is, in metres).
 (function (root) {
   'use strict';
@@ -1292,6 +1295,12 @@ window.TRACES.camp = {
     });
     // grass bedding
     const strawTex = cvs(128, 128, (g, w, h) => { g.fillStyle = '#b39a5f'; g.fillRect(0, 0, w, h); for (let i = 0; i < 500; i++) { const x = rnd() * w, y = rnd() * h, a = rr(-0.5, 0.5); g.strokeStyle = ['#d6c182', '#8f7a45', '#c9b06a', '#a68e52'][i % 4]; g.lineWidth = 1 + rnd(); g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * 14, y + Math.sin(a) * 14); g.stroke(); } });
+    // thatch: courses of grass bundles, the strands running downhill, each course overlapping the one below
+    const thatchTex = cvs(128, 128, (g, w, h) => {
+      g.fillStyle = '#a48a52'; g.fillRect(0, 0, w, h);
+      for (let row = 0; row < 4; row++) { const y0 = row * 32; g.fillStyle = 'rgba(60,45,25,.35)'; g.fillRect(0, y0 + 28, w, 4);
+        for (let i = 0; i < 120; i++) { const x = rnd() * w, len = 18 + rnd() * 14; g.strokeStyle = ['#d1bc7c', '#8e7442', '#c2a866', '#9c8250', '#b59a5c'][i % 5]; g.lineWidth = 1 + rnd(); g.beginPath(); g.moveTo(x, y0 + rnd() * 6); g.lineTo(x + rr(-3, 3), y0 + len); g.stroke(); } }
+    });
     // a deer hide blanket
     const hideTex = cvs(128, 128, (g, w, h) => { g.fillStyle = '#8a6440'; g.fillRect(0, 0, w, h); speck(g, w, h, 900, ['#9c7650', '#6e4c30', '#b08a60'], 2); g.fillStyle = 'rgba(240,226,200,.85)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.ellipse(20 + rnd() * 88, 14 + rnd() * 100, 2 + rnd() * 2, 2 + rnd() * 1.5, 0, 0, TAU); g.fill(); } const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(60,40,24,.5)'); gr.addColorStop(0.5, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(60,40,24,.5)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
 
@@ -1302,6 +1311,7 @@ window.TRACES.camp = {
       vertexShader: 'uniform float uW; void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position + normal * uW, 1.); }',
       fragmentShader: 'void main(){ gl_FragColor = vec4(.14, .1, .08, 1.); }'});
     const M = {
+      thatch: mat({map: thatchTex, side: THREE.DoubleSide}), dark: mat({color: 0x241a14}),
       tarp: mat({map: tarpTex, side: THREE.DoubleSide}), bark: mat({map: barkTex}), plank: mat({map: plankTex}), wattle: mat({map: wattleTex}), straw: mat({map: strawTex}), hide: mat({map: hideTex}),
       log: mat({color: 0x6b5038}), char: mat({color: 0x2b2420}), ash: mat({color: 0x8d8a84}), split: mat({color: 0xc59a66}), meat: mat({color: 0x7a2a22}), rope: mat({color: 0xc8b88e}), bag: mat({map: null, color: 0x3c7a8c}), stone: mat({color: 0x9a948a}), stone2: mat({color: 0x847c70}), water: mat({color: 0x5f8a96}), thatch: mat({color: 0xb39a58}), pot: mat({color: 0xb5643a}), soot: mat({color: 0x3a302a}), hideS: mat({color: 0x9a6a40}), sod: mat({color: 0x6f8a44}), basket: mat({color: 0xa88654}), leaf: mat({color: 0x55803a}), clay: mat({color: 0x9c8a6c})
     };
@@ -1534,13 +1544,81 @@ window.TRACES.camp = {
       const bowl = mesh(new THREE.LatheGeometry([[0.01, 0], [0.13, 0.01], [0.17, 0.05], [0.18, 0.11], [0.15, 0.11], [0.14, 0.06], [0.01, 0.04]].map(q => new THREE.Vector2(q[0], q[1])), 12), mat({color: 0x8a5a34, side: THREE.DoubleSide}), true, bowlG); bowl.position.set(c.x - 0.25, 0, c.z + 0.1);
     }
 
+    // ---------- the huts: one of each kind, on the plots round the boulders ----------
+    // sleeping hut: a beehive of bent poles under thick thatch, a hide over the door; storehouse: a thatched box up on
+    // four posts, with its ladder; smokehouse: a small clay-chinked hut, smoke seeping from the roof; workshop: an
+    // open shed, thatch on poles, with a chopping block and poles leaning ready.
+    const hutTex = t => { const c = t.clone(); c.needsUpdate = true; return c; };
+    const domeThatch = mat({map: hutTex(thatchTex), side: THREE.DoubleSide}); domeThatch.map.repeat.set(6, 3);
+    const roofThatch = mat({map: hutTex(thatchTex), side: THREE.DoubleSide}); roofThatch.map.repeat.set(2, 2);
+    const wallWattle = mat({map: hutTex(wattleTex)}); wallWattle.map.repeat.set(1.5, 1);
+    function gable(G, w, d, h0, h1, overhang, m){
+      // a pitched roof: two thatched slopes meeting at a ridge running across (x), eaves at h0, ridge at h1
+      for (const sz of [-1, 1]) {
+        const run = d / 2 + overhang, rise = h1 - h0, len = Math.hypot(run, rise), g = new THREE.PlaneGeometry(w + overhang * 2, len, 4, 3);
+        g.rotateX(-Math.PI / 2); g.rotateX(sz * Math.atan2(rise, run)); g.translate(0, h0 + rise / 2, sz * run / 2);
+        mesh(g, m || roofThatch, true, G);
+      }
+      for (const sx of [-1, 1]) { const sh = new THREE.Shape(); sh.moveTo(-d / 2, 0); sh.lineTo(d / 2, 0); sh.lineTo(0, h1 - h0); sh.closePath(); const g = new THREE.ShapeGeometry(sh); g.rotateY(Math.PI / 2); g.translate(sx * w / 2, h0, 0); mesh(g, wallWattle, false, G); }
+    }
+    const HUT = {
+      sleep(G) {
+        const prof = [[1.25, 0], [1.27, 0.25], [1.2, 0.75], [1.02, 1.25], [0.74, 1.68], [0.4, 1.98], [0.08, 2.12], [0.0, 2.14]].map(q => new THREE.Vector2(q[0], q[1]));
+        mesh(new THREE.LatheGeometry(prof, 22), domeThatch, true, G);
+        // courses of thatch, standing proud of the dome
+        for (const [r, y] of [[1.27, 0.28], [1.13, 0.95], [0.86, 1.5]]) { const o = mesh(new THREE.TorusGeometry(r, 0.06, 5, 26), M.thatch, false, G); o.rotation.x = Math.PI / 2; o.position.y = y; }
+        // the frame's poles poking out of the top
+        for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; pole(new THREE.Vector3(Math.cos(a) * 0.08, 1.95, Math.sin(a) * 0.08), new THREE.Vector3(Math.cos(a) * 0.32, 2.5, Math.sin(a) * 0.32), 0.03, M.bark, G); }
+        // the doorway, facing the fire, with a hide hung over half of it
+        const door = new THREE.Shape(); door.moveTo(-0.38, 0); door.lineTo(0.38, 0); door.lineTo(0.38, 0.62); door.absarc(0, 0.62, 0.38, 0, Math.PI, false); door.closePath();
+        const dg = new THREE.ShapeGeometry(door, 10); dg.translate(0, 0, 1.26); dg.rotateX(-0.08); mesh(dg, M.dark, false, G);
+        const hide = mesh(new THREE.PlaneGeometry(0.42, 0.9, 2, 3), M.hide, false, G); hide.position.set(0.2, 0.47, 1.29); hide.rotation.set(-0.05, 0.12, 0.04);
+        pole(new THREE.Vector3(-0.42, 0, 1.25), new THREE.Vector3(-0.42, 1.05, 1.22), 0.035, M.bark, G); pole(new THREE.Vector3(0.42, 0, 1.25), new THREE.Vector3(0.42, 1.05, 1.22), 0.035, M.bark, G);
+      },
+      store(G) {
+        // four posts, a floor of split poles, woven walls, a thatched roof, and the ladder leaning on it
+        for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) pole(new THREE.Vector3(sx * 0.7, 0, sz * 0.55), new THREE.Vector3(sx * 0.7, 1.05, sz * 0.55), 0.06, M.bark, G);
+        const floor = mesh(new THREE.BoxGeometry(1.7, 0.08, 1.4), M.split, true, G); floor.position.y = 1.05;
+        const box = mesh(new THREE.BoxGeometry(1.5, 0.95, 1.2), wallWattle, true, G); box.position.y = 1.56;
+        const dg = mesh(new THREE.PlaneGeometry(0.45, 0.62), M.dark, false, G); dg.position.set(0.3, 1.45, 0.61);
+        const RG = new THREE.Group(); RG.position.y = 2.03; G.add(RG); gable(RG, 1.5, 1.2, 0, 0.75, 0.25);
+        for (const sx of [-1, 1]) pole(new THREE.Vector3(0.3 + sx * 0.2, 0, 1.25), new THREE.Vector3(0.3 + sx * 0.2, 1.15, 0.65), 0.025, M.bark, G);
+        for (let i = 0; i < 4; i++) { const y = 0.25 + i * 0.26, z = 1.25 - (0.6 / 1.15) * y; const g = new THREE.CylinderGeometry(0.018, 0.018, 0.42, 5); g.rotateZ(Math.PI / 2); const o = mesh(g, M.bark, true, G); o.position.set(0.3, y, z); }
+        // a few bundles of something hanging under the eaves
+        for (let i = 0; i < 3; i++) { const o = mesh(new THREE.ConeGeometry(0.07, 0.3, 6), M.straw, true, G); o.position.set(-0.55 + i * 0.22, 1.85, 0.68); o.rotation.x = Math.PI; }
+      },
+      smoke(G) {
+        const box = mesh(new THREE.BoxGeometry(1.4, 1.35, 1.3), wallWattle, true, G); box.position.y = 0.67;
+        const RG = new THREE.Group(); RG.position.y = 1.34; G.add(RG); gable(RG, 1.4, 1.3, 0, 0.95, 0.18);
+        const dg = mesh(new THREE.PlaneGeometry(0.5, 0.85), M.dark, false, G); dg.position.set(-0.2, 0.45, 0.66);
+        const flap = mesh(new THREE.PlaneGeometry(0.5, 0.85, 2, 2), M.hide, false, G); flap.position.set(-0.2, 0.45, 0.67);
+        // clay chinking: pale daubs along the corners
+        for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) { const o = mesh(new THREE.SphereGeometry(0.09, 6, 4), mat({color: 0xb7a07a}), false, G); o.position.set(sx * 0.7, 0.2 + i * 0.33, 0.65); o.scale.set(0.6, 1.2, 0.5); }
+        stoneRing(G, new THREE.Vector3(0.75, 0, 0.85), 0.22, 0.18, 7);
+      },
+      shop(G) {
+        // posts, taller at the front, under a single slope of thatch; inside, a chopping block and poles leaning
+        for (const [sx, sz, h] of [[-1, -1, 1.75], [1, -1, 1.75], [-1, 1, 2.1], [1, 1, 2.1]]) pole(new THREE.Vector3(sx * 1.2, 0, sz * 0.85), new THREE.Vector3(sx * 1.2, h, sz * 0.85), 0.05, M.bark, G);
+        const run = 1.7 + 0.5, rise = 0.35, g = new THREE.PlaneGeometry(2.9, Math.hypot(run, rise), 4, 3);
+        g.rotateX(-Math.PI / 2); g.rotateX(-Math.atan2(rise, run)); g.translate(0, 1.93, 0.0); mesh(g, roofThatch, true, G);   // higher at the front
+        for (const sz of [-0.85, 0.85]) { const b = new THREE.CylinderGeometry(0.04, 0.04, 2.5, 6); b.rotateZ(Math.PI / 2); const o = mesh(b, M.bark, true, G); o.position.set(0, sz < 0 ? 1.74 : 2.08, sz); }
+        const stump = mesh(new THREE.CylinderGeometry(0.22, 0.25, 0.45, 9), M.log, true, G); stump.position.set(-0.4, 0.22, 0.1);
+        const top = mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.02, 9), M.split, false, G); top.position.set(-0.4, 0.455, 0.1);
+        for (let i = 0; i < 5; i++) pole(new THREE.Vector3(0.6 + i * 0.09, 0, -0.75), new THREE.Vector3(0.45 + i * 0.1, 1.6, -0.6), 0.025, M.bark, G);
+        const table = mesh(new THREE.BoxGeometry(0.9, 0.06, 0.45), M.split, true, G); table.position.set(0.55, 0.75, 0.25);
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const l = mesh(new THREE.BoxGeometry(0.05, 0.72, 0.05), M.log, false, G); l.position.set(0.55 + sx * 0.38, 0.36, 0.25 + sz * 0.17); }
+      }
+    };
+    const hutG = {}, hutSlots = ['hut1', 'hut2', 'hut3', 'hut4'].map(k => T.sites[k]).filter(Boolean);
+    for (const k in HUT) { const G = group('hut-' + k); HUT[k](G); G.visible = false; hutG[k] = G; }
+
     // ---------- join what never comes apart, so the phone draws each in a few calls ----------
-    for (const G of [...shelterG, bedG, blanketG, rainG, hangG, coalG, storeG, benchG, cacheG, hearthG, lookG, potG, bowlG]) mergeMeshes(G, outMat);
+    for (const G of [...shelterG, bedG, blanketG, rainG, hangG, coalG, storeG, benchG, cacheG, hearthG, lookG, potG, bowlG, ...Object.values(hutG)]) mergeMeshes(G, outMat);
     rackG.remove(meatG); mergeMeshes(rackG, outMat); mergeMeshes(meatG, outMat); rackG.add(meatG);
     woodRows.forEach(G => mergeMeshes(G, outMat));
 
     // ---------- the camp's state ----------
-    const st = {fire: 'out', shelter: 0, bed: false, blanket: false, rack: false, meat: false, wood: 0, store: false, rain: false, hang: false, crates: 2, bench: false, cache: false, hearth: false, look: false, pot: false, bowl: false};
+    const st = {fire: 'out', shelter: 0, bed: false, blanket: false, rack: false, meat: false, wood: 0, store: false, rain: false, hang: false, crates: 2, bench: false, cache: false, hearth: false, look: false, pot: false, bowl: false, huts: []};
     function set(o) {
       Object.assign(st, o || {});
       layLogs(st.fire);
@@ -1553,6 +1631,9 @@ window.TRACES.camp = {
       benchG.visible = !!st.bench; cacheG.visible = !!st.cache; hearthG.visible = !!st.hearth; lookG.visible = !!st.look; potG.visible = !!st.pot; bowlG.visible = !!st.bowl;
       rainG.visible = !!st.rain; hangG.visible = !!st.hang;
       crateG.forEach((o, i) => { o.visible = i < st.crates; });
+      // each hut on its plot, in the order they went up
+      for (const k in hutG) hutG[k].visible = false;
+      (st.huts || []).forEach((k, i) => { const G = hutG[k], p = hutSlots[i]; if (!G || !p) return; G.position.copy(W(p[0], p[1])); G.visible = true; });
     }
     set({});
 
@@ -1576,6 +1657,9 @@ window.TRACES.camp = {
       while (em.smoke > 1) { em.smoke--; const g = 0.48 + Math.random() * 0.12; S.emit({x: F.x + rr(-0.1, 0.1), y: lit ? 0.8 : 0.2, z: F.z + rr(-0.1, 0.1), vy: rr(0.55, 0.9), life: rr(4, 6.5), s: 0.3, s1: lit ? 2.1 : 1.3, c: [g, g * 0.98, g * 0.96], a: lit ? 0.32 : 0.22, k: 3, kind: 3, rot: rnd() * TAU}); }
       em.ember += dt * (big ? 9 : lit ? 4 : coals ? 0.6 : 0);
       while (em.ember > 1) { em.ember--; S.emit({add: true, x: F.x + rr(-0.15, 0.15), y: 0.3, z: F.z + rr(-0.1, 0.1), vx: rr(-0.2, 0.2), vy: rr(0.8, 1.8), vz: rr(-0.2, 0.2), life: rr(1, 2.4), s: 0.05, c: [1, rr(0.45, 0.7), 0.15], a: 1, k: 2, kind: 0}); }
+      // smoke seeping from the smokehouse roof while the fire burns
+      const si = (st.huts || []).indexOf('smoke');
+      if (si >= 0 && (lit || coals) && hutSlots[si]) { em.hut = (em.hut || 0) + dt * 1.4; while (em.hut > 1) { em.hut--; const q = hutG.smoke.position; S.emit({x: q.x + rr(-0.2, 0.2), y: 2.25, z: q.z + rr(-0.1, 0.1), vy: rr(0.3, 0.55), vx: 0.1, life: rr(4, 6), s: 0.3, s1: 1.4, c: [0.62, 0.62, 0.6], a: 0.2, k: 3, kind: 3}); } }
       if (st.rack && st.meat) { em.rack += dt * 1.2; while (em.rack > 1) { em.rack--; const c = T.sites.rack, p = W(c[0] + rr(-20, 20), c[1]); S.emit({x: p.x, y: 0.4, z: p.z, vy: 0.45, life: 4, s: 0.25, s1: 1.1, c: [0.6, 0.6, 0.58], a: 0.16, k: 3, kind: 3}); } }
     }
     // a shower of sparks, when wood goes on

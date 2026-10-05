@@ -3,6 +3,7 @@
 //
 //   node tools/autoplay.mjs                 # 48 games, every start, solo and duo, every difficulty
 //   node tools/autoplay.mjs --games 200 --days 400
+//   node tools/autoplay.mjs --kit first            # with Dagr's first kit instead of the realistic one
 //
 // It ends with "all good" when nothing went wrong.
 import {load} from './engine.mjs';
@@ -13,7 +14,7 @@ const GAMES = +opt('games', 48), MAX_DAYS = +opt('days', 365), VERBOSE = args.in
 const SMART = args.includes('--smart'), QUESTS = args.includes('--quests'), MATE = args.includes('--mate');
 const MSTAT = {days: 0, games: 0, eaten: 0, tally: {}};   // what the partners did in the two-person games
 const QSTAT = {};   // quest id -> {done: games that finished it, days: total day it was finished on, stuck: games that ended on it}
-const FILE = opt('file'), TRACE = opt('trace'), TRIAL = args.includes('--trial'), LEVELS = (opt('levels', '') || '').split(',').filter(Boolean);
+const KIT = opt('kit'), FILE = opt('file'), TRACE = opt('trace'), TRIAL = args.includes('--trial'), LEVELS = (opt('levels', '') || '').split(',').filter(Boolean);
 
 const {E, D} = load(FILE);
 const problems = new Map();   // kind -> {count, example}
@@ -161,7 +162,7 @@ function kit(s){
   s.food.push({id: s.nid++, key: 'venison', kg: 3, kcal: 3600, st: 'smoked', exp: s.t + 24 * 25, rack: null});
 }
 function play(seed, start, party, diff){
-  const s = E.newGame({seed, start, party, diff});
+  const s = E.newGame({seed, start, party, diff, kit: KIT || undefined});
   if (TRIAL) kit(s);
   const tag = `seed ${seed} ${start} ${party} ${diff}`;
   const ctx = {}, food = {gathered: 0, spoiled: 0, raided: 0};
