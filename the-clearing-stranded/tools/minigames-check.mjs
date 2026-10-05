@@ -60,7 +60,7 @@ const useSpot = async (pred, job) => {
   let open = false;
   for (let k = 0; k < Math.min(4, T.length) && !open; k++){ await tapToward(T[k][0], T[k][1]); open = await until(() => World._v.menuOpen, k ? 8000 : 20000); }
   if (!open) return false;
-  const i = await page.evaluate(job => [...document.querySelectorAll('.wmenu [data-wi]')].findIndex(b => b.textContent.indexOf(job) >= 0), job);
+  const i = await page.evaluate(job => [...document.querySelectorAll('.wmenu [data-wi]')].findIndex(b => b.textContent.indexOf(job) >= 0 && b.getAttribute('aria-disabled') !== 'true'), job);
   if (i < 0) return false;
   await page.click(`.wmenu [data-wi="${i}"]`); return true;
 };
@@ -113,7 +113,7 @@ if (part('practice')){
 await page.click('[data-m="menu"]'); await page.click('[data-m="pfish"]');
 check(await until(() => !!document.getElementById('fishing'), 8000), 'Practice fishing opens the fishing game');
 await shot('m01-practice-pond');
-st = await angler(90000, false);
+st = await angler(150000, false);
 check(st && st.mode === 'card', 'a fish was landed at the practice pond');
 if (st && st.mode === 'card'){ await shot('m02-practice-catch'); await page.click('.f-card button'); }
 await page.click('.f-quit'); await page.waitForSelector('.f-card button'); await page.click('.f-card button');

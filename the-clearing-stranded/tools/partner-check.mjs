@@ -59,7 +59,7 @@ const useSpot = async (pred, job) => {
   let open = false;
   for (let k = 0; k < Math.min(4, T.length) && !open; k++){ await tapToward(T[k][0], T[k][1]); open = await until(() => World._v.menuOpen, k ? 8000 : 20000); }
   if (!open) return false;
-  const i = await page.evaluate(job => [...document.querySelectorAll('.wmenu [data-wi]')].findIndex(b => b.textContent.indexOf(job) >= 0), job);
+  const i = await page.evaluate(job => [...document.querySelectorAll('.wmenu [data-wi]')].findIndex(b => b.textContent.indexOf(job) >= 0 && b.getAttribute('aria-disabled') !== 'true' && (job || !/Fish with|Hunt/.test(b.textContent))), job);
   if (i < 0) return false;
   await page.click(`.wmenu [data-wi="${i}"]`); return true;
 };
@@ -100,7 +100,13 @@ check(await goTo(m.at), 'followed him to ' + m.at);
 check(await until(() => !!World.matePos(), 40000), 'found the partner at ' + m.at);
 const mp = await page.evaluate(() => World.matePos());
 if (mp){
-  await tapToward(Math.round(mp.x) + 2, Math.round(mp.y) + 1); await until(() => !World._v.auto && !World._v.moving && !World._v.path.length, 20000); await page.waitForTimeout(1200);
+  // walk up beside him, on open ground that isn't something to use (a tap there would open its menu instead)
+  const near = await page.evaluate(([mx, my]) => { const V = World._v, M = V.map.M; let best = null;
+    for (let j = 0; j < 32; j++) for (let i = 0; i < 48; i++){ if ('gGtfsm'.indexOf(M[j][i]) < 0 || V.map.spotAt[j * 48 + i]) continue; const d = Math.hypot(i - mx, j - my); if (d < 1.5 || d > 4) continue; if (!best || d < best.d) best = {i, j, d}; }
+    return best && [best.i, best.j]; }, [Math.round(mp.x), Math.round(mp.y)]);
+  if (near) await tapToward(near[0], near[1]);
+  await until(() => !World._v.auto && !World._v.moving && !World._v.path.length, 20000); await page.waitForTimeout(1200);
+  if (await page.evaluate(() => World._v.menuOpen)){ await page.click('.ab [data-k="b"]'); await page.waitForTimeout(300); }
   await shot('p04-at-his-job');
   const sp = await page.evaluate(() => { const L = World._lv, S = L.S, v = S.view, r = L.cv.getBoundingClientRect(), w = L.partner.root.position.clone(); w.y = 0.9; const q = S.toPaint(w); return [r.left + (q[0] - (v.cx - v.w / 2)) / v.w * r.width, r.top + (q[1] - (v.cy - v.h / 2)) / v.h * r.height]; });
   await page.touchscreen.tap(sp[0], sp[1]);
