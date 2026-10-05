@@ -1,6 +1,7 @@
 // Opens the built ranch page on a phone-sized screen and uses it the way a person would: look at the whole ranch, zoom
 // down to the farmyard so things stand up, put out hay and fill the troughs, let the chickens out, and look a cow over.
-// Checks the land is drawn for real (3D trees, grass, the painting's colors) and the herd is the cartoon cattle. Saves
+// Checks the painted map is the ground (with its own grass and dirt close up), the world round it is drawn for real (3D
+// trees, grass) and the herd is the cartoon cattle. Saves
 // screenshots.
 // A computer with no graphics chip draws the ranch only a frame or two a second, so the check moves the world on with
 // RANCH.skip(seconds) where a person would simply wait.
@@ -43,7 +44,7 @@ console.log('whole ranch:', JSON.stringify(await info()));
 await page.evaluate(() => { RANCH.flyTo(RANCH.PL.hay.x + 10, RANCH.PL.hay.z - 25, 120, 0.2); RANCH.skip(3); });
 await shot('02-farmyard-from-above', 2500);
 check(await page.evaluate(() => RANCH.land.stats().trees > 100), 'the trees stand up as 3D trees round the farmyard');
-check(await page.evaluate(() => RANCH.land.realGround > 0.5), 'the ground turns real as you come down');
+check(await page.evaluate(() => RANCH.land.mapDetail), "close up, the painted map keeps its own grass and dirt");
 const signs = await page.evaluate(() => [...document.querySelectorAll('.sign:not(.off)')].map(b => b.textContent));
 check(signs.includes('Hay ring'), 'the Hay ring sign pops up near the farmyard');
 console.log('farmyard:', JSON.stringify(await info()), 'signs:', signs.join(', '));

@@ -10,15 +10,17 @@ The animals are kept in [`animal-3d-models/zebu-cattle/`](../animal-3d-models/ze
 The link is in the chat where it was made. `The_Ranch.html` is the same page as one file, built with
 `node the-ranch/tools/build.mjs` (it isn't kept in the repository, because it's rebuilt every time).
 
-**The second look (October 5, 2026): cartoon animals in a real-looking ranch.** Chris asked for Henry as the cute
-cartoon, in a realistic place. So Henry, the herd and the chickens are soft 3D cartoons, and everything else is drawn
-to look real, the way envoi's *Colossus in the Meadow* draws its meadow:
+**The second look (October 5, 2026): the cartoon map and cartoon cows, in a realistic world.** Chris asked for "the
+cartoon maps and cartoon cows with realistic environment". So the painted map stays the ground, Henry, the herd and the
+chickens are soft 3D cartoons, and the world round them is drawn to look real, the way envoi's *Colossus in the Meadow*
+draws its meadow:
 
-- From the sky you see your map of the ranch, exactly as it was painted. Drag to move, pinch to zoom, twist with two
-  fingers to turn.
-- Come down and the painting turns into real ground under you: turf where the map is green, packed dirt on the trails
-  and round the farmyard, plowed furrows in the field, gravel under the railroad, and water in the pond. Cloud shadows
-  drift over it all, and the sun stands high in the north-west, where the painting has it.
+- The ground is your painted map of the ranch at every height, looking just as it was painted. Drag to move, pinch to
+  zoom, twist with two fingers to turn.
+- It is lit by a real sun, high in the north-west where the painting has it: the trees and buildings throw shadows on
+  it, cloud shadows drift over it, and the pond ripples in the wind and mirrors the sky. Come right down and the map
+  keeps its own painted grass and dirt (cut from open places on the painting and laid on smaller), so it stays the
+  cartoon map instead of turning blurry.
 - Every painted tree stands up as a real-looking tree (post oaks, cedars and taller round trees), swaying in the wind
   and casting its shadow. The houses and sheds have metal roofs and siding or old boards, the barn is corrugated metal,
   the fences are cedar posts and barbed wire, the bull pens are steel pipe, and the railroad has rails, ties and gravel.
@@ -76,8 +78,8 @@ The street address on the satellite picture is covered, because this repository 
   the buildings, the yards, the pond, the fences and the places of the day's work. The cattle prefer the trails, the
   way real cattle do, and walk round the trees.
 - Each painted tree gets a 3D tree in the same spot, its green taken from the painting under it.
-- `ranch-land.js` draws the land for real. It works out from the painting's colors what each spot is (grass, dirt,
-  plowed field, water) and builds the trees, buildings, fences and railroad. It uses the land kit that Henry's page uses
+- `ranch-land.js` draws the world round the painted map. It works out from the painting's colors where grass grows
+  and where the water is, lights the map, and builds the trees, buildings, fences and railroad. It uses the land kit that Henry's page uses
   too (`animal-3d-models/viewer/land-kit.js`: the sky, the sunlight, the wind, the grass and the painted textures) and
   envoi's film camera (`animal-3d-models/viewer/cinema.js`).
 

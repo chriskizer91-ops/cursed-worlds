@@ -1,9 +1,9 @@
-// ranch-land.js: the ranch's land drawn for real, while the cattle and the chickens stay cartoons (Chris, October 4, 2026).
+// ranch-land.js: the ranch's world drawn for real round Chris's cartoon map and the cartoon cattle and chickens (Chris,
+// October 4 and 5, 2026: "Use the cartoon maps and cartoon cows with realistic environment").
 // It is drawn the way envoi's Colossus in the Meadow draws its meadow, through the land kit
 // (animal-3d-models/viewer/land-kit.js) and envoi's film camera (animal-3d-models/viewer/cinema.js):
-//   - the ground: from the sky it is the painted map, exactly as painted. Come down and it turns into real ground, worked out
-//     from the painting under it: turf where it is green, packed dirt on the trails and round the farmyard, plowed furrows
-//     in the field, gravel under the railroad, and water in the pond, with the clouds' shadows drifting over it all;
+//   - the ground: Chris's painted cartoon map, at every height, lit by the real sun and sky, shaded by the trees and the
+//     buildings, with the clouds' shadows drifting over it; the pond ripples in the wind and mirrors the sky;
 //   - grass: tufts that grow round wherever you look, where the painting is green, short on the trails, bending in the wind
 //     and leaning out of the way of the animal you are following;
 //   - trees: every painted tree stands up as a tree of leaves on branches (post oaks, cedars and taller round trees),
@@ -33,7 +33,7 @@
     const {hemi, key, fill, fog} = K.lights(scene, {shadow: 30, far: 500});
     hemi.color.copy(LIN('#c2d2e0'));   // a paler sky, so the shade under the trees isn't so blue
     const cinema = root.makeCinema ? root.makeCinema(renderer, {msaa: 4}) : null;
-    if (cinema) { cinema.set({exposure: K.E, bloom: P.bloom * .8, bloomRadius: 1, rays: 0, grain: 0.025, vignette: P.vignette * .8, split: 0.1, aperture: P.aperture, maxBlur: 7, saturation: 1.0, fringe: 0.001}); cinema.sun(K.DISC); }
+    if (cinema) { cinema.set({exposure: K.E, bloom: P.bloom * .8, bloomRadius: 1, rays: 0, grain: 0.025, vignette: P.vignette * .8, split: 0, aperture: P.aperture, maxBlur: 7, saturation: 1.22, fringe: 0.001}); cinema.sun(K.DISC); }
 
     // ---------- what the painting says is where ----------
     // A picture of the ranch at 0.6 m a pixel: red, how much grass grows; green, bare dirt; blue, water; alpha, the plowed
@@ -71,96 +71,62 @@
     // ---------- textures for the ground and for what people built (painted in code) ----------
     const tx = (c, data) => { const t = own(new THREE.CanvasTexture(c)); if (!data) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
     const wrapDot = (g, S, x, y, r, col) => { const q = g.createRadialGradient(x, y, 0, x, y, r); q.addColorStop(0, col); q.addColorStop(1, col.replace(/[\d.]+\)$/, '0)')); g.fillStyle = q; for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) g.fillRect(x - r + ox, y - r + oy, r * 2, r * 2); };
-    const meanLin = c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, s = [0, 0, 0]; let n = 0; for (let i = 0; i < d.length; i += 4 * 7) { for (let k = 0; k < 3; k++) s[k] += Math.pow(d[i + k] / 255, 2.2); n++; } return new THREE.Vector3(s[0] / n, s[1] / n, s[2] / n); };
-    // packed dirt: clods, pebbles, a few hoof prints and wisps of straw
-    const dirtC = (() => {
-      const S = 512, c = cvs(S, S), g = c.getContext('2d'); g.fillStyle = '#8e785a'; g.fillRect(0, 0, S, S);
-      for (let i = 0; i < 90; i++) wrapDot(g, S, rnd() * S, rnd() * S, rr(30, 110), ['rgba(70,56,40,.35)', 'rgba(170,150,116,.3)', 'rgba(120,96,66,.35)'][(rnd() * 3) | 0]);
-      for (let i = 0; i < 9000; i++) { g.fillStyle = rnd() < .5 ? 'rgba(50,38,26,.3)' : 'rgba(200,184,150,.25)'; g.fillRect(rnd() * S, rnd() * S, rr(1, 3), rr(1, 3)); }
-      for (let i = 0; i < 200; i++) { const x = rnd() * S, y = rnd() * S, r = rr(1, 3.5), v = rr(120, 170); g.fillStyle = 'rgba(30,24,16,.22)'; g.beginPath(); g.ellipse(x + r * .3, y + r * .4, r * .8, r * .5, 0, 0, TAU); g.fill(); g.fillStyle = `rgba(${v},${v - 6},${v - 16},.7)`; g.beginPath(); g.ellipse(x, y, r, r * rr(.6, 1), rnd() * 3, 0, TAU); g.fill(); }
-      for (let i = 0; i < 5; i++) { const x = rr(20, S - 20), y = rr(20, S - 20), a = rnd() * TAU; g.fillStyle = 'rgba(52,40,28,.45)'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(x + Math.cos(a) * 5 * s, y + Math.sin(a) * 5 * s, 6, 10, a, 0, TAU); g.fill(); } }
-      for (let i = 0; i < 70; i++) { const x = rnd() * S, y = rnd() * S, L = rr(8, 22), a = rnd() * TAU; g.strokeStyle = 'rgba(210,186,120,.6)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); g.stroke(); }
-      return c;
-    })();
-    const dirtTex = tx(dirtC), dirtMean = meanLin(dirtC);
     // gravel under the railroad
     const gravelTex = (() => {
       const S = 256, c = cvs(S, S), g = c.getContext('2d'); g.fillStyle = '#6c6862'; g.fillRect(0, 0, S, S);
       for (let i = 0; i < 2600; i++) { const x = rnd() * S, y = rnd() * S, r = rr(1.5, 4.5), v = rr(70, 170); g.fillStyle = `rgb(${v + 8},${v + 2},${v - 6})`; g.beginPath(); g.ellipse(x, y, r, r * rr(.6, 1), rnd() * 3, 0, TAU); g.fill(); }
       return tx(c);
     })();
-    const turfMean = meanLin(K.groundTex.image);
-    const bladeC = (() => {
-      const S = 512, c = cvs(S, S), g = c.getContext('2d'); g.fillStyle = 'rgb(118,118,118)'; g.fillRect(0, 0, S, S);
-      for (let i = 0; i < 70; i++) wrapDot(g, S, rnd() * S, rnd() * S, rr(20, 70), rnd() < .5 ? 'rgba(60,60,60,.35)' : 'rgba(170,170,170,.3)');
-      for (let i = 0; i < 16000; i++) {
-        const x = rnd() * S, y = rnd() * S, L = rr(4, 14), a = rnd() * TAU, v = rnd() < .45 ? rr(40, 90) : rr(150, 235);
-        g.strokeStyle = `rgba(${v},${v},${v},.75)`; g.lineWidth = rr(.8, 2);
-        for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + Math.cos(a) * L, y + oy + Math.sin(a) * L); g.stroke(); }
-      }
-      return c;
-    })();
-    const bladeTex = tx(bladeC, true), bladeMean = meanLin(bladeC).x;
 
-    // ---------- the ground ----------
-    // Each piece of the painted map, lit by the sun; nearer, real ground worked out from the painting; from the sky, the
-    // painting just as it was painted.
+    // ---------- the ground: the painted map ----------
+    // Chris's cartoon map is the ground at every height (Chris, October 5, 2026). It is lit by the real sun and sky, so it
+    // looks just as painted in the sunshine, darker in the shade of the trees and the buildings, and the clouds' shadows
+    // drift over it. Only the pond takes more than light: it ripples in the wind and mirrors the sky.
+    // The painting is soft when you come right down to it (its paint is laid on in blocks of 30 to 60 cm), so close up it is
+    // blurred just enough that the blocks don't show, and the painting's own grass and dirt, cut from open places on it and
+    // laid on smaller, give it its texture there.
+    const flat = own(new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, THREE.RGBAFormat)); flat.needsUpdate = true;
     const groundU = Object.assign({
-      uMask: {value: mask}, uTurf: {value: K.groundTex}, uTurfMean: {value: turfMean}, uBlade: {value: bladeTex}, uBladeMean: {value: bladeMean}, uDirtT: {value: dirtTex}, uDirtMean: {value: dirtMean}, uGravel: {value: gravelTex},
-      uIrr: {value: new THREE.Vector3(1, 1, 1)}, uDirtC: {value: LIN('#a48c66').multiplyScalar(.75)}, uFieldC: {value: LIN('#6a5040').multiplyScalar(.75)}, uWaterC: {value: LIN('#18231f')}, uNear: {value: 0}, uFar: {value: 0}, uMap: {value: new THREE.Vector2(MW, MH)},
-      uRail: {value: Array.from({length: 6}, (v, i) => new THREE.Vector2(RAIL[Math.min(i, RAIL.length - 1)] ? RAIL[Math.min(i, RAIL.length - 1)].x : 1e4, RAIL[Math.min(i, RAIL.length - 1)] ? RAIL[Math.min(i, RAIL.length - 1)].z : 1e4))},
+      uMask: {value: mask}, uIrr: {value: new THREE.Vector3(1, 1, 1)}, uNear: {value: 0}, uMap: {value: new THREE.Vector2(MW, MH)},
+      uGrassD: {value: flat}, uDirtD: {value: flat}, uGrassM: {value: new THREE.Vector3(.22, .22, .22)}, uDirtM: {value: new THREE.Vector3(.22, .22, .22)}, uDetail: {value: 0},
     }, AIRU, EXPU);
     const GROUND_FS = [
-      ' float gWater = 0., gField = 0., gK = 0.; vec3 gPaint = vec3(0.);',
-      ' { vec4 tc = texture2D(map, vUv); gPaint = unfilm(tc.rgb);',
-      '   vec2 tdx = dFdx(vUv * 2048.), tdy = dFdy(vUv * 2048.); float lod = .5 * log2(max(max(dot(tdx, tdx), dot(tdy, tdy)), 1e-6));',
-      '   vec3 soft = texture2D(map, vUv, max(0., 3.1 - lod)).rgb; vec3 alb = mix(pow(tc.rgb, vec3(2.2)), unfilm(soft) / uIrr, uNear);',
-      '   vec2 wq = vGp + (vec2(mn(vGp * 1.1), mn(vGp * 1.1 + 7.3)) - .5) * 1.6 + (vec2(mn(vGp * 4.3 + 2.), mn(vGp * 4.3 + 5.)) - .5) * .5;',
-      '   vec2 muv = wq / uMap + .5; vec4 mk = uBeyond > .5 ? vec4(1., 0., 0., 0.) : texture2D(uMask, muv);',
-      '   gK = uNear * (1. - smoothstep(22., 70., vDepth));',
-      '   if (gK > .001) {',
-      '     vec3 sl = unfilm(soft) / uIrr; float sll = dot(sl, vec3(.3, .59, .11)); vec3 base = mix(vec3(sll), sl, .9);',
-      '     vec3 t2 = pow(texture2D(uTurf, vGp / 31. + .37).rgb, vec3(2.2)) / uTurfMean;',
-      '     float bl = pow(texture2D(uBlade, vGp / 2.6).r, 2.2) / uBladeMean, bl2 = pow(texture2D(uBlade, mat2(.8, -.6, .6, .8) * vGp / 7.1 + .5).r, 2.2) / uBladeMean;',
-      '     float mot = (.82 + .36 * mf(vGp * .23)) * (.9 + .2 * mf(vGp * .061 + 3.));',
-      '     vec3 grass = base * mix(vec3(1.), t2, .45) * mix(1., sqrt(bl * bl2), .8) * mot;',
-      '     vec2 rq = mat2(.8, -.6, .6, .8) * vGp; vec3 d1 = pow(texture2D(uDirtT, vGp / 6.).rgb, vec3(2.2)) / uDirtMean, d2 = pow(texture2D(uDirtT, rq / 17. + .31).rgb, vec3(2.2)) / uDirtMean, dd = sqrt(d1 * d2);',
-      '     vec3 dirt = mix(base, uDirtC, .3) * dd;',
-      '     float fur = .5 + .5 * sin(vGp.x * 6.98 + mn(vGp * .2) * 2.);',
-      '     vec3 field = mix(base, uFieldC, .4) * dd * mix(.7, 1.1, fur);',
-      '     float rd = 1e4; for (int i = 0; i < 5; i++) { vec2 a = uRail[i], b = uRail[i + 1], ab = b - a; float u = clamp(dot(vGp - a, ab) / max(dot(ab, ab), 1e-3), 0., 1.); rd = min(rd, length(vGp - a - ab * u)); }',
-      '     float rail = (1. - smoothstep(2.3, 3.1, rd)) * (1. - uBeyond);',
-      '     vec3 grav = pow(texture2D(uGravel, vGp / 2.5).rgb, vec3(2.2));',
-      '     vec3 r = mix(grass, dirt, mk.g); r = mix(r, field, mk.a); r = mix(r, grav, rail); r = mix(r, uWaterC, mk.b);',
-      '     gField = mk.a * gK; gWater = mk.b * gK;',
-      '     alb = mix(alb, r, gK);',
+      ' float gWater = 0.;',
+      ' { vec2 tdx = dFdx(vUv * 2048.), tdy = dFdy(vUv * 2048.); float lod = .5 * log2(max(max(dot(tdx, tdx), dot(tdy, tdy)), 1e-6));',
+      '   vec3 alb = unfilm(texture2D(map, vUv, max(0., 3. - lod) * uNear).rgb) / uIrr;',
+      '   if (uBeyond < .5) gWater = texture2D(uMask, vGp / uMap + .5).b * uNear;',
+      '   float near = uDetail * uNear * (1. - smoothstep(30., 90., vDepth));',
+      '   if (near > .001) {',
+      '     vec2 wq = vGp + (vec2(mn(vGp * 1.1), mn(vGp * 1.1 + 7.3)) - .5) * 1.6;',
+      '     vec4 mk = uBeyond > .5 ? vec4(1., 0., 0., 0.) : texture2D(uMask, wq / uMap + .5);',
+      '     vec2 rq = mat2(.8, -.6, .6, .8) * vGp;',
+      '     vec3 gd = pow(texture2D(uGrassD, vGp / 3.6).rgb, vec3(2.2)) / uGrassM * mix(vec3(1.), pow(texture2D(uGrassD, rq / 9.7 + .3).rgb, vec3(2.2)) / uGrassM, .35);',
+      '     vec3 dd = pow(texture2D(uDirtD, vGp / 4.8).rgb, vec3(2.2)) / uDirtM;',
+      '     vec3 det = mix(gd, dd, clamp(mk.g + mk.a, 0., 1.)); det = mix(det, vec3(1.), mk.b);',
+      '     alb *= mix(vec3(1.), det, near);',
       '   }',
       '   alb *= 1. - .35 * cshade(vGp);',
       '   diffuseColor.rgb *= alb; }'].join('\n');
-    // gentle lumps in the turf, furrows in the field, ripples on the water as the wind goes over it
     const GROUND_N = [
-      ' if (gK > .001) { vec2 q = vGp * .4; float e = .2;',
-      '   vec2 sl = vec2(mn(q + vec2(e, 0.)) - mn(q - vec2(e, 0.)), mn(q + vec2(0., e)) - mn(q - vec2(0., e))) / (2. * e) * .4 * .3 * gK;',
-      '   sl.x += cos(vGp.x * 6.98 + mn(vGp * .2) * 2.) * .28 * gField;',
-      '   vec2 w = vGp * 2.3 + uFlow.xy * .35; float f = .12;',
-      '   sl += vec2(mf(w + vec2(f, 0.)) - mf(w - vec2(f, 0.)), mf(w + vec2(0., f)) - mf(w - vec2(0., f))) / (2. * f) * 2.3 * .012 * (1. + 2. * uWind.z) * gWater;',
+      ' if (gWater > .001) { vec2 w = vGp * 2.3 + uFlow.xy * .35; float f = .12;',
+      '   vec2 sl = vec2(mf(w + vec2(f, 0.)) - mf(w - vec2(f, 0.)), mf(w + vec2(0., f)) - mf(w - vec2(0., f))) / (2. * f) * 2.3 * .012 * (1. + 2. * uWind.z) * gWater;',
       '   normal = normalize((viewMatrix * vec4(normalize(vec3(-sl.x, 1., -sl.y)), 0.)).xyz); }'].join('\n');
-    const irr = () => { const c = key.color.clone().multiplyScalar(P.li * LIGHT.y).add(hemi.color.clone().multiplyScalar(hemi.intensity)); return new THREE.Vector3(c.r, c.g, c.b); };
+    // how much light falls on open ground in the sun: the sun's, the sky's, and the sky's again as the ground reflects it
+    const irr = () => { const c = key.color.clone().multiplyScalar(P.li * LIGHT.y).add(hemi.color.clone().multiplyScalar(hemi.intensity * IRR_SKY)); return new THREE.Vector3(c.r, c.g, c.b); };
+    const IRR_SKY = 1.35;
     function groundMat(map, beyond) {
       const m = own(new THREE.MeshStandardMaterial({map, roughness: .96, metalness: 0, envMapIntensity: .35}));
       m.extensions = {derivatives: true};
       m.onBeforeCompile = sh => {
         groundU.uIrr.value.copy(irr());
         Object.assign(sh.uniforms, groundU, {uBeyond: {value: beyond ? 1 : 0}});
-        sh.vertexShader = 'varying vec2 vGp; varying float vDepth;\n' + sh.vertexShader
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\n vGp = (modelMatrix * vec4(position, 1.)).xz;')
+        sh.vertexShader = 'varying vec2 vGp; varying float vDepth;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vGp = (modelMatrix * vec4(position, 1.)).xz;')
           .replace('#include <project_vertex>', '#include <project_vertex>\n vDepth = -mvPosition.z;');
-        sh.fragmentShader = 'varying vec2 vGp; varying float vDepth; uniform sampler2D uMask, uTurf, uDirtT, uGravel, uBlade; uniform float uBladeMean; uniform vec3 uTurfMean, uDirtMean, uDirtC, uFieldC, uWaterC, uIrr; uniform float uNear, uFar, uBeyond; uniform vec2 uMap; uniform vec2 uRail[6];\n' +
+        sh.fragmentShader = 'varying vec2 vGp; varying float vDepth; uniform sampler2D uMask, uGrassD, uDirtD; uniform vec3 uIrr, uGrassM, uDirtM; uniform float uNear, uBeyond, uDetail; uniform vec2 uMap;\n' +
           AIR + CSH + UNFILM + sh.fragmentShader
           .replace('#include <map_fragment>', GROUND_FS)
           .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, .06, gWater);')
-          .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + GROUND_N)
-          .replace('#include <tonemapping_fragment>', ' gl_FragColor.rgb = mix(gl_FragColor.rgb, gPaint, uFar);\n#include <tonemapping_fragment>');
+          .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + GROUND_N);
       };
       m.customProgramCacheKey = () => 'ranch-ground';
       return m;
@@ -193,7 +159,7 @@
       'float Wd = (H * (.9 + .6 * h2) + .1 * step(.001, H)) * uRing.z * 1.3;',
       'float kind = h2 < .05 ? 2. : h2 < .14 ? 1. : h1 < .3 * (1. - dens) + .05 ? 3. : 0.;',
       'vUv.x = (kind + aCard.x + .5) * .25;',
-      'vTint = mix(vec3(1.), clamp(pc / vec3(.06, .15, .035), vec3(.5), vec3(1.5)), .35 * uPaintOK) * vec3(.9, .95, .85);',
+      'vTint = mix(vec3(1.), clamp(pc / vec3(.06, .15, .035), vec3(.45), vec3(1.6)), .65 * uPaintOK);',
       'vec4 root = vec4(p, H, h1 * 1.2 - .6); vec2 card = vec2(aCard.x * Wd, aCard.y);'].join('\n');
     const GRASS_LEAN = ' { float lean = atan(max(uCam.y, 0.) / max(lc, .3)) * .6, yy = transformed.y; transformed.y = yy * cos(lean); transformed.xz -= toC * yy * sin(lean); }';
     const grassRings = [[-1, 13, .3, 3, 1, 3], [10, 32, .7, 2, 1.6, 3], [28, 78, 1.6, 1, 2.6, 6]].map(([r0, r1, s, segs, big, fw]) => {
@@ -528,6 +494,18 @@
     // ---------- the painting's colors, once its pieces have loaded ----------
     // images: the six pieces, across then down. A page opened straight from a file can't read its own pictures back; then
     // the land keeps what the trace says.
+    // a square of a map piece (in its own pixels), blended with itself shifted by half so it repeats without a seam
+    function patch(img, sx, sy, S) {
+      const N = 256, a = cvs(N, N), ga = a.getContext('2d'); ga.drawImage(img, sx, sy, S, S, 0, 0, N, N);
+      const b = cvs(N, N), gb = b.getContext('2d'); for (const ox of [-N / 2, N / 2]) for (const oy of [-N / 2, N / 2]) gb.drawImage(a, ox, oy);
+      const A = ga.getImageData(0, 0, N, N), B = gb.getImageData(0, 0, N, N).data, o = A.data, sum = [0, 0, 0];
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        const e = Math.min(x, N - 1 - x, y, N - 1 - y) / (N * .3), w = e >= 1 ? 1 : e * e * (3 - 2 * e), i = (y * N + x) * 4;
+        for (let k = 0; k < 3; k++) { o[i + k] = o[i + k] * w + B[i + k] * (1 - w); sum[k] += Math.pow(o[i + k] / 255, 2.2); }
+      }
+      ga.putImageData(A, 0, 0);
+      return {tex: tx(a, true), mean: new THREE.Vector3(sum[0], sum[1], sum[2]).divideScalar(N * N)};
+    }
     function setPaint(images) {
       try {
         const c = cvs(GW, GH), g = c.getContext('2d');
@@ -535,6 +513,11 @@
         paintPx = g.getImageData(0, 0, GW, GH).data;
       } catch (e) { return false; }
       paintG.putImageData(new ImageData(new Uint8ClampedArray(paintPx), GW, GH), 0, 0); paint.needsUpdate = true; grassU.uPaintOK.value = 1;
+      // the painting's own grass (an open field past the railroad, top right) and dirt (the farmyard, with hoof marks)
+      try {
+        const g = patch(images[1], 752, 32, 192), d = patch(images[4], 704, 1216, 256);
+        groundU.uGrassD.value = g.tex; groundU.uGrassM.value.copy(g.mean); groundU.uDirtD.value = d.tex; groundU.uDirtM.value.copy(d.mean); groundU.uDetail.value = 1;
+      } catch (e) { /* keep the painting plain */ }
       classify();
       // each tree takes the green under it, a little brighter, so it stands out from the painted ground
       const col = new THREE.Color();
@@ -562,7 +545,7 @@
       // the grass grows in round where you look, as you come down to it
       const grow = 1 - sm(16, 32, d); grassU.uGrow.value = grow; grassU.uFocus.value.set(focus.x, focus.z);
       for (const R of grassRings) { R.mesh.visible = grow > .01 && !R.off; R.u.uCentre.value.set(Math.round(focus.x / R.s) * R.s, Math.round(focus.z / R.s) * R.s); }
-      groundU.uNear.value = 1 - sm(90, 260, d); groundU.uFar.value = sm(260, 650, d);
+      groundU.uNear.value = 1 - sm(90, 260, d);
       fog.near = 70 + d * 1.6; fog.far = 480 + d * 4.5;
       // the animal you are following pushes the grass aside
       if (follow) { const p = follow.root.position, h = follow.root.rotation.y, sc = follow.root.scale.x, fx2 = Math.sin(h), fz2 = Math.cos(h), down = /lie|sleep|lying/.test(follow.state) ? 1 : 0; AIRU.uBodyA.value.set(p.x + fx2 * .75 * sc, p.z + fz2 * .75 * sc, (down ? .85 : .5) * sc, down ? 1.3 : .9); AIRU.uBodyB.value.set(p.x - fx2 * .85 * sc, p.z - fz2 * .85 * sc); }
@@ -585,7 +568,8 @@
       stats: () => ({tufts: grassRings.map(r => r.tufts), cards: TK.map(k => k.map(l => l.cards)), trees: trees.drawn}),
       // for a phone that can't keep up: the film camera at three quarters of the screen's resolution, and no far ring of grass
       lighter() { if (cinema) cinema.set({scale: .75}); grassRings[2].mesh.visible = false; grassRings[2].off = true; },
-      get grassGrows() { return grassU.uGrow.value; }, get painted() { return grassU.uPaintOK.value > 0; }, get realGround() { return groundU.uNear.value; },
+      get mapDetail() { return groundU.uDetail.value > 0; },
+      get grassGrows() { return grassU.uGrow.value; }, get painted() { return grassU.uPaintOK.value > 0; }, 
       dispose() { K.dispose(); if (cinema) cinema.dispose(); },
     };
   }
