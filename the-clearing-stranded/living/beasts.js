@@ -31,16 +31,22 @@
     const grp = (parent, x, y, z) => { const g = new THREE.Group(); (parent || body).add(g); g.position.set(x, y, z); return g; };
     const legs = [], st = {phase: Math.random() * TAU, head: null, neck: null, tail: null, hop: kind === 'rabbit' || kind === 'squirrel', walkW: 0, grazeW: 0};
 
-    if (kind === 'deer') {
-      // a white-tailed doe or a young buck: tawny back, pale belly, the white flag of a tail
-      const coat = 0x9c6e45, belly = 0xe8dcc8, dark = 0x2a2018;
+    if (kind === 'deer' || kind === 'ghostbuck') {
+      // a white-tailed doe or a young buck: tawny back, pale belly, the white flag of a tail. The ghost buck of the salt lick
+      // is the legend: white all over, with a great rack of antlers.
+      const ghost = kind === 'ghostbuck', coat = ghost ? 0xeeeae0 : 0x9c6e45, belly = ghost ? 0xfaf8f2 : 0xe8dcc8, dark = ghost ? 0x8a6a62 : 0x2a2018;
       body.position.y = 0.82;
       part(ball(0.2, 0.22, 0.52), coat); part(ball(0.16, 0.12, 0.42), belly).position.set(0, -0.09, 0);
       st.neck = grp(body, 0, 0.1, 0.42); const n = part(ball(0.09, 0.26, 0.1), coat, st.neck); n.position.set(0, 0.16, 0.06); n.rotation.x = 0.45;
       st.head = grp(st.neck, 0, 0.38, 0.16); part(ball(0.075, 0.08, 0.17), coat, st.head).position.set(0, 0, 0.06);
       part(ball(0.035, 0.035, 0.035), dark, st.head, false).position.set(0, -0.01, 0.22);
       for (const s of [1, -1]) { const e = part(ball(0.03, 0.08, 0.015), coat, st.head); e.position.set(0.07 * s, 0.09, -0.04); e.rotation.z = -0.6 * s; part(ball(0.014, 0.016, 0.01), dark, st.head, false).position.set(0.06 * s, 0.03, 0.08); }
-      if (Math.random() < 0.5) for (const s of [1, -1]) { const a = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.03 * s, 0.07, -0.02), new THREE.Vector3(0.1 * s, 0.2, 0.02), new THREE.Vector3(0.09 * s, 0.26, 0.12)]), 6, 0.012, 4); part(a, 0xd9cdb0, st.head); }
+      if (ghost) for (const s of [1, -1]) {
+        // the main beam sweeping up and forward, and four tines standing up off it
+        const beam = new THREE.CatmullRomCurve3([new THREE.Vector3(0.03 * s, 0.07, -0.03), new THREE.Vector3(0.16 * s, 0.2, -0.06), new THREE.Vector3(0.2 * s, 0.3, 0.06), new THREE.Vector3(0.12 * s, 0.34, 0.2)]);
+        part(new THREE.TubeGeometry(beam, 10, 0.016, 5), 0xe2d6b8, st.head);
+        for (const u of [0.3, 0.5, 0.7, 0.88]) { const p = beam.getPoint(u); part(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p, p.clone().add(new THREE.Vector3(0.01 * s, 0.12 - u * 0.04, 0.02))]), 3, 0.011, 4), 0xe2d6b8, st.head); }
+      } else if (Math.random() < 0.5) for (const s of [1, -1]) { const a = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.03 * s, 0.07, -0.02), new THREE.Vector3(0.1 * s, 0.2, 0.02), new THREE.Vector3(0.09 * s, 0.26, 0.12)]), 6, 0.012, 4); part(a, 0xd9cdb0, st.head); }
       st.tail = grp(body, 0, 0.12, -0.5); part(ball(0.05, 0.12, 0.04), coat, st.tail).position.set(0, 0.04, -0.03); part(ball(0.035, 0.09, 0.03), 0xf5f2ea, st.tail, false).position.set(0, 0.04, -0.06);
       for (const [x, z] of [[0.11, 0.33], [-0.11, 0.33], [0.11, -0.35], [-0.11, -0.35]]) { const g = grp(body, x, -0.05, z); part(legG(0.74, 0.06, 0.024), coat, g); part(ball(0.026, 0.03, 0.035), dark, g, false).position.set(0, -0.77, 0.01); legs.push(g); }
       st.size = 1; st.gait = 6;
@@ -68,15 +74,17 @@
       const tg = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.1, -0.08), new THREE.Vector3(0, 0.22, -0.04), new THREE.Vector3(0, 0.26, 0.04)]), 10, 0.045, 7); part(tg, 0xa8784c, st.tail);
       for (const [x, z] of [[0.04, 0.07], [-0.04, 0.07], [0.05, -0.06], [-0.05, -0.06]]) { const g = grp(body, x, -0.03, z); part(legG(0.06, 0.02, 0.012), fur, g, false); legs.push(g); }
       st.size = 1; st.gait = 12;
-    } else if (kind === 'bison') {
-      // a bison: a great dark hump of wool over the shoulders, the head held low, short curved horns
-      const wool = 0x4a3222, hide = 0x2e2018;
+    } else if (kind === 'bison' || kind === 'oldbull') {
+      // a bison: a great dark hump of wool over the shoulders, the head held low, short curved horns. The old bull of the
+      // salt lick is the legend: bigger than any other, his wool gone grizzled and his horns thick and worn.
+      const old = kind === 'oldbull', wool = old ? 0x6a5644 : 0x4a3222, hide = old ? 0x231a14 : 0x2e2018;
       body.position.y = 1.0;
       part(ball(0.42, 0.5, 0.75), hide).position.set(0, 0, -0.15); part(ball(0.48, 0.62, 0.55), wool).position.set(0, 0.12, 0.35);
       st.neck = grp(body, 0, -0.05, 0.7); st.head = grp(st.neck, 0, -0.2, 0.25);
       part(ball(0.24, 0.28, 0.3), wool, st.head); part(ball(0.16, 0.15, 0.18), hide, st.head).position.set(0, -0.12, 0.2);
       part(ball(0.12, 0.18, 0.1), wool, st.head).position.set(0, -0.3, 0.05);
-      for (const s of [1, -1]) { const h = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.18 * s, 0.12, 0), new THREE.Vector3(0.3 * s, 0.18, 0.02), new THREE.Vector3(0.28 * s, 0.3, 0.08)]), 6, 0.03, 5); part(h, 0x1a1612, st.head); }
+      for (const s of [1, -1]) { const h = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.18 * s, 0.12, 0), new THREE.Vector3(0.3 * s, 0.18, 0.02), new THREE.Vector3(0.28 * s, 0.3, 0.08)]), 6, old ? 0.045 : 0.03, 5); part(h, old ? 0x3a3026 : 0x1a1612, st.head); }
+      if (old) part(ball(0.3, 0.2, 0.3), 0x8a7860).position.set(0, 0.5, 0.42);   // the grizzled top of his hump
       st.tail = grp(body, 0, 0.1, -0.85); part(ball(0.03, 0.25, 0.03), hide, st.tail).position.set(0, -0.2, 0);
       for (const [x, z] of [[0.24, 0.5], [-0.24, 0.5], [0.22, -0.55], [-0.22, -0.55]]) { const g = grp(body, x, -0.3, z); part(legG(0.68, 0.12, 0.07), z > 0 ? wool : hide, g); legs.push(g); }
       st.size = 1; st.gait = 4;

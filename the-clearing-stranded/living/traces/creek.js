@@ -58,10 +58,14 @@ window.TRACES.creek = {
     // the ford: over the gravel bar and through the shallow riffle to the far bank
     [36, [870, 730], [950, 696], [1010, 640], [1060, 588], [1110, 548], [1170, 526]],
     // the path downstream along the far bank, past the bois d'arc grove, off the bottom edge
-    [40, [1170, 526], [1230, 532], [1272, 556], [1300, 580], [1326, 606], [1356, 636], [1374, 672], [1392, 740], [1420, 804], [1446, 870], [1466, 937], [1486, 1024]]
+    [40, [1170, 526], [1230, 532], [1272, 556], [1300, 580], [1326, 606], [1356, 636], [1374, 672], [1392, 740], [1420, 804], [1446, 870], [1466, 937], [1486, 1024]],
+    // two faint ways, hidden until they are found: upstream through the woods on the far bank to the beaver pond, and
+    // east through the brush below the bois d'arc grove to the bluff with the cave in its foot
+    {w: 34, kind: 'H', to: 'beaver', pts: [[1086, 300], [1100, 240], [1126, 180], [1146, 120], [1160, 60], [1162, 0]]},
+    {w: 34, kind: 'H', to: 'cave', pts: [[1404, 690], [1450, 660], [1494, 630], [1536, 612]]}
   ],
   hub: [870, 730],
-  exits: [['river', 0, 814]],
+  exits: [['river', 0, 814], ['beaver', 1162, 0, 'hidden'], ['cave', 1536, 612, 'hidden']],
   // the game's spots: two big pecans, the grapevine tree, the fallen limb, the bois d'arc grove, the white sycamore,
   // and the path on downstream
   spots: {pecans: [[352, 336], [642, 482]], grapes: [[238, 772]], hardwood: [[790, 786]], osage: [[1286, 490], [1382, 534]],

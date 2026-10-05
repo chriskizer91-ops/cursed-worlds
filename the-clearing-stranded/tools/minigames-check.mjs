@@ -65,7 +65,7 @@ const useSpot = async (pred, job) => {
   await page.click(`.wmenu [data-wi="${i}"]`); return true;
 };
 
-// an angler: cast to the middle, strike when the float goes under, reel while the line is green, let go before it's red
+// an angler: cast by the sunken log, strike when the float goes under, reel while the line is green, let go before it's red
 async function angler(maxMs, deep){
   const t0 = Date.now(); let holding = false, cardShot = false;
   while (Date.now() - t0 < maxMs){
@@ -73,7 +73,7 @@ async function angler(maxMs, deep){
     if (!st) return null;
     if (st.mode === 'card'){ if (holding){ await page.mouse.up(); holding = false; } return st; }
     if (st.mode === 'end') return st;
-    if (st.mode === 'ready'){ if (deep && !st.deep) await page.click('.f-depth [data-d="bot"]'); await page.mouse.move(220, 560); await page.mouse.down(); await page.waitForTimeout(650); await page.mouse.up(); }
+    if (st.mode === 'ready'){ if (deep && !st.deep) await page.click('.f-depth [data-d="bot"]'); await page.mouse.move(220, 560); await page.mouse.down(); await page.waitForTimeout(775); await page.mouse.up(); }
     else if (st.mode === 'out'){ if (!st.bait){ const b = await page.$('.f-reel:not([hidden])'); if (b) await b.click(); } else if (st.eng === 'bite'){ await page.mouse.move(220, 560); await page.mouse.down(); await page.mouse.up(); } }
     else if (st.mode === 'fight'){ if (!holding && st.ten < 0.55){ await page.mouse.move(220, 560); await page.mouse.down(); holding = true; } else if (holding && st.ten > 0.8){ await page.mouse.up(); holding = false; } }
     await page.waitForTimeout(30);
@@ -81,11 +81,24 @@ async function angler(maxMs, deep){
   if (holding) await page.mouse.up();
   return null;
 }
-// a shooter: wait for an animal in the open, put the sights on it, hold steady a second, let go
+// a shooter: wait for an animal in the open, creep closer while its head is down (and freeze while it looks up), put
+// the sights on it, hold steady a second, let go
+const crept = {tried: 0, closer: 0};
 async function shooter(){
   for (let s = 0; s < 3; s++){
     // (this machine draws 3D slowly, so give the animal time to come out; then shoot at whatever is in view)
     await until(() => { const H = window.Hunt && Hunt.current; return !H || H.state().over || H.animals.some(a => a.alive && !a.gone && (a.st === 'graze' || a.st === 'feed' || a.fly)); }, 40000);
+    if (s === 0 && await page.evaluate(() => { const H = Hunt.current; return !!H && H.state().stalk && !H.state().over; })){
+      crept.tried++;
+      // (this machine draws slowly, so keep at it for up to six seconds of the game's own time)
+      const g0 = await page.evaluate(() => Hunt.current.state().t);
+      for (let i = 0; i < 600; i++){
+        const z = await page.evaluate(g0 => { const H = Hunt.current; if (!H || H.state().over || H.state().t - g0 > 6) return 0; const look = H.animals.some(a => a.alive && !a.gone && a.look > 0); H.creep(!look); const st = H.state(); return st.zoom - st.zmin; }, g0);
+        if (z <= 0.001) break; await page.waitForTimeout(80);
+      }
+      if (await page.evaluate(() => { const H = Hunt.current; if (H) H.creep(false); return !!H && H.state().zoom < 0.95; })) crept.closer++;
+      await shot('m05-hunt-crept');
+    }
     const tgt = await page.evaluate(() => { const H = Hunt.current; if (!H || H.state().over) return null; const a = H.animals.find(a => a.alive && !a.gone && (a.st === 'graze' || a.st === 'feed' || a.fly)) || H.animals.find(a => a.alive && !a.gone); if (!a) return null; const b = H.rectOf(a); return [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]; });
     if (!tgt) break;
     await page.mouse.move(tgt[0], tgt[1]); await page.mouse.down();
@@ -174,6 +187,7 @@ for (let k = 0; k < 6 && !hunted; k++){
   hunted = true;
 }
 check(hunted, 'found something to hunt on the Prairie');
+check(!crept.tried || crept.closer > 0, 'creeping closer brings the animal nearer');
 await closeSheets();
 }
 

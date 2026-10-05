@@ -223,7 +223,8 @@ for (let g = 0; g < GAMES; g++){
   const start = STARTS[g % 4], party = TRIAL ? 'solo' : PARTIES[(g >> 2) % 2], diff = DIFFS[Math.floor(g / (TRIAL ? 4 : 8)) % DIFFS.length];
   const r = play(1000 + g, start, party, diff);
   const m = E.summary(r.s);
-  results.push({start, party, diff, days: m.days + m.hours / 24, cause: r.s.dead ? r.s.cause : 'alive', bars: r.s.gear.bars, built: Object.keys(r.s.tools).filter(k => r.s.tools[k] === true).length, shelter: r.s.shelter, huts: (r.s.huts || []).length, badges: m.ach});
+  results.push({start, party, diff, days: m.days + m.hours / 24, cause: r.s.dead ? r.s.cause : 'alive', bars: r.s.gear.bars, built: Object.keys(r.s.tools).filter(k => r.s.tools[k] === true).length, shelter: r.s.shelter, huts: (r.s.huts || []).length, badges: m.ach,
+    found: ['cave', 'lick', 'beaver'].filter(k => r.s.found && r.s.found[k]), legends: ['legendBuck', 'legendBull'].filter(k => r.s.flags[k]).concat(['legendgar', 'whiskers'].filter(k => r.s.ach && (Array.isArray(r.s.ach) ? r.s.ach.indexOf(k) >= 0 : r.s.ach[k])))});
   if (VERBOSE) console.log(r.tag.padEnd(34), (r.s.dead ? 'died day ' + m.days + ' (' + r.s.cause + ')' : 'alive after ' + m.days + ' days').padEnd(32), 'shelter', r.s.shelter, 'badges', m.ach,
     r.food ? `| wild food: ${Math.round(r.food.gathered / 1000)}k Cal gathered, ${Math.round(r.food.spoiled / 1000)}k spoiled, ${Math.round(r.food.raided / 1000)}k raided; eaten ${Math.round(r.s.stats.kcal / 1000)}k, ${r.s.stats.fish} fish, ${r.s.stats.game} game, ${r.s.gear.rounds} rounds left` : '');
 }
@@ -240,6 +241,7 @@ for (const key of ['start', 'party', 'diff']){
   const o = by(key);
   console.log('  ' + key.padEnd(6), Object.keys(o).map(k => `${k}: ${avg(o[k])} days avg, ${o[k].filter(r => r.cause === 'alive').length}/${o[k].length} alive`).join('   '));
 }
+console.log('  secret places found: ' + ['cave', 'lick', 'beaver'].map(k => k + ' ' + results.filter(r => r.found.indexOf(k) >= 0).length).join(', ') + ' of ' + results.length + ' games; legends: ' + ['legendBuck', 'legendBull', 'legendgar', 'whiskers'].map(k => k + ' ' + results.filter(r => r.legends.indexOf(k) >= 0).length).join(', '));
 console.log('  built: shelter ' + (results.reduce((a, r) => a + r.shelter, 0) / results.length).toFixed(1) + ' of 3 on average, huts ' + (results.reduce((a, r) => a + r.huts, 0) / results.length).toFixed(1) + ' of 4 (' + results.filter(r => r.huts >= 4).length + ' games built all four)');
 const causes = by('cause');
 console.log('  endings', Object.keys(causes).map(k => k + ' ' + causes[k].length).join(', '));

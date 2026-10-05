@@ -1,8 +1,11 @@
 # Art for Stranded (The Clearing)
 
-**All in (October 4, 2026).** The nine places, the camp and Cedar Stand seasons, and the character, shelter and
-camp sheets have all come back and are in the game. Nothing is waiting on a picture. The prompts are kept as a
-record, and for any more seasons (the other seven places in summer, fall and winter) or new places later.
+**The nine places are all in (October 4, 2026).** The nine places, the camp and Cedar Stand seasons, and the
+character, shelter and camp sheets have all come back and are in the game. The prompts are kept as a record, and for
+any more seasons (the other seven places in summer, fall and winter).
+
+**New (October 5, 2026): `batch-07-secret-places.md`**, three paintings for Dagr's secret places: the Bluff Cave, the
+Salt Lick and the Beaver Pond. The game draws them in its own pixel style until these come back.
 
 ## The rule: only backgrounds are pictures
 
@@ -14,10 +17,10 @@ code. Only the places you walk around in, and a few backgrounds for the title an
 
 | Order | File | What it is | How many |
 |---|---|---|---|
-| 1 | `batch-01-places.md` | The eight places still to paint (02 to 09), in late spring. The camp (01) is done. | 8 |
-| 2 | `batch-06-moments.md` | The title background, and four backgrounds for the skill moments | 5 |
+| 1 | `batch-07-secret-places.md` | The three secret places: Bluff Cave, Salt Lick, Beaver Pond | 3 |
+| 2 | `batch-06-moments.md` | The title background, and four backgrounds for the skill moments (nice to have: the game works without them) | 5 |
 
-That's 13 pictures in all.
+`batch-01-places.md` is done: all nine places are in the game.
 
 ## How to use this
 

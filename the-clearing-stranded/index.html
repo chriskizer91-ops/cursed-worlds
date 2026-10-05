@@ -131,6 +131,7 @@ h1,h2,h3,p{margin:0}
 .world canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
 .world:focus-visible{box-shadow:inset 0 0 0 3px var(--blaze)}
 .world canvas.lvcv{position:absolute;inset:0;image-rendering:auto}
+.world canvas.lvcv[hidden]{display:none}
 .lvfade{position:absolute;inset:0;background:#0a0c10;opacity:0;pointer-events:none}
 .lvmark{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
 .lvmark::before{content:"";position:absolute;left:-9px;top:-18px;border-style:solid;border-width:13px 9px 0 9px;border-color:var(--blaze) transparent transparent transparent;filter:drop-shadow(0 0 1px #231f24) drop-shadow(0 0 1px #231f24);animation:lvbob 1s ease-in-out infinite alternate}
@@ -642,10 +643,19 @@ D.LOCS = {
     desc:'Upstream, a still pond ringed with cattails. Gar roll at the surface to gulp air.'},
   creek:   {name:'Creek Bottom', icon:'🌰', x:336, y:236,
     desc:'Rich bottomland downstream: pecans, grapevines, sycamores, and deep shade.'},
-  spring:  {name:'Hidden Spring', icon:'💧', x:318, y:34, hidden:true,
-    desc:'Cold, clear water seeping from the base of a sandstone ledge. Safe to drink.'}
+  spring:  {name:'Hidden Spring', icon:'💧', x:318, y:34, hidden:true, found:'spring',
+    desc:'Cold, clear water seeping from the base of a sandstone ledge. Safe to drink.'},
+  // secret places: found by exploring, each off the end of a trail from the place that leads there
+  cave:    {name:'Bluff Cave', icon:'🦇', x:362, y:276, hidden:true, found:'cave',
+    desc:'Downstream, the creek cuts under a limestone bluff with a cave in its foot, taller than a person. It stays cool all summer and mild all winter. Bats roost in the back, and old bear claw marks scar the walls.'},
+  lick:    {name:'Salt Lick', icon:'🦌', x:362, y:156, hidden:true, found:'lick',
+    desc:'A bare, trampled flat where salty mud seeps out of the ground. Deer, bison and everything else come to lick it, mostly at dawn and dusk.'},
+  beaver:  {name:'Beaver Pond', icon:'🦫', x:364, y:196, hidden:true, found:'beaver',
+    desc:'Upstream, beavers have dammed the creek into a still, deep pond full of drowned trees. A lodge of sticks stands in the middle.'}
 };
-D.LOC_ORDER = ['camp','cedar','oak','prairie','berry','river','pond','creek','spring'];
+D.LOC_ORDER = ['camp','cedar','oak','prairie','berry','river','pond','creek','spring','cave','lick','beaver'];
+// where each secret place is found: by exploring here
+D.SECRETS = {cave: 'creek', lick: 'prairie', beaver: 'creek'};
 
 // kcal = Calories per 100 g. spoil = days a fresh lot lasts at about 70 °F.
 D.FOODS = {
@@ -703,7 +713,7 @@ D.KITS = {
 D.MATS = {
   poles:{name:'Cedar poles', icon:'🪵'}, planks:{name:'Crate planks', icon:'🪚'},
   bark:{name:'Cedar bark tinder', icon:'🟫'}, wood:{name:'Firewood', icon:'🔥'},
-  vines:{name:'Vines', icon:'🌿'}, cord:{name:'Vine cordage', icon:'➰'}, paracord:{name:'Nylon cord', icon:'🪢'},
+  vines:{name:'Vines', icon:'🌿'}, cord:{name:'Vine cordage', icon:'➰'}, paracord:{name:'Nylon cord', icon:'🪢'}, chert:{name:'Chert', icon:'🪨'}, salt:{name:'Salt', icon:'🧂'},
   yucca:{name:'Yucca leaves', icon:'🌱'}, fiber:{name:'Yucca cord', icon:'🧵'},
   grass:{name:'Dry grass', icon:'🌾'}, stones:{name:'Cooking stones', icon:'🪨'},
   clay:{name:'Clay', icon:'🟤'}, cane:{name:'River cane', icon:'🎋'},
@@ -785,7 +795,10 @@ D.SPECIES = {
 D.HUNT = {
   oak:     [['squirrel',0.45],['rabbit',0.32],['turkey',0.28],['deer',0.3]],
   prairie: [['quail',0.45],['rabbit',0.45],['dove',0.4],['turkey',0.14],['deer',0.15],['bison',0.5]],
-  creek:   [['duck',0.32],['squirrel',0.4],['turkey',0.25],['raccoon',0.1],['deer',0.3]]
+  creek:   [['duck',0.32],['squirrel',0.4],['turkey',0.25],['raccoon',0.1],['deer',0.3]],
+  // the secret places: everything comes to the salt lick, and the beaver pond is full of ducks
+  lick:    [['deer',0.5],['rabbit',0.3],['turkey',0.22],['bison',0.6]],
+  beaver:  [['duck',0.55],['raccoon',0.15],['deer',0.18]]
 };
 D.GAME = {
   squirrel:{name:'fox squirrel', food:'squirrel', kg:[0.3,0.4], clean:0.5, small:true, eco:'squirrel'},
@@ -798,27 +811,31 @@ D.GAME = {
   // birds that come in flocks: a hunt can bring down more than one with its three shots
   quail:{name:'bobwhite quail', food:'quail', kg:[0.15,0.2], clean:0.3, small:true, flock:[4,9], fly:true},
   dove:{name:'mourning doves', food:'dove', kg:[0.1,0.13], clean:0.2, small:true, flock:[2,4], fly:true},
-  duck:{name:'wood ducks', food:'duck', kg:[0.45,0.65], clean:0.4, small:true, flock:[2,4], fly:true}
+  duck:{name:'wood ducks', food:'duck', kg:[0.45,0.65], clean:0.4, small:true, flock:[2,4], fly:true},
+  // legends: one of each, found step by step (the side quests say how)
+  ghostbuck:{name:'the Ghost Buck', food:'venison', kg:[30,36], clean:2.5, hides:1, legend:true},
+  oldbull:{name:'the Old Bull', food:'bison', kg:[60,60], clean:5, hides:3, legend:true}
 };
 
 // Fish on a hook and line. where: how common at each water (missing: not there). kg: whole-fish weight. fight: how
 // hard it pulls (0 to 1). food: what it is in the pantry. warm: bites best in warm months. night: feeds at dusk and
 // after dark. run: the months it crowds up the river to spawn. legend: the fish of a lifetime.
 D.FISH = {
-  bluegill:    {name:'Bluegill', sci:'Lepomis macrochirus', food:'sunfish', where:{pond:1, creek:0.35, river:0.15}, kg:[0.06,0.35], fight:0.22, warm:true, fact:'The fish almost everyone catches first. It nibbles the bait off the hook if you strike too soon.'},
+  bluegill:    {name:'Bluegill', sci:'Lepomis macrochirus', food:'sunfish', where:{pond:1, creek:0.35, river:0.15, beaver:0.8}, kg:[0.06,0.35], fight:0.22, warm:true, fact:'The fish almost everyone catches first. It nibbles the bait off the hook if you strike too soon.'},
   longear:     {name:'Longear sunfish', sci:'Lepomis megalotis', food:'sunfish', where:{creek:1, river:0.15}, kg:[0.04,0.18], fight:0.2, warm:true, fact:'Maybe the most colorful fish in North America: turquoise squiggles on bright orange, in clear rocky creeks.'},
-  greensunfish:{name:'Green sunfish', sci:'Lepomis cyanellus', food:'sunfish', where:{pond:0.45, creek:0.55}, kg:[0.05,0.25], fight:0.25, warm:true, fact:'A big mouth for a sunfish, and tough enough to live in the smallest, warmest pools.'},
-  crappie:     {name:'White crappie', sci:'Pomoxis annularis', food:'sunfish', where:{pond:0.35, river:0.25}, kg:[0.15,0.8], fight:0.3, fact:'Schools around sunken branches. Its mouth is paper-thin, so reel gently.'},
-  bass:        {name:'Largemouth bass', sci:'Micropterus salmoides', food:'bass', where:{pond:0.6, river:0.2, creek:0.15}, kg:[0.3,3], fight:0.62, warm:true, fact:'An ambush hunter of weedy shallows. When it\'s hooked, it jumps.'},
+  greensunfish:{name:'Green sunfish', sci:'Lepomis cyanellus', food:'sunfish', where:{pond:0.45, creek:0.55, beaver:0.5}, kg:[0.05,0.25], fight:0.25, warm:true, fact:'A big mouth for a sunfish, and tough enough to live in the smallest, warmest pools.'},
+  crappie:     {name:'White crappie', sci:'Pomoxis annularis', food:'sunfish', where:{pond:0.35, river:0.25, beaver:0.6}, kg:[0.15,0.8], fight:0.3, fact:'Schools around sunken branches. Its mouth is paper-thin, so reel gently.'},
+  bass:        {name:'Largemouth bass', sci:'Micropterus salmoides', food:'bass', where:{pond:0.6, river:0.2, creek:0.15, beaver:0.7}, kg:[0.3,3], fight:0.62, warm:true, fact:'An ambush hunter of weedy shallows. When it\'s hooked, it jumps.'},
   spottedbass: {name:'Spotted bass', sci:'Micropterus punctulatus', food:'bass', where:{creek:0.45, river:0.25}, kg:[0.2,1.3], fight:0.55, warm:true, fact:'The bass of clear, rocky creeks. Rows of little spots run down its belly.'},
   whitebass:   {name:'White bass', sci:'Morone chrysops', food:'bass', where:{river:0.18}, run:[1,2,3], kg:[0.3,1.1], fight:0.5, fact:'In late winter they crowd up the rivers by the thousands to spawn. Texans call it the sand bass run.'},
-  catfish:     {name:'Channel catfish', sci:'Ictalurus punctatus', food:'catfish', where:{river:1, pond:0.35, creek:0.3}, kg:[0.4,5], fight:0.6, night:true, fact:'Finds food in muddy water by smell and taste: its whole body is covered in taste buds.'},
-  bullhead:    {name:'Yellow bullhead', sci:'Ameiurus natalis', food:'catfish', where:{pond:0.35, creek:0.3}, kg:[0.2,0.8], fight:0.35, night:true, fact:'A little catfish with white chin whiskers. Careful: the spines in its fins sting.'},
+  catfish:     {name:'Channel catfish', sci:'Ictalurus punctatus', food:'catfish', where:{river:1, pond:0.35, creek:0.3, beaver:0.3}, kg:[0.4,5], fight:0.6, night:true, fact:'Finds food in muddy water by smell and taste: its whole body is covered in taste buds.'},
+  bullhead:    {name:'Yellow bullhead', sci:'Ameiurus natalis', food:'catfish', where:{pond:0.35, creek:0.3, beaver:0.5}, kg:[0.2,0.8], fight:0.35, night:true, fact:'A little catfish with white chin whiskers. Careful: the spines in its fins sting.'},
   bluecat:     {name:'Blue catfish', sci:'Ictalurus furcatus', food:'catfish', where:{river:0.08}, kg:[3,25], fight:0.88, night:true, fact:'The biggest catfish in North America. Some grow past 100 pounds.'},
-  flathead:    {name:'Flathead catfish', sci:'Pylodictis olivaris', food:'catfish', where:{river:0.06}, kg:[3,30], fight:0.9, night:true, fact:'A loner that waits in deep holes and eats only live fish.'},
+  flathead:    {name:'Flathead catfish', sci:'Pylodictis olivaris', food:'catfish', where:{river:0.06, beaver:0.12}, kg:[3,30], fight:0.9, night:true, fact:'A loner that waits in deep holes and eats only live fish.'},
   drum:        {name:'Freshwater drum', sci:'Aplodinotus grunniens', food:'fish', where:{river:0.4}, kg:[0.5,3], fight:0.55, fact:'It grunts by drumming muscles against its air bladder. The stones in its ears are called lucky stones.'},
   spottedgar:  {name:'Spotted gar', sci:'Lepisosteus oculatus', food:'gar', where:{pond:0.25, creek:0.1}, kg:[0.5,2], fight:0.6, warm:true, fact:'Gulps air at the surface, so it does fine in warm, still ponds. Its eggs are poisonous: never eat gar roe.'},
   longnosegar: {name:'Longnose gar', sci:'Lepisosteus osseus', food:'gar', where:{river:0.3}, kg:[0.8,4], fight:0.65, warm:true, fact:'A snout like a needle, full of teeth. Hard to hook: the bait slips off its bony jaws.'},
+  oldwhiskers: {name:'Old Whiskers', sci:'Pylodictis olivaris', food:'catfish', where:{beaver:0.06}, kg:[32,45], fight:1, night:true, legend:true, fact:'A flathead catfish older than any tree on the dam, lying in the deepest hole under the drowned timber. Flatheads only eat live fish, and this one has eaten a lot of them.'},
   alligatorgar:{name:'Alligator gar', sci:'Atractosteus spatula', food:'gar', where:{river:0.012}, kg:[25,90], fight:1, warm:true, legend:true, fact:'The giant of the river. It can pass 8 feet and 300 pounds, and gars have been around since the dinosaurs.'}
 };
 
@@ -874,6 +891,9 @@ D.RECIPES = [
    special:'leach', desc:'Boil bitter acorns in changes of water to pull out the tannins. Needs a bowl or pot and 2 liters of water.'},
   {id:'bow', name:'Carve a bois d\'arc bow', icon:'🏹', group:'Hunting', hours:12, session:3, work:'moderate',
    need:{stave:1, fiber:2}, flag:'bow', desc:'A quiet hunting weapon that never runs out of bullets.'},
+  {id:'points', name:'Knap chert arrowheads', icon:'🪨', group:'Hunting', hours:2, work:'light', anywhere:true,
+   need:{chert:3}, flag:'points', prereq:[{kind:'recipe',id:'bow',label:'Bois d’arc bow'}],
+   desc:'Flake sharp points from the chert of the Bluff Cave, pressing off chips with a deer-antler tip. Arrows with stone points hit harder and break less.'},
   {id:'arrows', name:'Make 3 arrows', icon:'🏹', group:'Hunting', hours:2, work:'light',
    need:{cane:3, feathers:3}, give:{arrows:3}, desc:'River cane shafts, turkey-feather fletching, fire-hardened tips.'},
   {id:'workbench', name:'Build a workbench', icon:'🪚', group:'Camp', hours:4, session:2, work:'moderate', planks:true,
@@ -977,6 +997,7 @@ D.GUIDE = {
   cougar:{name:'Mountain lion', sci:'Puma concolor', cat:'Animals', fact:'An ambush hunter, most active at dawn and dusk. Face it, look big, and never run.'},
   pigeon:{name:'Passenger pigeon', sci:'Ectopistes migratorius', cat:'Animals', fact:'Extinct in our world since 1914. Here, migrating flocks still take hours to pass overhead.'},
   parakeet:{name:'Carolina parakeet', sci:'Conuropsis carolinensis', cat:'Animals', fact:'North America\'s own parrot, extinct in our world since 1918. Here they flash green and yellow through the bottomland trees.'},
+  bat:{name:'Mexican free-tailed bat', sci:'Tadarida brasiliensis', cat:'Animals', fact:'Millions roost in Texas caves. Each one eats hundreds of moths and mosquitoes a night, and they fly out at dusk in rivers you can see for miles.'},
   beaver:{name:'American beaver', sci:'Castor canadensis', cat:'Animals', fact:'Their dams make ponds. They also spread giardia, one reason to boil your water.'},
   bullfrog:{name:'American bullfrog', sci:'Lithobates catesbeianus', cat:'Animals', fact:'Hunts at night along the pond edge. The legs are the meat.'},
   snapper:{name:'Common snapping turtle', sci:'Chelydra serpentina', cat:'Animals', fact:'Keep your hands away from the front half. A big one is a lot of meat.'},
@@ -1021,6 +1042,10 @@ D.ACH = {
   camp1:{name:'Home improvement', how:'Build your first camp upgrade'},
   camp5:{name:'Homestead', how:'Build all five camp upgrades'},
   hut1:{name:'Builder', how:'Build your first hut'},
+  ghost:{name:'Ghost of the woods', how:'Bring home the Ghost Buck'},
+  oldbull:{name:'The Old Bull', how:'Face down the Old Bull'},
+  whiskers:{name:'Old Whiskers', how:'Land Old Whiskers'},
+  secret:{name:'Off the map', how:'Find a secret place'},
   village:{name:'A little village', how:'Build all four huts'}
 };
 
@@ -1172,6 +1197,31 @@ D.QUESTS = [
    steps:[{text:'Carve a bow-drill kit from a cedar pole', recipe:'bowdrill'}, {text:'Strip cedar bark for tinder', any:[{inv:'bark', n:1}, {stat:'drillFires', n:1}], at:['cedar', 'bark'], hint:'The stringy bark peels off the cedars at the Cedar Stand.'},
      {text:'Start a fire with the bow drill', stat:'drillFires', n:1, at:['camp', 'firestart'], hint:'Let the fire go out first, or bank it. Saw steady and fast until it smokes, then blow the coal into the bark.'}],
    done:'Smoke, a coal, a flame, and no match. You can make fire with your hands now, anywhere, for the rest of your life.'},
+  // the legends
+  {id:'ghostbuck', side:true, title:'The Ghost Buck', when:{found:'trail'},
+   story:'A white deer: one in thirty thousand is born that way. If there\'s one in these woods, he\'s old and wise and very hard to see.',
+   steps:[{text:'Find his sign in the Oak Woods', flag:'ghostSign', at:['oak', 'hunt_oak'], hint:'Hunt or explore the Oak Woods and watch the ground.'},
+     {text:'Find the salt lick he goes to', found:'lick', at:['prairie', 'explore_prairie'], hint:'Explore the far prairie: follow the deer trails.'},
+     {text:'Wait for him at the lick at dawn or dusk', flag:'ghostSeen', at:['lick', 'watchlick'], hint:'Watch the lick from the brush in the first or last light.'},
+     {text:'Bring him home', flag:'legendBuck', at:['lick', 'watchlick'], hint:'Three shots. Make the first one count.'}],
+   done:'The Ghost Buck. People would tell this story for a hundred years, if there were any people.'},
+  {id:'oldbull', side:true, title:'The Old Bull', when:{world:'bison'},
+   story:'Every herd has one: the oldest, biggest bull, scarred from a hundred fights. He doesn\'t run from wolves. He won\'t run from you.',
+   steps:[{text:'Find the salt lick on the Prairie', found:'lick', at:['prairie', 'explore_prairie'], hint:'Explore the far prairie: follow the trails.'},
+     {text:'Find his wallow at the lick while the herd is here', flag:'bullSign', at:['lick', 'watchlick'], hint:'Watch the lick while the herd is on the Prairie.'},
+     {text:'Face the Old Bull', flag:'legendBull', at:['lick', 'watchlick'], hint:'He comes to the salt at dawn and dusk. If you miss, he charges.'}],
+   done:'The Old Bull is down. Smoke what you can: it\'s weeks of meat.'},
+  {id:'rivergiant', side:true, title:'The River Giant', when:{did:'fish_river'},
+   story:'Alligator gars live a hundred years and grow longer than a canoe. They hunt the deep holes of the big rivers at dusk.',
+   steps:[{text:'See the River Giant roll', flag:'garSeen', at:['river', 'fish_river'], hint:'Fish the River Bank and watch the deep water by the snag.'},
+     {text:'Catch a fish of 2 pounds or more for bait', flag:'bigBait', at:['river', 'fish_river'], hint:'Fish the river or the pond. Bait on the bottom finds the bigger fish.'},
+     {text:'Land the River Giant', ach:'legendgar', at:['river', 'fish_river'], hint:'Fish the river at dusk, in the last light, bait high. Be patient on the line.'}],
+   done:'The River Giant, on the bank. You let your arms shake for a while.'},
+  {id:'whiskers', side:true, title:'Old Whiskers', when:{found:'beaver'},
+   story:'In the deepest hole under the drowned trees of the beaver pond lives a flathead catfish older than the dam.',
+   steps:[{text:'Fish the beaver pond', did:'fish_beaver', at:['beaver', 'fish_beaver'], hint:'Fish from the dam.'},
+     {text:'Land Old Whiskers', ach:'whiskers', at:['beaver', 'fish_beaver'], hint:'He feeds in the last light of dusk. Bait on the bottom, and hold on.'}],
+   done:'Old Whiskers. You could almost swear he looked at you.'},
   {id:'village', side:true, title:'A little village', when:{shelter:1},
    story:'There\'s open ground all round the boulders: room for a hut to sleep in, a storehouse, a smokehouse and a workshop. Each one takes a lot of poles and grass, and each one makes camp better for good.',
    steps:[{text:'Build a sleeping hut', recipe:'hutsleep'}, {text:'Build a storehouse', recipe:'hutstore'}, {text:'Build a smokehouse', recipe:'hutsmoke'}, {text:'Build a workshop', recipe:'hutshop'}],
@@ -1306,6 +1356,7 @@ function windOn(s, work, ctx){
 }
 // what the cold feels like: the National Weather Service wind chill, for 50 °F and below with wind over 3 mph
 function feels(s, work, ctx){
+  if (s.loc === 'cave' && (work === 'rest' || work === 'sleep' || work === 'light')) return 64;
   const T = tempAt(s, s.t), v = windOn(s, work, ctx);
   if (T > 50 || v < 3) return T;
   const k = Math.pow(v, 0.16);
@@ -1484,8 +1535,9 @@ function sleepQ(s){
   const atCamp = s.loc === 'camp';
   let q = 0.42;
   if (atCamp){ q += [0, 0.22, 0.33, 0.43][s.shelter]; if (s.tools.bedding) q += 0.1; if (s.tools.hutSleep) q += 0.12; }
+  if (s.loc === 'cave') q += 0.25;
   const rain = rainNow(s, s.t);
-  if (rain && !(atCamp && s.shelter >= 1)) q -= 0.25;
+  if (rain && !(atCamp && s.shelter >= 1) && s.loc !== 'cave') q -= 0.25;
   const T = tempAt(s, s.t), ins = insulation(s, 'sleep');
   const Tf = feels(s, 'sleep', {camp: atCamp});
   if (Tf < 55) q -= Math.max(0, (55 - Tf) / 60) * (1 - ins);
@@ -1502,10 +1554,11 @@ E.sleepQ = sleepQ;
 
 function stepBody(s, dt, work, ctx){
   const b = s.body, c = s.cond;
-  const T = tempAt(s, s.t);
+  const inCave = s.loc === 'cave' && (work === 'rest' || work === 'sleep' || work === 'light');   // a cave stays near 64 °F all year
+  const T = inCave ? 64 : tempAt(s, s.t);
   const rain = rainNow(s, s.t);
   const atCamp = s.loc === 'camp';
-  const covered = atCamp && s.shelter >= 1 && (ctx.camp || work === 'sleep' || work === 'rest');
+  const covered = inCave || (atCamp && s.shelter >= 1 && (ctx.camp || work === 'sleep' || work === 'rest'));
   // wet or dry
   if (rain && !covered){
     if (c.wet < 0.9 && !s.flags.soaked){ s.flags.soaked = true; msg(s, rain.kind === 'snow' ? 'Snow soaks through your clothes.' : 'The rain soaks you to the skin.'); }
@@ -1688,7 +1741,7 @@ function stepCamp(s, dt){
     if (rain && s.shelter < 2 && !(s.tools.hutSmoke && r.need === 'smoke') && r.prog > 0 && chance(s, 0.1 * dt)) r.prog = Math.max(0, r.prog - 2);
     if (r.prog >= r.req){
       lot.st = r.need === 'smoke' ? 'smoked' : 'dried';
-      lot.exp = s.t + (r.need === 'smoke' ? 30 : 60) * 24;
+      lot.exp = s.t + (r.need === 'smoke' ? (r.salt ? 45 : 30) : 60) * 24;
       lot.rack = null;
       msg(s, lotName(lot) + ' is done on the rack. It will keep for weeks.');
       ach(s, null, 'jerky');
@@ -1865,9 +1918,9 @@ E.newGame = function(opt){
     t: 0, t0: 0, loc: 'camp',
     body: {hp: 100, hyd: 96, res: RES_MAX, en: 92},
     cond: {wet: 0, inc: 0, sick: 0, venom: 0, venomT: 0, rash: 0, sprain: 0, protein: 0},
-    inv: {poles: 0, planks: 0, bark: 0, wood: 0, vines: 0, cord: 0, paracord: 0, yucca: 0, fiber: 0, grass: 0, stones: 0, clay: 0, cane: 0, grubs: 0, hides: 0, feathers: 0, stave: 0, arrows: 0},
+    inv: {poles: 0, planks: 0, bark: 0, wood: 0, vines: 0, cord: 0, paracord: 0, chert: 0, salt: 0, yucca: 0, fiber: 0, grass: 0, stones: 0, clay: 0, cane: 0, grubs: 0, hides: 0, feathers: 0, stave: 0, arrows: 0},
     gear: {crates: 0, tarp: 0, knives: 0, rounds: 99, laces: 0, hooks: 0, matches: 0, bottle: 0, firstaid: 0, bars: 0},
-    tools: {bowdrill: false, spear: false, fishtrap: false, snares: 0, rack: false, bowl: false, pot: false, bags: 0, rain: false, hang: false, bedding: false, blanket: false, bow: false, club: false, seep: false, workbench: false, woodstore: false, cache: false, hearth: false, lookout: false, hutSleep: false, hutStore: false, hutSmoke: false, hutShop: false},
+    tools: {points: false, bowdrill: false, spear: false, fishtrap: false, snares: 0, rack: false, bowl: false, pot: false, bags: 0, rain: false, hang: false, bedding: false, blanket: false, bow: false, club: false, seep: false, workbench: false, woodstore: false, cache: false, hearth: false, lookout: false, hutSleep: false, hutStore: false, hutSmoke: false, hutShop: false},
     shelter: 0,
     fire: {st: 'out', fuel: 0, at: 0, wet: false},
     water: {clean: 0, raw: 0, risk: 0},
@@ -1877,7 +1930,7 @@ E.newGame = function(opt){
     pot: {stage: 'none', dried: 0, tries: 0},
     proj: {},
     skill: {fireOK: 0, fireFail: 0, spear: 0},
-    found: {spring: false, osage: false, trail: false},
+    found: {spring: false, osage: false, trail: false, cave: false, lick: false, beaver: false},
     visited: {camp: true},
     guide: {}, ach: {},
     world: {dry: 0, flood: 0, bison: 0, bisonId: 0, pigeons: 0, pigeonId: 0, carcass: 0, wolvesAway: 0, scare: {}, mast: 'fair', raidNight: -99},
@@ -2101,6 +2154,9 @@ function skyWord(k){ return {clear: 'Clear skies', partly: 'Partly cloudy', clou
 E.skyWord = skyWord;
 
 /* ---------- walking ---------- */
+// a secret place counts once it's been found (the Hidden Spring, the cave, the lick, the beaver pond)
+function foundLoc(s, k){ const L = D.LOCS[k]; return !!L && (!L.hidden || !!(s.found && s.found[L.found || 'spring'])); }
+E.foundLoc = foundLoc;
 function travelMins(s, k){
   const a = D.LOCS[s.loc], b = D.LOCS[k];
   let m = Math.max(10, Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 0.28 / 5) * 5);
@@ -2110,7 +2166,7 @@ function travelMins(s, k){
   return Math.round(m);
 }
 E.travelList = function(s){
-  return D.LOC_ORDER.filter(k => k !== s.loc && (!D.LOCS[k].hidden || s.found.spring))
+  return D.LOC_ORDER.filter(k => k !== s.loc && foundLoc(s, k))
     .map(k => ({id: k, name: D.LOCS[k].name, icon: D.LOCS[k].icon, mins: travelMins(s, k), visited: !!s.visited[k]}));
 };
 const FIRST = {
@@ -2120,11 +2176,14 @@ const FIRST = {
   berry: ['honeybee', 'Native bees work the flowers: bumblebees, sweat bees, tiny carpenter bees. Not one honeybee. Those came from Europe with people.'],
   pond: ['gar', 'A long, toothy fish rises, gulps air with a pop, and sinks again: a gar.'],
   creek: ['hog', 'The bottomland soil is smooth and unbroken. In our Texas, feral hogs would have torn it all up. There are none here.'],
-  spring: [null, 'The water is so cold it makes your teeth ache.']
+  spring: [null, 'The water is so cold it makes your teeth ache.'],
+  cave: ['bat', 'Your eyes adjust to the dark. Hundreds of bats hang from the cave roof like folded umbrellas, and a cool breath of air comes from deep inside. Old claw marks on the wall: a bear has wintered here.'],
+  lick: [null, 'The mud is churned with tracks: deer, raccoon, turkey, bison. Everything comes here for the salt.'],
+  beaver: ['beaver', 'A dam of mud and sticks taller than you holds back a whole pond. Out in the middle, a beaver lodge, and a V of ripples heading for it.']
 };
 E.travel = function(s, k){
   if (s.dead || s.pending || !D.LOCS[k] || k === s.loc) return null;
-  if (D.LOCS[k].hidden && !s.found.spring) return null;
+  if (!foundLoc(s, k)) return null;
   const snap = snapshot(s); begin(s);
   const R = newR('Walk to ' + D.LOCS[k].name, D.LOCS[k].icon);
   const mins = travelMins(s, k), dark = isDark(s);
@@ -2141,6 +2200,7 @@ E.travel = function(s, k){
   }
   if (!s.visited[k]){
     s.visited[k] = true; skillUp(s, R, 'exploring', 2, 'go:' + k);
+    if (D.LOCS[k].hidden && k !== 'spring') ach(s, R, 'secret');
     const f = FIRST[k];
     if (f){ if (f[0]) unlock(s, f[0], R); R.lines.push(f[1]); }
   }
@@ -2355,8 +2415,10 @@ act({id: 'rack', loc: 'camp', name: 'Load the drying rack', icon: '🪜', h: 0.5
   run(s, R){
     pass(s, 0.5, 'light', R, {camp: true}); if (s.dead) return;
     const L = rackable(s);
-    for (const f of L){ const meat = !!D.FOODS[f.key].meat; f.rack = {need: meat ? 'smoke' : 'sun', prog: 0, req: meat ? 30 : 24}; }
+    const salt = s.inv.salt >= 1 && L.some(f => D.FOODS[f.key].meat);
+    for (const f of L){ const meat = !!D.FOODS[f.key].meat; f.rack = {need: meat ? 'smoke' : 'sun', prog: 0, req: meat ? (salt ? 20 : 30) : 24}; if (meat && salt) f.rack.salt = true; }
     R.lines.push('You slice everything thin and lay it on the rack: ' + L.map(f => D.FOODS[f.key].name.toLowerCase()).join(', ') + '.');
+    if (salt){ add(s, R, 'salt', -1); R.lines.push('You rub the meat with salt from the lick first. Salted, it cures in two-thirds the time and keeps half again as long.'); }
     if (L.some(f => D.FOODS[f.key].meat)) R.lines.push('The meat needs the fire kept going for about 30 hours, day and night.');
   }});
 act({id: 'rest', loc: '*', name: 'Rest for an hour', icon: '🌤️', h: 1, work: 'rest', dark: 'ok', haz: false,
@@ -2403,7 +2465,7 @@ act({id: 'saplings', loc: 'oak', name: 'Cut oak saplings for poles', icon: '🪵
 act({id: 'woodO', loc: 'oak', name: 'Gather oak deadwood', icon: '🔥', h: 1, work: 'moderate',
   sub: s => 'Dense oak burns long and hot. ' + stockWord(s.stock.woodO, 70),
   run(s, R){ gatherWood(s, R, 'woodO', 2.5, 4, 'Heavy oak limbs, dry and gray. They\'ll burn for hours.'); }});
-for (const L of ['oak', 'prairie', 'creek']){
+for (const L of ['oak', 'prairie', 'creek', 'beaver']){
   act({id: 'hunt_' + L, loc: L, name: 'Hunt', icon: '🎯', h: 2, work: 'moderate',
     can: canHunt, sub: s => huntSub(s, L), run(s, R){ huntGo(s, R, L); }});
 }
@@ -2595,6 +2657,33 @@ act({id: 'seep', loc: 'river', name: 'Dig a seep well', icon: '⛏️', h: 2, wo
   show: s => !s.tools.seep,
   sub: () => 'A hole in the sandbar fills with sand-filtered water. Safer than the river.',
   run(s, R){ pass(s, 2, 'heavy', R); if (s.dead) return; s.tools.seep = true; R.lines.push('You dig into the sandbar a few feet from the water. Slowly the hole fills with water that seeped through the sand: clearer than the river, and safer. Not perfectly safe, but close.'); }});
+// the Bluff Cave
+act({id: 'chert', loc: 'cave', name: 'Chip chert from the bluff', icon: '🪨', h: 1, work: 'heavy',
+  sub: () => 'Gray nodules of chert in the limestone: it breaks with an edge sharper than glass.',
+  run(s, R){ pass(s, 1, 'heavy', R); if (s.dead) return; add(s, R, 'chert', ri(s, 2, 3)); R.lines.push('You pry fist-sized nodules of chert out of the limestone and strike a test flake: sharp enough to shave with.'); }});
+act({id: 'bats', loc: 'cave', name: 'Watch the bats fly out', icon: '🦇', h: 0.5, work: 'rest', dark: 'ok',
+  show: s => isEvening(s) || twilight(s),
+  sub: () => 'At dusk the whole roost pours out of the cave to hunt.',
+  run(s, R){ pass(s, 0.5, 'rest', R); if (s.dead) return; unlock(s, 'bat', R); s.flags.bats = true; R.lines.push('At dusk a few bats flicker out, then dozens, then a living river of them pours out of the cave mouth and away over the trees, with a sound like rain. It goes on for ten minutes.'); }});
+// the Salt Lick
+act({id: 'watchlick', loc: 'lick', name: 'Watch the lick from the brush', icon: '🎯', h: 2, work: 'moderate',
+  can: canHunt, sub: s => (twilight(s) ? 'Dawn and dusk: the best time. ' : 'Animals come mostly at dawn and dusk. ') + 'Everything comes here for the salt.',
+  run(s, R){ huntGo(s, R, 'lick'); }});
+act({id: 'salt', loc: 'lick', name: 'Scrape salt from the dry crust', icon: '🧂', h: 1, work: 'light',
+  can: s => rainNow(s, s.t) || rainedEarlierToday(s) ? 'The crust has washed back into mud. Wait for a dry day.' : true,
+  sub: () => 'On dry days a white crust of salt forms on the mud. Salt cures meat faster on the drying rack.',
+  run(s, R){ pass(s, 1, 'light', R); if (s.dead) return; add(s, R, 'salt', ri(s, 1, 2)); R.lines.push('You scrape the white crust off the dry mud into your hat, and pick out the grit. Real salt.'); }});
+// the Beaver Pond
+act({id: 'drink_beaver', loc: 'beaver', name: 'Drink from the pond', icon: '💧', h: 0.25, work: 'rest', dark: 'ok',
+  can: thirsty, sub: () => 'Beavers live in it. Beaver fever is real.', run(s, R){ drinkSource(s, R, 0.07); }});
+act({id: 'fill_beaver', loc: 'beaver', name: 'Fill your containers', icon: '🎒', h: 0.25, work: 'light', dark: 'ok',
+  can: canFill, sub: () => 'Boil it: beavers carry giardia.', run(s, R){ fillSource(s, R, 0.07); }});
+act({id: 'cattail_beaver', loc: 'beaver', name: 'Dig cattail roots', icon: '🌾', h: 1.5, work: 'moderate', wading: true,
+  sub: () => 'Cattails crowd the shallows above the dam.', run(s, R){ cattails(s, R, 1.1); }});
+act({id: 'beavers', loc: 'beaver', name: 'Watch the beavers', icon: '🦫', h: 0.5, work: 'rest', dark: 'ok',
+  show: s => isEvening(s) || twilight(s),
+  sub: () => 'They come out at dusk to work on the dam.',
+  run(s, R){ pass(s, 0.5, 'rest', R); if (s.dead) return; unlock(s, 'beaver', R); s.flags.beavers = true; R.lines.push('A flat head breaks the water and tows a willow branch to the dam. Then another. When one spots you, it slaps its tail on the water with a crack like a rifle shot, and they all vanish.'); }});
 act({id: 'drink_pond', loc: 'pond', name: 'Drink from the pond', icon: '💧', h: 0.25, work: 'rest', dark: 'ok',
   can: thirsty, sub: () => 'Still, warm water. Riskier than the river.', run(s, R){ drinkSource(s, R, 0.06); }});
 act({id: 'fill_pond', loc: 'pond', name: 'Fill your containers', icon: '🎒', h: 0.25, work: 'light', dark: 'ok',
@@ -2691,6 +2780,7 @@ function forage(s, R, loc, hours){
 /* ---------- exploring ---------- */
 function explore(s, R, loc){
   pass(s, exploreHours(s), 'moderate', R); if (s.dead) return;
+  legendSigns(s, R, loc);
   if (s.tools.lookout) R.lines.push('The route you picked from the lookout saves half an hour.');
   if (!s.found.spring && chance(s, loc === 'oak' ? 0.3 : loc === 'prairie' ? 0.22 : 0.12)){
     s.found.spring = true;
@@ -2700,6 +2790,21 @@ function explore(s, R, loc){
   if (loc === 'creek' && !s.found.osage && chance(s, 0.45)){
     s.found.osage = true; unlock(s, 'osage', R);
     R.lines.push('A grove of thorny trees dropping bumpy green fruit the size of softballs: osage orange, bois d\'arc. The best bow wood there is. You can cut a stave here now.');
+    return;
+  }
+  if (loc === 'creek' && !s.found.cave && chance(s, 0.35)){
+    s.found.cave = true;
+    R.lines.push('Far downstream, the creek bends under a pale limestone bluff, and in the foot of the bluff is a cave mouth taller than you. A cool breath of air comes out of it. It\'s on your map now: the Bluff Cave.');
+    return;
+  }
+  if (loc === 'creek' && !s.found.beaver && chance(s, 0.3)){
+    s.found.beaver = true;
+    R.lines.push('You follow the creek upstream instead, and the water goes still and wide: beavers have dammed it into a pond full of drowned trees. It\'s on your map now: the Beaver Pond.');
+    return;
+  }
+  if (loc === 'prairie' && !s.found.lick && chance(s, 0.35)){
+    s.found.lick = true;
+    R.lines.push('Deer trails, more and more of them, all heading the same way. They lead to a bare, trampled flat where the mud tastes of salt. It\'s on your map now: the Salt Lick.');
     return;
   }
   if (loc === 'oak' && !s.found.trail && chance(s, 0.4)){
@@ -2716,7 +2821,7 @@ function explore(s, R, loc){
 /* ---------- fishing with hook and line ---------- */
 // what's biting here right now: how often (bites a minute of the fishing game) and which fish, by how likely
 function fishPool(s, loc){
-  const m = monthNow(s), h = hourOf(s.t), eco = loc === 'pond' ? 'pondfish' : 'riverfish';
+  const m = monthNow(s), h = hourOf(s.t), eco = loc === 'pond' || loc === 'beaver' ? 'pondfish' : 'riverfish';
   const cold = [11, 0, 1].indexOf(m) >= 0, dusk = twilight(s), night = isDark(s), hot = m >= 5 && m <= 7 && h > 11 && h < 17;
   const list = [];
   for (const sp in D.FISH){
@@ -2724,6 +2829,8 @@ function fishPool(s, loc){
     if (F.run) w *= F.run.indexOf(m) >= 0 ? 6 : 0.35;
     if (F.warm && cold) w *= 0.35;
     if (F.night) w *= night || dusk ? 2 : 0.6; else if (night) w *= 0.4;
+    // the River Giant comes to a big bait in the deep water at dusk
+    if (sp === 'alligatorgar' && s.flags.bigBait && (dusk || night)) w *= 20;
     list.push([sp, r3(w)]);
   }
   const rate = Math.sqrt(dens(s, eco)) * Math.sqrt(aware(s, eco)) * (dusk ? 1.4 : hot ? 0.7 : 1) * (cold ? 0.55 : 1) * (s.inv.grubs > 0 ? 1.4 : 1) * LV(s).catch * perk(s, 'fishing');
@@ -2736,7 +2843,7 @@ function fishSub(s, loc){
 }
 function fishGo(s, R, loc){
   pass(s, 1, 'light', R); if (s.dead) return;
-  const P = fishPool(s, loc), eco = loc === 'pond' ? 'pondfish' : 'riverfish';
+  const P = fishPool(s, loc), eco = loc === 'pond' || loc === 'beaver' ? 'pondfish' : 'riverfish';
   const caught = []; let lost = 0;
   if (PLAY && Array.isArray(PLAY.fish)){
     for (const f of PLAY.fish.slice(0, 8)){ const F = f && D.FISH[f.sp]; if (!F || !(F.where[loc] > 0)) continue; caught.push({sp: f.sp, kg: clamp(+f.kg || F.kg[0], F.kg[0], F.kg[1])}); }
@@ -2753,19 +2860,22 @@ function fishGo(s, R, loc){
   }
   if (lost) add(s, R, 'hooks', -lost);
   if (P.bait && (caught.length || lost)) add(s, R, 'grubs', -1);
+  if (loc === 'river' && questOpen(s, 'rivergiant') && !s.flags.garSeen && chance(s, 0.35)){ s.flags.garSeen = true; R.lines.push('Out in the deep water by the snag, something rolls: a back as long as a canoe, armored in gray plates, and a snout full of teeth. Then it\'s gone. The River Giant. A fish that big wants a big fish for bait.'); }
+  if (questOpen(s, 'rivergiant') && s.flags.garSeen && !s.flags.bigBait && caught.some(c => c.kg >= 0.9)){ s.flags.bigBait = true; R.lines.push('You keep the biggest one alive on a stringer: bait for the River Giant. Fish the river at dusk or after dark.'); }
   let n = 0;
   for (const c of caught){
     if (!harvest(s, eco)) break;
     const F = D.FISH[c.sp];
     addFood(s, R, F.food, c.kg * 0.45);   // about 45% of a fish is meat
     logCatch(s, R, c.sp, c.kg); n++;
-    if (F.legend){ ach(s, R, 'legendgar'); R.lines.push('The alligator gar! Longer than you are tall, armored like a dinosaur. A fish people would talk about for the rest of their lives, if there were any people.'); }
+    if (c.sp === 'oldwhiskers'){ ach(s, R, 'whiskers'); R.lines.push('Old Whiskers! A flathead as long as your leg is tall and as heavy as a full pack, with a head as wide as a shovel. Nobody will ever believe you, because there\'s nobody.'); }
+    else if (F.legend){ ach(s, R, 'legendgar'); R.lines.push('The alligator gar! Longer than you are tall, armored like a dinosaur. A fish people would talk about for the rest of their lives, if there were any people.'); }
   }
   if (n){ s.stats.fish += n; ach(s, R, 'fish'); skillUp(s, R, 'fishing', n, 'fish+'); }
   R.lines.push(n ? (n === 1 ? 'One fish on the stringer.' : n + ' fish on the stringer.') : pick(s, ['Not a bite worth having. Some days the fish win.', 'Nibbles, a stolen worm, and nothing to show for it.']));
   if (lost) R.lines.push((lost > 1 ? lost + ' big ones snapped the line and took the hooks.' : 'A big one snapped the line and took a hook.') + ' ' + (s.gear.hooks > 0 ? s.gear.hooks + ' left.' : 'That was your last hook: whittle gorge hooks (Craft tab).'));
 }
-for (const L of ['pond', 'river', 'creek']){
+for (const L of ['pond', 'river', 'creek', 'beaver']){
   act({id: 'fish_' + L, loc: L, name: 'Fish with hook and line', icon: '🎣', h: 1, work: 'light',
     can: s => s.gear.hooks > 0 ? true : 'No hooks left. Whittle gorge hooks (Craft tab).',
     sub: s => fishSub(s, L), run(s, R){ fishGo(s, R, L); }});
@@ -2804,10 +2914,32 @@ function huntRoll(s, loc, bigOnly){
 }
 function huntGo(s, R, loc){
   pass(s, 2, 'moderate', R); if (s.dead) return;
+  legendSigns(s, R, loc);
+  const lg = legendAt(s, loc);
+  if (lg){ s.pending = {type: 'hunt', sp: lg, loc, waited: true, n: 1}; R.lines.push(lg === 'ghostbuck' ? 'The light is going gold. Something pale moves at the edge of the brush, and steps out onto the lick: a white buck with antlers like a rocking chair. The Ghost Buck.' : 'The ground shakes. The herd has come to the lick, and out in front of it walks a bull the size of a pickup truck, scarred and gray in the face: the Old Bull.'); return; }
   const sp = huntRoll(s, loc, false);
   if (!sp){ R.lines.push(pick(s, ['Two hours of stillness. Tracks, droppings, and birdsong, but nothing in range.', 'You ease along the trail, but whatever was here heard you first.', 'Nothing moves but the wind in the grass.'])); return; }
   s.pending = {type: 'hunt', sp, loc, waited: false, n: huntFlock(s, sp)};
   R.lines.push('Something moves. You freeze.');
+}
+// the legends leave signs before you see them: tracks in the Oak Woods, a wallow at the lick
+const questOpen = (s, id) => !!s.quest.open[id] && !s.quest.done[id];
+function legendSigns(s, R, loc){
+  if (loc === 'oak' && questOpen(s, 'ghostbuck') && !s.flags.ghostSign && chance(s, 0.45)){
+    s.flags.ghostSign = true;
+    R.lines.push('In the mud of the deer trail: the biggest tracks you\'ve ever seen, and caught on a briar, a tuft of pure white hair. A white buck. They say a deer like that comes to salt at dawn and dusk.');
+  }
+  if (loc === 'lick' && s.world.bison > 0 && questOpen(s, 'oldbull') && !s.flags.bullSign){
+    s.flags.bullSign = true;
+    R.lines.push('At the edge of the lick, a wallow worn deep into the ground, the dust full of long, coarse, gray hair, and hoofprints wider than your hand. The Old Bull comes here to roll.');
+  }
+}
+// a legend at the lick, at dawn or dusk, once you know its signs
+function legendAt(s, loc){
+  if (loc !== 'lick' || !twilight(s)) return null;
+  if (s.flags.ghostSign && !s.flags.legendBuck && chance(s, 0.4)){ s.flags.ghostSeen = true; return 'ghostbuck'; }
+  if (s.flags.bullSign && s.world.bison > 0 && !s.flags.legendBull && chance(s, 0.35)) return 'oldbull';
+  return null;
 }
 // how many come together: a covey of quail, a pair of doves, or one animal
 function huntFlock(s, sp){ const f = D.GAME[sp].flock; return f ? ri(s, f[0], f[1]) : 1; }
@@ -2821,7 +2953,9 @@ const SPOT = {
   pigeon: 'The flock is so thick that branches bend under the roosting pigeons.',
   quail: 'A covey of bobwhites is feeding in the grass. You can hear them whistling to each other.',
   dove: 'Mourning doves are coming in low over the grass, fast and twisting.',
-  duck: 'Wood ducks are dabbling in the still water under the trees.'
+  duck: 'Wood ducks are dabbling in the still water under the trees.',
+  ghostbuck: 'The Ghost Buck stands at the lick, white as frost, head up, nostrils working. He knows something is wrong.',
+  oldbull: 'The Old Bull lowers his huge head to the salt, eighty yards out. If he charges, nothing will stop him.'
 };
 const KILL = {
   squirrel: 'A clean shot. Not much meat on a squirrel, but it counts.',
@@ -2833,7 +2967,9 @@ const KILL = {
   pigeon: 'One shot into the roost brings down a handful of birds.',
   quail: 'Bobwhite: small, but sweet meat.',
   dove: 'Doves: a mouthful each, but good eating.',
-  duck: 'Wood duck: rich, dark meat with real fat on it.'
+  duck: 'Wood duck: rich, dark meat with real fat on it.',
+  ghostbuck: 'The Ghost Buck. You walk up to him slowly, and for a long minute you just look. Twelve points, a white coat, and more meat than you can carry in one trip.',
+  oldbull: 'The Old Bull goes down like a falling tree. It takes the rest of the day to butcher what you can carry. The wolves will have the rest.'
 };
 function huntView(s){
   const p = s.pending, G = D.GAME[p.sp], o = [];
@@ -2857,7 +2993,7 @@ function huntResolve(s, R, k){
   if (k === 'arrow' && !(s.tools.bow && s.inv.arrows > 0)) return;
   const game = PLAY && Number.isFinite(+PLAY.hits) ? PLAY : null, most = G.flock ? Math.min(3, p.n || 1) : 1;
   if (game && !(+game.shots > 0)){ R.lines.push('You never get a clean shot, and it slips away.'); return; }
-  let hit = (k === 'arrow' ? 0.58 : 0.84) * Math.sqrt(perf(s)) * Math.sqrt(G.eco ? aware(s, G.eco) : 1) * skm() * perk(s, 'hunting');
+  let hit = (k === 'arrow' ? (s.tools.points ? 0.7 : 0.58) : 0.84) * Math.sqrt(perf(s)) * Math.sqrt(G.eco ? aware(s, G.eco) : 1) * skm() * perk(s, 'hunting');
   if (p.sp === 'pigeon') hit = 0.95;
   if (k === 'shoot') s.world.scare[p.loc] = s.t + 18;
   else s.world.scare[p.loc] = Math.max(s.world.scare[p.loc] || 0, s.t + 3);
@@ -2866,17 +3002,20 @@ function huntResolve(s, R, k){
   if (!game && hits && most > 1) while (hits < most && chance(s, 0.3 * skm())) hits++;
   const hitIt = hits > 0;
   if (k === 'arrow'){
-    if (!hitIt && chance(s, 0.45)){ add(s, R, 'arrows', -1); R.lines.push('The arrow hisses past and is lost in the brush.'); }
+    if (!hitIt && chance(s, s.tools.points ? 0.3 : 0.45)){ add(s, R, 'arrows', -1); R.lines.push('The arrow hisses past and is lost in the brush.'); }
     else if (hitIt && chance(s, 0.2)){ add(s, R, 'arrows', -1); R.lines.push('The arrow snaps in the carcass.'); }
   }
   if (!hitIt){
     R.lines.push(k === 'shoot' ? 'The shot cracks across the land. A miss, and it\'s gone.' : 'A miss. It bolts.');
+    if (p.sp === 'oldbull' && chance(s, 0.5)){ hurt(s, rr(s, 20, 35) * dmgM(s), 'mauled'); R.lines.push('The Old Bull wheels and charges! You throw yourself into the brush, and a horn rakes your side as he thunders past.'); }
     if (p.sp === 'bison' && chance(s, 0.2)){ hurt(s, rr(s, 15, 30) * dmgM(s), 'mauled'); R.lines.push('A bull swings toward you and charges! It clips you as you dive behind a tree.'); }
     return;
   }
   if (G.eco) harvest(s, G.eco);
   let kg = 0; for (let i = 0; i < hits; i++) kg += rr(s, G.kg[0], G.kg[1]);
   if (p.sp === 'bison'){ kg = s.P > 1 ? 70 : 40; s.world.carcass = 3; }
+  if (p.sp === 'oldbull'){ kg = s.P > 1 ? 100 : 60; s.world.carcass = 3; s.flags.legendBull = true; ach(s, R, 'oldbull'); }
+  if (p.sp === 'ghostbuck'){ s.flags.legendBuck = true; ach(s, R, 'ghost'); }
   if (p.sp === 'pigeon') kg = ri(s, 3, 8) * 0.15;
   pass(s, G.clean * (G.flock ? Math.max(1, hits * 0.6) : 1), G.clean >= 2 ? 'heavy' : 'moderate', R);
   addFood(s, R, G.food, kg);
@@ -3495,6 +3634,8 @@ function adviceGoals(s){
   if (s.shelter >= 2){ const h = nextHut(s); if (h) goal('There\'s room round the boulders for huts. Next: ' + h.name.charAt(0).toLowerCase() + h.name.slice(1) + '.', {recipe: h.id}); }
   if (s.shelter >= 1 && (!s.found.spring || !s.found.trail)) goal('Nobody has ever mapped these woods. Explore deeper in the Oak Woods and see what\'s out there.', {go: 'oak', act: 'explore_oak'});
   if (s.shelter >= 1 && !s.found.osage) goal('The Creek Bottom runs on for miles. Explore downstream.', {go: 'creek', act: 'explore_creek'});
+  if (s.shelter >= 2 && (!s.found.cave || !s.found.beaver)) goal('There\'s more along the creek than anyone has seen. Explore the Creek Bottom again.', {go: 'creek', act: 'explore_creek'});
+  if (s.shelter >= 2 && !s.found.lick) goal('Deer trails cross the far prairie, all going somewhere. Explore the Prairie and follow them.', {go: 'prairie', act: 'explore_prairie'});
   if (isEvening(s) && s.loc === 'camp' && !isDark(s)) goal('The light is going, and nothing is worth a long walk now. Rest at camp until dark.', {act: 'rest'});
   // what the partner is already out getting, you needn't (unless it's all there is to do)
   const M = s.mate && s.mate.job, busy = M && M.at !== 'camp' && s.t < M.t2 ? (M.k === 'wood' ? /^wood[A-Z]$/ : M.k === 'water' ? /^fill_/ : null) : null;
@@ -3826,6 +3967,8 @@ E.load = function(str){
     if (s.opt.kit !== 'real' && s.opt.kit !== 'first') s.opt.kit = 'first';   // saves from before the realistic kit
     for (const k of ['matches', 'bottle', 'firstaid']) if (!Number.isFinite(s.gear[k])) s.gear[k] = 0;
     if (!Number.isFinite(s.inv.paracord)) s.inv.paracord = 0;
+    for (const k of ['chert', 'salt']) if (!Number.isFinite(s.inv[k])) s.inv[k] = 0;
+    for (const k of ['cave', 'lick', 'beaver']) if (typeof s.found[k] !== 'boolean') s.found[k] = false;
     if (!Number.isFinite(s.stats.drillFires)) s.stats.drillFires = s.opt.kit === 'first' ? s.stats.fires || 0 : 0;
     s.gear.rounds = 99;                                      // the rifle never runs out now
     const numeric = {body:['hp','hyd','res','en'], water:['clean','raw','risk'], inv:Object.keys(D.MATS), gear:Object.keys(D.GEAR).filter(k => k !== 'snares'), tools:['bags','snares'], fire:['fuel','at'], pot:['dried','tries'], skill:['fireOK','fireFail','spear']};
@@ -3847,7 +3990,7 @@ E.load = function(str){
     if (s.log.some(entry => !num(entry.t) || (entry.icon != null && (typeof entry.icon !== 'string' || entry.icon.length > 8)) || entry.lines.some(l => typeof l !== 'string'))) return null;
     if (s.pin != null && !Object.prototype.hasOwnProperty.call(RMAP, s.pin)) delete s.pin;
     if (s.map != null && !(object(s.map) && Number.isInteger(s.map.x) && Number.isInteger(s.map.y) && s.map.x >= 0 && s.map.x < 48 && s.map.y >= 0 && s.map.y < 36)) delete s.map;
-    for (const id of ['workbench','woodstore','cache','hearth','lookout','hutSleep','hutStore','hutSmoke','hutShop']) if (!(id in s.tools)) s.tools[id] = false;
+    for (const id of ['workbench','woodstore','cache','hearth','lookout','hutSleep','hutStore','hutSmoke','hutShop','points']) if (!(id in s.tools)) s.tools[id] = false;
     if (!Array.isArray(s.huts) || s.huts.some(k => ['sleep','store','smoke','shop'].indexOf(k) < 0)) s.huts = ['sleep','store','smoke','shop'].filter(k => s.tools['hut' + k.charAt(0).toUpperCase() + k.slice(1)]);
     if (!Number.isFinite(s.stock.saplings)) s.stock.saplings = 60;   // saves from before oak saplings
     if (!object(s.did) || Object.keys(s.did).some(k => !num(s.did[k]))) s.did = {};   // saves from before quests
@@ -3877,7 +4020,7 @@ E.skills = function(s){
    eats and drinks when you do. (His jobs are the same jobs you do, worked out with MATE on: no time passes for you.) */
 let MATE = false;
 // one person alone, carrying what one person can carry, with a long walk each way: about this much of what you'd get
-const MATE_YIELD = 0.7;
+const MATE_YIELD = 0.3;
 const newMate = () => ({job: null, news: [], lastK: null, n: 0});
 function mateOK(M){
   const o = x => !!x && typeof x === 'object' && !Array.isArray(x), num = x => typeof x === 'number' && Number.isFinite(x);
@@ -5531,8 +5674,8 @@ const PLACES = {
     beasts: {deer: [10, 10, 80, 60], squirrel: [10, 20, 80, 70], turkey: [40, 50, 80, 90]}},
 
   prairie: {ground: 'g', hub: [30, 56],
-    paint: [['G', 'ell', 60, 50, 34, 30], ['G', 'ell', 20, 22, 20, 16], ['G', 'ell', 30, 88, 26, 14], ['G', 'ell', 92, 80, 14, 20], ['g', 'ell', 30, 56, 12, 8], ['L', 'ell', 78, 10, 14, 6], ['g', 'ell', 76, 20, 18, 8]],
-    exits: [['camp', 0, 55]],
+    paint: [['G', 'ell', 60, 50, 34, 30], ['G', 'ell', 20, 22, 20, 16], ['G', 'ell', 30, 88, 26, 14], ['G', 'ell', 92, 80, 14, 20], ['g', 'ell', 30, 56, 12, 8], ['L', 'ell', 78, 10, 14, 6], ['g', 'ell', 76, 20, 18, 8], ['h', 'ell', 96, 88, 8, 12]],
+    exits: [['camp', 0, 55], ['lick', 100, 88, 'hidden']],
     things: [['stones', 72, 20, 0, 'ridge'], ['stones', 80, 22, 1, 'ridge'], ['stones', 86, 18, 0, 'ridge'],
       ['yucca', 30, 28, 0, 'yucca'], ['yucca', 34, 30, 0, 'yucca'], ['yucca', 42, 72, 0, 'yucca'], ['yucca', 46, 74, 0, 'yucca'],
       ['pear', 62, 74, 0, 'pear'], ['pear', 66, 76, 0, 'pear'], ['pear', 86, 56, 0, 'pear'], ['oak', 56, 40, 1, 'hackberry'], ['sapling', 40, 52, 1, 'runs']],
@@ -5595,8 +5738,8 @@ const PLACES = {
     beasts: {}},
 
   creek: {ground: 'f', hub: [30, 60],
-    paint: [['creek', [[60, 0], [64, 20], [58, 40], [66, 60], [72, 80], [76, 100]]], ['g', 'ell', 30, 40, 18, 14], ['F', 'band', 'right', 4]],
-    exits: [['river', 0, 78]],
+    paint: [['creek', [[60, 0], [64, 20], [58, 40], [66, 60], [72, 80], [76, 100]]], ['g', 'ell', 30, 40, 18, 14], ['F', 'band', 'right', 4], ['h', 'rect', 76, 0, 86, 18], ['h', 'rect', 88, 50, 100, 66]],
+    exits: [['river', 0, 78], ['beaver', 80, 0, 'hidden'], ['cave', 100, 58, 'hidden']],
     things: [['pecan', 24, 30, 0, 'pecans'], ['pecan', 40, 46, 0, 'pecans'], ['pecan', 20, 66, 2, 'grapes'], ['deadfall', 48, 78, 1, 'hardwood'], ['osage', 86, 30, 0, 'osage'], ['pecan', 50, 20, 1, 'stand'], ['pecan', 84, 70, 1]],
     marks: {down: [88, 96]},
     scatter: [['oak', 10, 'f'], ['pecan', 4, 'f'], ['fern', 6, 'f'], ['log', 2, 'f']],
@@ -5618,12 +5761,49 @@ const PLACES = {
     marks: {pool: [55, 62]},
     scatter: [['fern', 6, 'g'], ['rock', 3, 'g']],
     spots: {pool: {name: 'The spring', at: [55, 62], acts: ['drink_spring', 'fill_spring'], say: 'Cold, clear water seeping from the foot of the ledge.'}},
-    beasts: {}}
+    beasts: {}},
+
+  // the secret places, found by exploring. Until their paintings come, they're drawn in the game's own pixel style.
+  cave: {ground: 'f', hub: [40, 62],
+    paint: [['L', 'band', 'top', 34], ['L', 'ell', 94, 44, 10, 14], ['f', 'ell', 50, 28, 7, 9], ['creek', [[0, 90], [40, 94], [100, 88]]], ['s', 'ell', 52, 80, 24, 5], ['F', 'ell', 0, 30, 10, 20]],
+    exits: [['creek', 0, 66]],
+    things: [['cavemouth', 50, 32, 0, 'mouth'], ['rock', 30, 44, 0], ['rock', 64, 46, 1], ['rock', 80, 70, 0], ['log', 66, 66, 0], ['cedar', 18, 44, 2], ['cedar', 86, 58, 3], ['oak', 20, 76, 0], ['fern', 40, 44, 0], ['fern', 60, 42, 0]],
+    scatter: [['oak', 8, 'f'], ['cedar', 4, 'f'], ['rock', 8, 'f'], ['fern', 6, 'f']],
+    spots: {
+      mouth: {name: 'The cave mouth', at: [49, 38], acts: ['rest', 'sleep', 'bats'], say: 'A cave taller than you in the foot of the bluff. Cool air breathes out of it, and it smells of bats.'},
+      chert: {name: 'Chert in the bluff', at: [72, 37], acts: ['chert'], say: 'Bands of gray-blue chert in the limestone: the stone arrowheads are made from.'}
+    },
+    beasts: {squirrel: [10, 50, 50, 80]}},
+
+  lick: {ground: 'g', hub: [22, 56],
+    paint: [['F', 'band', 'top', 12], ['F', 'band', 'right', 6], ['F', 'ell', 0, 100, 16, 24], ['G', 'ell', 30, 20, 20, 12], ['G', 'ell', 80, 88, 20, 14], ['m', 'ell', 62, 50, 17, 15], ['s', 'ell', 64, 48, 8, 6], ['h', 'ell', 34, 40, 5, 7]],
+    exits: [['prairie', 0, 56]],
+    things: [['cedar', 14, 26, 1], ['cedar', 22, 30, 2], ['cedar', 86, 30, 3], ['oak', 84, 72, 0], ['rock', 72, 38, 0], ['yucca', 40, 80, 0], ['stones', 50, 68, 1], ['pear', 30, 84, 0]],
+    scatter: [['cedar', 6, 'g'], ['oak', 3, 'g'], ['yucca', 4, 'G'], ['rock', 4, 'g'], ['pear', 3, 'g']],
+    spots: {
+      blind: {name: 'Brush blind', at: [30, 50], acts: ['watchlick'], say: 'A screen of brush downwind of the lick. Sit still here and the animals come to you.'},
+      crust: {name: 'The salt crust', at: [63, 50], acts: ['salt'], say: 'Bare mud churned by hooves, crusted white with salt where it has dried.'}
+    },
+    beasts: {deer: [46, 30, 84, 70], bison: [50, 30, 90, 80], turkey: [20, 64, 60, 92], rabbit: [10, 40, 46, 90]}},
+
+  beaver: {ground: 'g', hub: [28, 84],
+    paint: [['F', 'band', 'left', 8], ['F', 'band', 'right', 8], ['F', 'band', 'top', 6], ['pond', 50, 38, 32, 25], ['m', 'rect', 20, 66, 80, 70], ['creek', [[52, 72], [56, 86], [50, 100]]]],
+    exits: [['creek', 76, 100]],
+    things: [['deadfall', 52, 34, 0, 'lodge'], ['snag', 34, 28, 0], ['snag', 66, 46, 1], ['reeds', 22, 48, 0, 'cattailsB'], ['reeds', 25, 55, 0, 'cattailsB'], ['reeds', 78, 54, 0, 'cattailsB'], ['oak', 82, 76, 0, 'perch'], ['oak', 14, 76, 1]],
+    scatter: [['oak', 8, 'g'], ['pecan', 4, 'g'], ['reeds', 10, 'wet'], ['fern', 4, 'g']],
+    spots: {
+      dam: {name: 'The dam', at: [60, 67], acts: ['fish_beaver', 'beavers'], say: 'A dam of mud and sticks taller than you, with deep, still water behind it.'},
+      bank: {name: 'The pond bank', at: [36, 67], acts: ['drink_beaver', 'fill_beaver'], say: 'Still water the color of tea. Boil it: beavers carry giardia.'},
+      cattailsB: {name: 'Cattails', acts: ['cattail_beaver'], say: 'Cattails crowd the shallows above the dam.'},
+      lodge: {name: 'The beaver lodge', acts: ['beavers'], say: 'A dome of sticks and mud out in the pond: the beavers\' house. The door is under water.'},
+      perch: {name: 'Leaning willow', acts: ['hunt_beaver'], say: 'A willow leaning out over the water. Ducks come in to the pond past it.'}
+    },
+    beasts: {deer: [10, 74, 44, 96], rabbit: [60, 76, 90, 96]}}
 };
 const WSOLID = 'FwockLhbr';   // b: a bramble thicket, r: the stones of the fire ring   // ground nobody walks on. H, the brush over the path to the spring, is solid until you find it.
 const tX = p => Math.max(0, Math.min(WW - 1, Math.round(p / 100 * (WW - 1)))), tY = p => Math.max(0, Math.min(WH - 1, Math.round(p / 100 * (WH - 1))));
 // how big each kind of thing is on the ground, in squares
-const FOOT = {bigboulder: [4, 3], oak: [1, 1], pecan: [1, 1], mulberry: [2, 1], osage: [1, 1], cedar: [1, 1], plum: [1, 1], bramble: [2, 1], deadfall: [2, 1], tangle: [3, 1], log: [2, 1], snag: [2, 1], clay: [2, 1], cane: [1, 1], stones: [2, 1], chimney: [1, 1], sapling: [1, 1]};
+const FOOT = {bigboulder: [4, 3], oak: [1, 1], pecan: [1, 1], mulberry: [2, 1], osage: [1, 1], cedar: [1, 1], plum: [1, 1], bramble: [2, 1], deadfall: [2, 1], tangle: [3, 1], log: [2, 1], snag: [2, 1], clay: [2, 1], cane: [1, 1], stones: [2, 1], chimney: [1, 1], sapling: [1, 1], cavemouth: [3, 2]};
 
 function pgen(k){
   const L = PLACES[k], R = rng(9923 + D.LOC_ORDER.indexOf(k) * 101), M = [];
@@ -5699,7 +5879,7 @@ function pgen(k){
 }
 // every place's map, made once
 const WMAPS = {};
-const wmap = k => WMAPS[k] || (WMAPS[k] = lvTrace(k) ? lvMap(k) : pgen(k));   // a painted place is laid out by its trace
+const wmap = k => WMAPS[k] || (WMAPS[k] = whid(lvTrace(k) ? lvMap(k) : pgen(k)));   // a painted place is laid out by its trace
 // the next place to walk toward on the way to k, along the trails
 function wnextHop(from, to){
   if (from === to) return to;
@@ -5739,7 +5919,7 @@ function wart(F){
     fern: lr(mix(c.leaf, '#4e7a3e', 0.4), mix(c.light, '#9cc070', 0.4)),
     rock: c.rock, wrock: mix(c.rock, '#7a6e60', 0.7), grass: c.front, grassT: mix(c.front, c.stalk, 0.5), stalk: c.stalk, stalk2: c.stalk2, seed: c.seed, sand: c.sand,
     berryHi: '#9a7aac', berryRed: '#b0383a', pool: c.water, snow: '#eef1ee', bag: '#a99a67', sod: '#879661', bowl: '#8a6f4c', cane: '#c4b27a',
-    osageFall: lr('#b9a33e', '#e2cf6a'), clay: '#a19c8e'
+    osageFall: lr('#b9a33e', '#e2cf6a'), clay: '#a19c8e', cavedark: '#211c18'
   });
   const RC = {};
   return {P, c, F, winter, ramp(k){ return RC[k] || (RC[k] = Px.ramp(P[k] || '#8a8a7a')); }};
@@ -5773,7 +5953,7 @@ function wdist(src, w, h, cap){ // chamfer distance to the nearest pixel where s
 function wbake(Wd, A, o){
   const c = A.c, Wp = WW * WT, Hp = WH * WT, N = Wp * Hp, M = Wd.M, snow = o.snow;
   const CODE = {g: 0, G: 1, f: 2, t: 3, s: 3, m: 4, w: 5, o: 6, c: 7, k: 8, L: 9, F: 10, h: 11, H: 11, b: 12};
-  const ch = (x, y) => { let q = M[clamp(y, 0, WH - 1)][clamp(x, 0, WW - 1)]; if (q === 'H' && o.found) q = 't'; return q; };
+  const ch = (x, y) => { let q = M[clamp(y, 0, WH - 1)][clamp(x, 0, WW - 1)]; if (q === 'H' && o.found && o.found(clamp(x, 0, WW - 1), clamp(y, 0, WH - 1))) q = 't'; return q; };
   const K = new Uint8Array(N);
   // solid ground keeps to its own tiles; walkable ground takes on the ragged edges of its neighbors
   for (let py = 0; py < Hp; py++){ const ty = (py / WT) | 0;
@@ -5933,6 +6113,9 @@ const WOBJ = {
     g.stroke('M-20,-4 Q-16,-16 -10,-6 Q-4,4 2,-8 Q8,-18 14,-6 Q18,0 22,-10', 0.7, 0.6, 'vine', {edge: 1});
     if (!A.c.bare || A.F.month === 2) for (const q of [[-16, -12], [-8, -9], [-1, -6], [6, -12], [12, -10], [18, -8], [-12, -4], [4, -3]]) g.E(q[0], q[1], 3.2, 2.4, q[0] % 3 ? 'bush' : 'bush2', {edge: 2, tex: 'leaf'});
     for (const q of [[-10, -10], [8, -11]]) for (const d of [[-1.4, 0], [1.4, 0], [0, -1.6]]) g.E(q[0] + d[0], q[1] + d[1], 1.1, 0.9, 'berryRed', {lv: 2}); }},
+  // the mouth of the Bluff Cave: an arch of limestone round the dark
+  cavemouth: {box: [52, 38, 26, 35], sh: null, paint(g){ g.E(0, -13, 24, 17, 'wrock', {tex: 'stone', edge: 1}); g.E(-14, -4, 10, 6, 'wrock', {tex: 'stone', edge: 1}); g.E(14, -4, 10, 6, 'wrock', {tex: 'stone', edge: 1});
+    g.E(0, -8, 9, 10, 'cavedark', {edge: 1}); g.E(0, -1.5, 9, 2.5, 'cavedark'); }},
   stones: {box: [30, 14, 15, 11], sh: null, paint(g, A, v){ for (const q of (v ? [[-8, -2, 3.4], [0, -4, 2.6], [7, -2, 3], [3, -1, 2], [-3, -6, 2.2]] : [[-9, -3, 2.8], [-2, -2, 3.4], [6, -4, 2.6], [10, -1, 2], [1, -6, 2]])){ g.E(q[0], q[1], q[2], q[2] * 0.7, 'rock', {edge: 1, tex: 'stone'}); g.D(q[0] - 0.6, q[1] - q[2] * 0.4, 'rock', 4, 0.9); } }},
   plum: {box: [30, 30, 15, 28], sh: [9, 2.5], paint(g, A, v){ g.C(0, -1, 0.5, -10, 1.5, 1, 'bark', {edge: 1, tex: 'bark'}); g.C(0, -6, -5, -12, 0.8, 0.6, 'bark', {edge: 1});
     if (!A.c.bare || A.F.month === 2) for (const q of [[-5, -16, 7, 5], [5, -17, 6, 5], [0, -21, 6, 4], [-2, -13, 5, 3.6]]) g.E(q[0], q[1], q[2], q[3], v ? 'bush' : 'bush2', {edge: 2, tex: 'leaf'});
@@ -6061,11 +6244,22 @@ function wsp(key, box, fn, noline){
   if (!s){ Px.setLight(-0.55, -0.72, 0.5, 0.95); Px.setSnow(WV.snow ? 0.6 : 0); s = WV.spr[key] = wspr(WV.A, box[0], box[1], box[2], box[3], fn, noline); Px.setSnow(0); }
   return s;
 }
-const wfound = s => !!(s && s.found && s.found.spring);
+// a secret place: found yet? (the Hidden Spring when none is named)
+const wfound = (s, k) => !!s && E.foundLoc(s, k || 'spring');
+// the hidden ways: each 'H' square belongs to the secret place its path leads to, and opens once that place is found
+function whid(Wd){
+  const hto = new Array(WW * WH).fill(null);
+  for (const e of Wd.exits){ if (!e.hidden) continue; const Q = [[e.x, e.y]]; if (Wd.M[e.y][e.x] === 'H') hto[e.y * WW + e.x] = e.to;
+    while (Q.length){ const [x, y] = Q.shift(); for (const d of [[1, 0], [-1, 0], [0, 1], [0, -1]]){ const nx = x + d[0], ny = y + d[1]; if (nx < 0 || ny < 0 || nx >= WW || ny >= WH || hto[ny * WW + nx] || Wd.M[ny][nx] !== 'H') continue; hto[ny * WW + nx] = e.to; Q.push([nx, ny]); } } }
+  Wd.hto = hto; Wd.secrets = Wd.exits.filter(e => e.hidden).map(e => e.to);
+  return Wd;
+}
+const whidOpen = (Wd, x, y, s) => wfound(s, (Wd.hto && Wd.hto[y * WW + x]) || (Wd.secrets && Wd.secrets[0]));
+const wexitOpen = (e, s) => !e.hidden || wfound(s, e.to);
 function wground(Wd, x, y){ return !Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= WW || y >= WH ? 'F' : Wd.M[y][x]; }
 function wopen(Wd, x, y, s){ // can you stand here?
   const c = wground(Wd, x, y);
-  if (WSOLID.indexOf(c) >= 0 || (c === 'H' && !wfound(s))) return false;
+  if (WSOLID.indexOf(c) >= 0 || (c === 'H' && !whidOpen(Wd, x, y, s))) return false;
   return !Wd.B[y * WW + x] && !(Wd.dyn && Wd.dyn[y * WW + x]);
 }
 
@@ -6220,7 +6414,7 @@ function wsync(s, h, o){
   if (placeChanged){ WV.map = wmap(s.loc); WV.base = null; WV.bkey = ''; WV.nkey = ''; }
   const F = facts(s, h), lt = light(F, s.loc), cr = s.crops || {}, ripe = k => (cr[k] && cr[k].ripe) || 0;
   WV.F = Object.assign({}, F, {berries: ripe('blackberry') > 0.5 || ripe('dewberry') > 0.5 || ripe('dagr') > 0.3}); WV.lt = lt; WV.calm = still();
-  const gk = [s.loc, F.month, lt.snow ? 1 : 0, F.dry, wfound(s) ? 1 : 0, F.flood ? 1 : 0, Math.round(bloom(F) * 4)].join('|');
+  const gk = [s.loc, F.month, lt.snow ? 1 : 0, F.dry, (WV.map.secrets || []).map(k => wfound(s, k) ? 1 : 0).join(''), F.flood ? 1 : 0, Math.round(bloom(F) * 4)].join('|');
   const ak = gk + '|' + [WV.F.berries, F.mulberry, F.tuna, F.persimmon, F.pecan].map(x => x ? 1 : 0).join('');
   if (gk !== WV.gkey){ WV.gkey = gk; WV.base = null; }
   if (ak !== WV.akey){ WV.akey = ak; WV.spr = {}; WV.A = null; WV.snow = !!lt.snow; }
@@ -6253,7 +6447,7 @@ function wplace(t, dir){
 // walk on your own toward a place: to the exit on the way there, and on through the next place
 function wroam(){
   const s = WV.S, k = WV.dest; if (!k || !s || s.loc === k){ WV.dest = null; return; }
-  const hop = wnextHop(s.loc, k), e = hop && WV.map.exits.find(x => x.to === hop && (!x.hidden || wfound(s)));
+  const hop = wnextHop(s.loc, k), e = hop && WV.map.exits.find(x => x.to === hop && wexitOpen(x, s));
   if (!e){ WV.dest = null; return; }
   const P = wroute(WV.map, s, WV.pos.x, WV.pos.y, e.x, e.y, (x, y) => wopen(WV.map, x, y, s));
   if (!P){ WV.dest = null; return; }
@@ -6311,7 +6505,7 @@ function wstep(dx, dy, carry){
   WV.pos.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
   const tx = WV.pos.x + dx, ty = WV.pos.y + dy, s = WV.S;
   // walking off the edge of the map, at a trail's end: the way to the next place
-  const off = tx < 0 || ty < 0 || tx >= WW || ty >= WH, ex = off && WV.map.exits.find(e => e.x === WV.pos.x && e.y === WV.pos.y && (!e.hidden || wfound(s)));
+  const off = tx < 0 || ty < 0 || tx >= WW || ty >= WH, ex = off && WV.map.exits.find(e => e.x === WV.pos.x && e.y === WV.pos.y && wexitOpen(e, s));
   if (ex){ wleave(ex); return; }
   if (wopen(WV.map, tx, ty, s) && !WV.beasts.some(b => b.x === tx && b.y === ty)){ WV.moving = true; WV.fromX = WV.pos.x; WV.fromY = WV.pos.y; WV.toX = tx; WV.toY = ty; WV.t = Math.min(0.5, carry || 0); WV.steps++; return; }
   WV.path = []; if (WV.auto){ WV.auto = false; WV.dest = null; }
@@ -6319,7 +6513,7 @@ function wstep(dx, dy, carry){
 }
 // you stepped onto a trail's end: the next place, if the engine lets you go
 function warrive(){
-  const e = WV.map.exits.find(x => x.x === WV.pos.x && x.y === WV.pos.y && (!x.hidden || wfound(WV.S)));
+  const e = WV.map.exits.find(x => x.x === WV.pos.x && x.y === WV.pos.y && wexitOpen(x, WV.S));
   if (!e) return false;
   const pointsOut = (e.dir === 'left' && WV.pos.dir === 'left') || (e.dir === 'right' && WV.pos.dir === 'right') || (e.dir === 'up' && WV.pos.dir === 'up') || (e.dir === 'down' && WV.pos.dir === 'down');
   if (!pointsOut && !(WV.auto && !WV.path.length)) return false;
@@ -6340,7 +6534,7 @@ function wtap(tx, ty){
   if (tx === P.x && ty === P.y && !WV.moving){ wA(); return; }
   if (wmateHit(tx, ty) && WV.hooks.mate){ WV.hooks.mate(); return; }
   WV.dest = null;
-  const sid = wspotAt(tx, ty), exit = WV.map.exits.find(e => Math.abs(e.x - tx) + Math.abs(e.y - ty) <= 1 && (!e.hidden || wfound(s)));
+  const sid = wspotAt(tx, ty), exit = WV.map.exits.find(e => Math.abs(e.x - tx) + Math.abs(e.y - ty) <= 1 && wexitOpen(e, s));
   const ok = (x, y) => wopen(WV.map, x, y, s) && !WV.beasts.some(b => b.x === x && b.y === y);
   const sx = WV.moving ? WV.toX : P.x, sy = WV.moving ? WV.toY : P.y;
   if (exit && !sid){ const path = wroute(WV.map, s, sx, sy, exit.x, exit.y, ok); if (path){ WV.path = path; WV.auto = true; WV.dest = exit.to; WV.bump = null; WV.held = null; wkick(); } return; }
@@ -6497,7 +6691,7 @@ function wdraw(now){
   const Z = WV.Z, W = Z.W, H = Z.H, c = WV.ctx, s = WV.S, t = WV.calm ? 40 : now / 1000, MW = WW * WT, MH = WH * WT;
   if (!WV.A) WV.A = wart(WV.F);
   const art = wpainting(s.loc, WV.F.month);
-  if (!art && !WV.base) WV.base = wbake(WV.map, WV.A, {snow: !!WV.lt.snow, found: wfound(s), bloom: bloom(WV.F), flood: WV.F.flood});
+  if (!art && !WV.base) WV.base = wbake(WV.map, WV.A, {snow: !!WV.lt.snow, found: (x, y) => whidOpen(WV.map, x, y, s), bloom: bloom(WV.F), flood: WV.F.flood});
   const pp = wppos(), cx = MW <= W ? (MW - W) / 2 : clamp(pp.x - W / 2, 0, MW - W), cy = MH <= H ? (MH - H) / 2 : clamp(pp.y - 8 - H / 2, 0, MH - H); WV.cam = [cx, cy];
   c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.fillStyle = '#1d2621'; c.fillRect(0, 0, Z.devW, Z.devH);
   c.setTransform(Z.k, 0, 0, Z.k, 0, 0);
@@ -6591,7 +6785,7 @@ function wtarget(){
     for (const id in WV.map.spots){ const S = WV.map.spots[id]; if ((S.acts || []).indexOf(want) >= 0 || (S.makes || []).indexOf(want) >= 0){ const q = S.tiles[0]; return q ? {x: q[0], y: q[1], spot: id} : null; } }
     return null;
   }
-  const hop = wnextHop(s.loc, g.go), e = hop && WV.map.exits.find(x => x.to === hop && (!x.hidden || wfound(s)));
+  const hop = wnextHop(s.loc, g.go), e = hop && WV.map.exits.find(x => x.to === hop && wexitOpen(x, s));
   return e ? {x: e.x, y: e.y, exit: hop} : null;
 }
 function wmarker(c, cx, cy, W, H, t){
@@ -6714,16 +6908,18 @@ function lvSky(){
 }
 // where you stand, for the hunting and fishing games: the place's painting and trace, your spot on it, the hour and sky.
 // It waits for the painting if it isn't loaded yet.
+// (a secret place with no painting of its own yet borrows the painting of a place like it)
+const WSTAND = {lick: ['prairie', null], cave: ['creek', null], beaver: ['pond', 'pondedge']};
 function wscene(k){
   k = k || (WV.map && WV.map.k);
-  const T = lvTrace(k), F = WV.F || {month: 3, hour: 10, dom: 15};
+  const sk = lvTrace(k) ? null : WSTAND[k], pk = sk ? sk[0] : k, T = lvTrace(pk), F = WV.F || {month: 3, hour: 10, dom: 15};
   if (!T) return Promise.resolve(null);
   return new Promise(res => {
     const tryIt = n => {
-      const a = lvArt(k, F.month);
+      const a = lvArt(pk, F.month);
       if (!a){ if (n > 120) return res(null); return setTimeout(() => tryIt(n + 1), 50); }
-      const here = WV.map && WV.map.k === k && WV.pos;
-      res({k, img: a.img, trace: T, spot: here ? [(WV.pos.x + 0.5) * 32, (WV.pos.y + 0.62) * 32] : (T.hub || [T.size[0] / 2, T.size[1] / 2]),
+      const here = !sk && WV.map && WV.map.k === k && WV.pos, at = sk && sk[1] && T.spots && T.spots[sk[1]];
+      res({k, img: a.img, trace: T, spot: here ? [(WV.pos.x + 0.5) * 32, (WV.pos.y + 0.62) * 32] : at ? at[0] : (T.hub || [T.size[0] / 2, T.size[1] / 2]),
         month: F.month + ((F.dom || 15) - 15) / 31, hour: F.hour, weather: WV.F ? lvWeather() : 'clear', live: lvSupported(), name: D.LOCS[k] ? D.LOCS[k].name : '', mon: F.month});
     };
     tryIt(0);
@@ -7176,8 +7372,8 @@ const G = {
     ['M0,62 C54,50 110,68 164,56 C214,46 256,62 296,52 C318,46 330,48 338,40 C344,34 350,30 356,38 C364,48 372,44 380,40']
   ]
 };
-const LAB = {camp: [0, 24], cedar: [0, -11], oak: [0, -10], prairie: [0, -10], berry: [6, -14], river: [0, -10], pond: [-2, -19], creek: [-4, -11], spring: [0, -10]};
-const TRAILS = [['camp', 'cedar', 0.12], ['camp', 'oak', -0.1], ['camp', 'prairie', 0.1], ['camp', 'berry', -0.12], ['camp', 'river', 0.08], ['river', 'pond', 0.1], ['river', 'creek', -0.08], ['cedar', 'oak', 0.1], ['oak', 'spring', 0.12]];
+const LAB = {camp: [0, 24], cedar: [0, -11], oak: [0, -10], prairie: [0, -10], berry: [6, -14], river: [0, -10], pond: [-2, -19], creek: [-4, -11], spring: [0, -10], cave: [-16, -10], lick: [-14, -10], beaver: [-26, -10]};
+const TRAILS = [['camp', 'cedar', 0.12], ['camp', 'oak', -0.1], ['camp', 'prairie', 0.1], ['camp', 'berry', -0.12], ['camp', 'river', 0.08], ['river', 'pond', 0.1], ['river', 'creek', -0.08], ['cedar', 'oak', 0.1], ['oak', 'spring', 0.12], ['creek', 'cave', 0.1], ['creek', 'beaver', -0.12], ['prairie', 'lick', 0.12]];
 const STARS = [[22, 20], [58, 44], [96, 14], [140, 36], [176, 12], [214, 28], [252, 10], [288, 40], [330, 18], [362, 52], [40, 120], [120, 150], [250, 150], [300, 110], [352, 128], [70, 190], [180, 220], [290, 205], [16, 240], [356, 230]];
 
 function mapBase(p){
@@ -7221,7 +7417,7 @@ function campGlyph(s){
   }
   return o.join('');
 }
-function visibleLoc(k, s){ return !D.LOCS[k].hidden || (s && s.found.spring); }
+function visibleLoc(k, s){ return !D.LOCS[k].hidden || (!!s && E.foundLoc(s, k)); }
 function mapDyn(s, h, job){
   const o = [];
   if (h){
@@ -7584,7 +7780,7 @@ function hereTab(){
   }
   if (rows.length) h += `<div class="sect"><h3>Here<span class="count">walk up to a thing and tap it</span></h3><ul class="rows">${rows.join('')}</ul></div>`;
   if (S.loc === 'camp') h += '<div class="sect"><h3>Your camp</h3><div class="camp" style="margin-top:0;border-top:0">' + E.campInfo(S).map(([i, t]) => `<p><span>${i}</span><span>${esc(t)}</span></p>`).join('') + '</div></div>';
-  const ways = World.places[S.loc].exits.filter(e => e[3] !== 'hidden' || S.found.spring).map(e => shortPlace(e[0]));
+  const ways = World.places[S.loc].exits.filter(e => e[3] !== 'hidden' || E.foundLoc(S, e[0])).map(e => shortPlace(e[0]));
   h += `<p class="note">Trails from here lead to the ${esc(ways.join(', the ').replace(/, the ([^,]*)$/, ' and the $1'))}. Walk off the end of a trail, or open the map.</p>`;
   return h;
 }

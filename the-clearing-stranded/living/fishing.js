@@ -39,6 +39,8 @@
     drum: {h: 0.38, hx: 0.32, hump: 0.3, head: 'round', tail: 'round', dorsal: 'drum', back: '#666c72', side: '#bcc2c4', belly: '#eceee8', fin: '#9aa0a2', Lc: 38, zone: [0.5, 1], bottom: true, nib: [0, 2]},
     spottedgar: {h: 0.13, hx: 0.5, hump: 0, head: 'gar', snout: 0.12, tail: 'gar', dorsal: 'gar', back: '#48502e', side: '#8a8a56', belly: '#e0dcc0', fin: '#6a6a40', pat: 'spots', patC: 'rgba(28,28,18,.8)', spotsAll: true, Lc: 70, zone: [0, 0.28], nib: [0, 2], hookset: 0.75},
     longnosegar: {h: 0.1, hx: 0.5, hump: 0, head: 'gar', snout: 0.25, tail: 'gar', dorsal: 'gar', back: '#4c5838', side: '#9a9a68', belly: '#e4e0c8', fin: '#72704a', pat: 'spots', patC: 'rgba(30,30,20,.7)', Lc: 75, zone: [0, 0.3], nib: [0, 2], hookset: 0.55},
+    // the beaver pond's legend: a flathead, only bigger, darker and older, scarred from a lifetime under the drowned timber
+    oldwhiskers: {h: 0.21, hx: 0.3, hump: 0.02, head: 'flat', tail: 'square', dorsal: 'cat', back: '#3e3420', side: '#86703e', belly: '#ddd0a4', fin: '#4e4028', pat: 'mottle', patC: 'rgba(30,24,10,.7)', barbels: '#2a2418', jaw: true, Lc: 46, zone: [0.75, 1], bottom: true, nib: [1, 2], hookset: 0.85},
     alligatorgar: {h: 0.15, hx: 0.48, hump: 0.02, head: 'gar', snout: 0.11, broad: true, tail: 'gar', dorsal: 'gar', back: '#46462c', side: '#7a7850', belly: '#d6d0b0', fin: '#5e5c3a', pat: 'spots', patC: 'rgba(30,28,16,.6)', Lc: 50, zone: [0.05, 0.65], nib: [0, 1], hookset: 0.8}
   };
   const lookOf = sp => LOOK[sp] || LOOK.bluegill;
@@ -166,8 +168,10 @@
   // ---------- the water ----------
   const WATER = {
     pond: {top: '#55703e', bot: '#1f2c1a', murk: 0.45, deep: 0.92, weeds: 1, log: true},
-    river: {top: '#6e6c46', bot: '#2a281a', murk: 0.62, deep: 1, weeds: 0.3, log: false},
-    creek: {top: '#4d8a7f', bot: '#1d3a38', murk: 0.15, deep: 0.72, weeds: 0.6, log: true}
+    river: {top: '#6e6c46', bot: '#2a281a', murk: 0.62, deep: 1, weeds: 0.3, log: true},
+    creek: {top: '#4d8a7f', bot: '#1d3a38', murk: 0.15, deep: 0.72, weeds: 0.6, log: true},
+    // the beaver pond: deep, tea-colored water over drowned trees
+    beaver: {top: '#4e5c34', bot: '#1a2212', murk: 0.5, deep: 1, weeds: 0.8, log: true}
   };
 
   let css = false;
@@ -250,8 +254,17 @@
 
     // ---------- what's on the line ----------
     const st = {mode: 'ready', t: 0, clock: 0, power: 0, charge: 0, cast: null, bob: {x: 0.5, dip: 0, under: 0}, hook: {x: 0.5, y: 0.3}, deep: false, bait: true, reeling: false, reelK: 0,
-      ten: 0, red: 0, slack: 0, fish: null, caught: [], lost: 0, paused: false, saidT: 0, tipsLeft: {nib: 2, deep: 1, red: 2}, n: {}};
+      ten: 0, red: 0, slack: 0, fish: null, caught: [], lost: 0, paused: false, saidT: 0, tipsLeft: {nib: 2, deep: 1, red: 2, rise: 1}, n: {}};
     const cnt = k => { st.n[k] = (st.n[k] || 0) + 1; };
+    // where fish hold: by the weeds near the bank and the sunken log. A bait close to cover gets more bites, and more
+    // still where a fish has just risen. Casting anywhere does about as well as the dice; casting well, a little better.
+    const COVER = [{x: 0.26, k: 'weeds'}, {x: 0.64, k: 'log'}];
+    const nearOf = (x, c, w) => Math.exp(-(((x - c) / w) ** 2));
+    const coverAt = x => Math.max(...COVER.map(c => nearOf(x, c.x, 0.11)));
+    const riseAt = x => st.rise && st.t - st.rise.t < 10 ? nearOf(x, st.rise.x, 0.08) : 0;
+    const biteK = x => 0.78 + 0.28 * coverAt(x) + 0.16 * riseAt(x);
+    const spotName = x => riseAt(x) > 0.6 ? 'on the rise' : nearOf(x, COVER[0].x, 0.06) > 0.5 ? 'by the weeds' : nearOf(x, COVER[1].x, 0.06) > 0.5 ? 'by the log' : null;
+    let riseT = rr(3, 6);
     const hooksLeft = () => o.practice ? 99 : (pool.hooks || 0) - st.lost;
     const fishes = [], minnows = [], fx = [], motes = [];
     for (let i = 0; i < 40; i++) motes.push({x: Math.random(), y: Math.random(), s: rr(0.6, 1.8), v: rr(-0.004, 0.006)});
@@ -288,6 +301,7 @@
       st.mode = 'out'; st.bob.x = st.cast.x; st.hook.x = st.cast.x; st.hook.y = hookAt(st.cast.x); st.bait = true; st.cast = null;
       ripple(st.bob.x, 1); if (SND) SND.plunk();
       scareAll(0.25);
+      const nm = spotName(st.bob.x); if (nm && st.tipsLeft.nib <= 0) say('Nice cast, ' + nm + '.', 1.6);
       if (st.tipsLeft.nib-- > 0) say('Watch the float. Little bobs are nibbles: wait. When it goes under, tap!', 4);
     }
     function reelIn() {
@@ -307,7 +321,7 @@
       const y = comes ? clamp(st.hook.y + rr(-0.12, 0.12), 0.04, 0.97) : clamp(rr(L.zone[0], L.zone[1]), 0.04, 0.96);
       const side = Math.random() < 0.5 && st.hook.x > 0.3 ? -1 : 1, x0 = comes ? clamp(st.hook.x + side * rr(0.22, 0.32), 0.05, 1.12) : left ? -0.15 : 1.15;
       const f = {sp, kg: weigh(sp), x: x0, y, vx: 0, vy: 0, dir: left ? 1 : -1, ph: rr(0, TAU), st: comes ? 'come' : 'pass', t: 0, seed: Math.floor(rr(1, 99)), nib: Math.round(rr(L.nib[0], L.nib[1] + 0.49)), bias: rr(-1, 1)};
-      f.y = Math.min(f.y, bottom(clamp(f.x, 0, 1)) - 0.03);
+      f.want = f.y; f.y = Math.min(f.y, bottom(clamp(f.x, 0, 1)) - 0.03);
       if (!comes) f.vx = (left ? 1 : -1) * rr(0.05, 0.09);
       fishes.push(f); return f;
     }
@@ -383,7 +397,14 @@
       const waiting = st.mode === 'out' && st.bait;
       if (waiting && !engaged()) {
         const fl = pool.list.filter(x => fits(x[0])), fw = fl.reduce((a, x) => a + x[1], 0);
-        if (fl.length && Math.random() < dt * 0.12 * (pool.rate || 1) * (0.4 + 0.6 * fw / totalW)) { spawn(pickFrom(fl, fw), true); cnt('come'); }
+        if (fl.length && Math.random() < dt * 0.12 * (pool.rate || 1) * (0.4 + 0.6 * fw / totalW) * biteK(st.hook.x)) { spawn(pickFrom(fl, fw), true); cnt('come'); }
+      }
+      // now and then a fish rises by cover: rings on the water
+      riseT -= dt;
+      if (riseT <= 0 && (st.mode === 'ready' || st.mode === 'out' || st.mode === 'charge')) {
+        riseT = rr(7, 14); const c = COVER[Math.random() < 0.5 ? 0 : 1]; st.rise = {x: clamp(c.x + rr(-0.04, 0.04), 0.12, 0.92), t: st.t};
+        ripple(st.rise.x, 0.9); setTimeout(() => ripple(st.rise.x, 0.6), 350); if (SND) SND.plunk();
+        if (st.tipsLeft.rise-- > 0 && !st.saidT && st.mode !== 'fight') say('Rings on the water: a fish rose there. Fish hold by weeds and sunken wood. Cast close to them.', 4.5);
       }
       // others swim by, whatever the bait is doing
       passT -= dt;
@@ -405,7 +426,9 @@
       f.ph += dt * (f.st === 'hooked' ? 22 : f.st === 'leave' ? 14 : 7);
       const L = lookOf(f.sp);
       if (f.st === 'pass' || f.st === 'leave') {
-        f.x += f.vx * dt; f.y += Math.sin(st.t * 0.8 + f.seed) * 0.01 * dt; f.y = Math.min(f.y, bottom(clamp(f.x, 0, 1)) - 0.03);
+        // swimming by at the depth it likes, as deep as the water lets it
+        const want = Math.min(f.want === undefined ? f.y : f.want, bottom(clamp(f.x, 0, 1)) - 0.03);
+        f.x += f.vx * dt; f.y += (want - f.y) * Math.min(1, dt * 0.8) + Math.sin(st.t * 0.8 + f.seed) * 0.01 * dt; f.y = Math.min(f.y, bottom(clamp(f.x, 0, 1)) - 0.03);
         f.dir = Math.sign(f.vx) || 1;
         if (f.x < -0.3 || f.x > 1.3) f.gone = true;
         return;
@@ -590,7 +613,7 @@
         const x1 = SX(0.1 + st.power * 0.84);
         g.strokeStyle = 'rgba(255,255,255,.85)'; g.setLineDash([5, 6]); g.lineWidth = 2; g.beginPath(); g.moveTo(T2[0], T2[1]); g.quadraticCurveTo((T2[0] + x1) / 2, T2[1] - H * 0.14, x1, surfY); g.stroke(); g.setLineDash([]);
         g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.ellipse(x1, surfY, 12, 4, 0, 0, TAU); g.fill();
-        g.fillStyle = '#15212b'; g.font = '700 13px system-ui,sans-serif'; g.textAlign = 'center'; const lbl = st.power < 0.33 ? 'near' : st.power < 0.67 ? 'middle' : 'far'; g.lineWidth = 3; g.strokeStyle = 'rgba(244,247,247,.9)'; g.strokeText(lbl, x1, surfY - 16); g.fillText(lbl, x1, surfY - 16);
+        g.fillStyle = '#15212b'; g.font = '700 13px system-ui,sans-serif'; g.textAlign = 'center'; const lbl = spotName(0.1 + st.power * 0.84) || (st.power < 0.33 ? 'near' : st.power < 0.67 ? 'middle' : 'far'); g.lineWidth = 3; g.strokeStyle = 'rgba(244,247,247,.9)'; g.strokeText(lbl, x1, surfY - 16); g.fillText(lbl, x1, surfY - 16);
       }
     }
     let last = performance.now(), raf = 0;

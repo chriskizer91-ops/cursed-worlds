@@ -10,6 +10,19 @@ light from dawn to night, the weather and the seasons. The camp and the Cedar St
 paintings; the other places are turned toward the season in code. If a phone can't do 3D, the game falls back to its
 own pixel drawing on top of the painting. The camp on its own, to play with: https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT
 
+**Secret places and legends (October 5, 2026).** Explore the Creek Bottom and you may find the **Bluff Cave** (cool
+all summer, mild all winter, with chert for stone arrowheads and bats at dusk) and the **Beaver Pond** (fishing from the
+dam, ducks, beavers). Explore the Prairie and you may find the **Salt Lick**, where every animal comes for salt. Each
+is at the end of a faint trail that stays hidden in the brush until you've found it. Four legends wait out there, each
+a side quest in steps: the white **Ghost Buck**, the **Old Bull** bison (miss, and he charges), the **River Giant** gar,
+and **Old Whiskers**, the beaver pond's giant catfish. The three places need paintings: the prompts are in
+`docs/art-requests/batch-07-secret-places.md`. Until then the game draws them itself.
+
+**Better hunting and fishing (October 5, 2026).** Hunting: a grazing animal lifts its head now and then to look round.
+Hold **Creep closer** while its head is down to sneak in for a bigger shot; move while it's looking and it bolts.
+Fishing: fish hold by the weeds and the sunken log, and now and then one rises and leaves rings on the water. Cast
+close to them for more bites (the cast says "by the log" or "on the rise" when you're on it).
+
 **More huts, and a realistic kit (October 5, 2026).** There's open ground round the boulders for four huts: a
 sleeping hut, a storehouse up on posts, a smokehouse, and a workshop. Build them from the work ground at camp; each
 one makes camp better for good, and they're drawn in camp as you build them. New games start with a realistic kit:
@@ -59,6 +72,9 @@ All the art you sent is in (October 4, 2026):
 
 If you'd like more seasons, the other seven places in summer, fall and winter would replace the code's own season
 colors there (same names as the camp's: `03-oak-woods-summer.png` and so on).
+
+**Wanted next (October 5, 2026):** three paintings for the secret places, the Bluff Cave, the Salt Lick and the Beaver
+Pond. The prompts are in `docs/art-requests/batch-07-secret-places.md`, made the same way as the nine places.
 
 ## Files
 

@@ -84,11 +84,11 @@ await closeSheets();
 // a skill moment: the bow drill at the fire ring
 await page.evaluate(() => { const S = World._v.S; S.tools.bowdrill = true; S.inv.bark = 2; S.inv.wood = 3; });
 await page.evaluate(() => World.goTo('camp'));
-check(await until(() => World._v.S.loc === 'camp', 40000), 'walked back to camp from the field map\'s way of going');
+check(await until(() => World._v.S.loc === 'camp', 90000), 'walked back to camp from the field map\'s way of going');   // (slow where 3D is drawn without a graphics chip)
 await page.waitForTimeout(400);
 await closeSheets();
-const ring = await page.evaluate(() => World._v.map.spots.ring.tiles[0]);
-await tapToward(ring[0], ring[1]);
+const ring = await page.evaluate(() => World._v.map.spots.ring && World._v.map.spots.ring.tiles[0]);
+if (ring) await tapToward(ring[0], ring[1]);
 check(await until(() => World._v.menuOpen, 45000), 'tapping the fire ring opens its menu');   // (a dozen squares' walk: slow where 3D is drawn without a graphics chip)
 await page.click('.wmenu [data-wi="0"]');
 check(await until(() => !!document.getElementById('skill'), 3000), 'starting a fire opens the bow-drill skill moment');

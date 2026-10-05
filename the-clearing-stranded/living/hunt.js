@@ -17,7 +17,9 @@
   // Small game is drawn bigger than life, so a kid can find it on a phone.
   const KIND = {
     rabbit: [0.3, 0.24, 300, 0.9, 6, 1.6], squirrel: [0.25, 0.19, 290, 1.4, 5, 1.7], turkey: [0.4, 0.5, 380, 0.7, 4.2, 1.3], raccoon: [0.36, 0.3, 340, 0.6, 3.5, 1.4],
-    deer: [0.5, 0.85, 520, 0.8, 9, 1], bison: [0.95, 1.05, 760, 0.5, 6, 1], quail: [0.2, 0.16, 300, 0.35, 0, 1.8], dove: [0.2, 0.2, 400, 0, 0, 1.8], duck: [0.28, 0.28, 420, 0, 0, 1.6], pigeon: [0.2, 0.2, 400, 0, 0, 1.8]
+    deer: [0.5, 0.85, 520, 0.8, 9, 1], bison: [0.95, 1.05, 760, 0.5, 6, 1], quail: [0.2, 0.16, 300, 0.35, 0, 1.8], dove: [0.2, 0.2, 400, 0, 0, 1.8], duck: [0.28, 0.28, 420, 0, 0, 1.6], pigeon: [0.2, 0.2, 400, 0, 0, 1.8],
+    // the salt lick's legends: the white buck is warier and quicker than any deer, the old bull bigger than any bison
+    ghostbuck: [0.5, 0.9, 520, 0.8, 10, 1.15], oldbull: [1.1, 1.2, 760, 0.5, 6, 1.25]
   };
   const MODEL = {pigeon: 'dove', raccoon: 'squirrel'};
   let css = false;
@@ -34,6 +36,9 @@
 .hunt .h-say{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom,0px));max-width:88%;background:rgba(244,247,247,.92);color:#15212b;border-radius:999px;padding:7px 13px;font-size:14.5px;text-align:center;pointer-events:none;transition:opacity .3s}
 .hunt .h-say[data-off]{opacity:0}
 .hunt .h-quit{position:absolute;right:10px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:rgba(244,247,247,.92);color:#15212b;border:0;border-radius:999px;padding:10px 14px;font:inherit;font-weight:600;font-size:14px}
+.hunt .h-creep{position:absolute;left:10px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:rgba(244,247,247,.92);color:#15212b;border:0;border-radius:999px;padding:10px 14px;font:inherit;font-weight:700;font-size:14px;touch-action:none}
+.hunt .h-creep.on{background:#ffd27a}
+.hunt .h-creep[hidden]{display:none}
 .hunt .h-sight{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 1.5px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(0,0,0,.35);pointer-events:none;display:none}
 .hunt .h-sight::before,.hunt .h-sight::after{content:"";position:absolute;background:#e0521b;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
 .hunt .h-sight::before{left:50%;top:6px;bottom:6px;width:2px;margin-left:-1px}
@@ -54,7 +59,7 @@
     style();
     const sp = o.sp, K0 = KIND[sp] || KIND.rabbit, nm = o.names && o.names[sp], name = (Array.isArray(nm) ? nm[0] : nm) || sp, plural = (Array.isArray(nm) ? nm[1] : o.plural) || name, level = Math.max(1, Math.min(10, o.level || 1));
     const ov = document.createElement('div'); ov.className = 'hunt'; ov.id = 'hunt'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Hunting: ' + name);
-    ov.innerHTML = `<canvas aria-hidden="true"></canvas><div class="h-top"><span class="h-name"></span><span class="h-shots"><i></i><i></i><i></i></span></div><div class="h-sight"></div><div class="h-flash"></div><p class="h-say" aria-live="polite"></p><button type="button" class="h-quit">Lower the rifle</button>`;
+    ov.innerHTML = `<canvas aria-hidden="true"></canvas><div class="h-top"><span class="h-name"></span><span class="h-shots"><i></i><i></i><i></i></span></div><div class="h-sight"></div><div class="h-flash"></div><p class="h-say" aria-live="polite"></p><button type="button" class="h-creep" hidden>Creep closer</button><button type="button" class="h-quit">Lower the rifle</button>`;
     document.body.appendChild(ov); document.body.classList.add('noscroll');
     const cv = ov.querySelector('canvas'), sightEl = ov.querySelector('.h-sight'), flashEl = ov.querySelector('.h-flash'), sayEl = ov.querySelector('.h-say');
     ov.querySelector('.h-name').textContent = cap(name) + (o.n > 1 ? ' ×' + o.n : '');
@@ -70,6 +75,10 @@
     const openW = (x, z) => { const t = tileOfW(x, z); return openSq(t[0], t[1]); };
     let cssW = 0, cssH = 0;
     const view = {};
+    // On the ground you start a little farther off and can creep in, so a careful stalker gets the same size of shot as
+    // before (a little closer still where a tall screen can't step back as far); birds and quail come to you.
+    const birds0 = sp === 'dove' || sp === 'duck' || sp === 'pigeon', stalk = !birds0 && sp !== 'quail';
+    let baseW = 0, zoom = 1, ZMIN = 1;
     // the view: the most open stretch of ground within reach of where you stand, so the animal has somewhere to be
     let aimC = null;
     function bestCentre(vw, vh) {
@@ -86,9 +95,15 @@
     }
     function size() {
       const r = ov.getBoundingClientRect(); cssW = r.width; cssH = r.height; S.resize(cssW, cssH);
-      const vw = Math.min(T.size[0], K0[2] * Math.max(1, cssW / cssH * 0.75)), vh = vw * cssH / cssW;
-      if (!aimC) aimC = bestCentre(vw, vh);
-      S.setView(aimC[0], aimC[1], vw, vh);
+      // (never wider than shows the painting top to bottom)
+      const was = K0[2] * Math.max(1, cssW / cssH * 0.75), most = Math.min(T.size[0], T.size[1] * cssW / cssH);
+      baseW = Math.min(most, was * (stalk ? 1.3 : 1));
+      // creep in as far as the old view; where the screen couldn't step back that far, a little closer than it starts
+      ZMIN = !stalk ? 1 : was < baseW ? was / baseW : 0.88;
+      zoom = Math.max(zoom, ZMIN);
+      const vw = baseW * zoom, vh = vw * cssH / cssW;
+      if (!aimC) aimC = bestCentre(baseW, baseW * cssH / cssW);
+      S.setView(view.cx === undefined ? aimC[0] : view.cx, view.cy === undefined ? aimC[1] : view.cy, vw, vh);
       Object.assign(view, S.view);
     }
     size(); root.addEventListener('resize', size);
@@ -145,10 +160,10 @@
 
     // ---------- aiming and shooting ----------
     let shots = 3, hits = 0, t = 0, aim = null, over = false, flushed = false, endAt = 0, saidT = 0;
-    const maxT = birds ? 16 : 26;
+    const maxT = birds ? 16 : stalk ? 40 : 26;   // (time to creep up, on the ground)
     const pips = ov.querySelectorAll('.h-shots i');
     function say(text, secs) { sayEl.textContent = text; sayEl.removeAttribute('data-off'); saidT = t + (secs || 2.4); }
-    say(sp === 'quail' ? 'A covey in the grass. They\'ll flush when they hear you: be ready.' : birds ? 'Here they come. Follow one with the sights, a hair ahead, and let go.' : 'Wait for it to stop. Press and hold to aim, let go to shoot.', 3.2);
+    say(sp === 'quail' ? 'A covey in the grass. They\'ll flush when they hear you: be ready.' : birds ? 'Here they come. Follow one with the sights, a hair ahead, and let go.' : 'It hasn\'t seen you. Wait for it to stop and graze.', 3.2);
     // the sights sway with your breathing: steadiest after a second or so of holding, worse after five; skill steadies them
     function sway(hold) {
       const settle = hold < 1 ? 1 - 0.55 * hold : hold < 3.5 ? 0.45 : 0.45 + (hold - 3.5) * 0.35;
@@ -161,7 +176,7 @@
     }
     const touchOff = e => e.pointerType === 'mouse' ? 0 : Math.min(90, cssH * 0.09);
     ov.addEventListener('pointerdown', e => {
-      if (over || e.target.closest('.h-quit,.h-end')) return;
+      if (over || e.target.closest('.h-quit,.h-end,.h-creep')) return;
       e.preventDefault(); try { ov.setPointerCapture(e.pointerId); } catch (x) {}
       aim = {x: e.clientX, y: e.clientY - touchOff(e), t0: t, off: touchOff(e)};
       if (sp === 'quail' && !flushed) setTimeout(flush, 260);
@@ -170,7 +185,42 @@
     const release = e => { if (!aim || over) { aim = null; return; } const s2 = sightAt(); aim = null; if (shots > 0) fire(s2.x, s2.y); };
     ov.addEventListener('pointerup', release); ov.addEventListener('pointercancel', () => { aim = null; });
     ov.querySelector('.h-quit').addEventListener('click', () => end(true));
-    const keys = e => { if (e.key === 'Tab' || e.target.closest && e.target.closest('.h-end')) return; e.stopPropagation(); if (e.key === 'Escape' && e.type === 'keydown') end(true); };
+    // creeping closer: hold the button. Move only while its head is down.
+    const creepEl = ov.querySelector('.h-creep'); let creeping = false, noticed = 0, froze = false;
+    const creepOff = () => { creeping = false; creepEl.classList.remove('on'); };
+    creepEl.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (over || shots < 3) return; try { creepEl.setPointerCapture(e.pointerId); } catch (x) {} creeping = true; creepEl.classList.add('on'); });
+    creepEl.addEventListener('pointerup', creepOff); creepEl.addEventListener('pointercancel', creepOff); creepEl.addEventListener('lostpointercapture', creepOff);
+    creepEl.addEventListener('click', e => e.preventDefault());
+    // it saw you move: everything on the ground bolts
+    function bolt() {
+      say('It saw you move! Freeze when it looks up.', 2.6); creepOff();
+      for (const a of A) if (a.alive && !a.gone && !a.fly && a.st !== 'flee') { a.st = 'flee'; a.to = edgeFrom(a.p); a.t = 0; a.look = 0; }
+    }
+    function creep(dt) {
+      if (!stalk || over || shots < 3) { creepEl.hidden = true; creepOff(); return; }
+      const near = A.find(a => a.alive && !a.gone && a.st !== 'flee');
+      creepEl.hidden = !near || zoom <= ZMIN + 0.001;
+      if (creepEl.hidden) { creepOff(); return; }
+      const watch = A.find(a => a.alive && !a.gone && a.look > 0);
+      if (!creeping) { noticed = Math.max(0, noticed - dt); return; }
+      if (watch) {
+        noticed += dt; if (!froze) { froze = true; say('Freeze! It\'s looking.', 1.4); }
+        if (noticed > 0.4) { noticed = 0; bolt(); }
+        return;
+      }
+      froze = false; noticed = Math.max(0, noticed - dt);
+      // a step closer: the view narrows on the animal
+      zoom = Math.max(ZMIN, zoom - dt * 0.12);
+      const q = S.toPaint(new THREE.Vector3(near.p.x, 0.4, near.p.z)), k = Math.min(1, dt * 0.8);
+      const vw = baseW * zoom; S.setView(view.cx + (q[0] - view.cx) * k, view.cy + (q[1] - view.cy) * k, vw, vw * cssH / cssW); Object.assign(view, S.view);
+      if (zoom <= ZMIN + 0.001) say('As close as you dare. Now: press, hold steady, let go.', 2.4);
+    }
+    const keys = e => {
+      if (e.key === 'Tab' || e.target.closest && e.target.closest('.h-end')) return; e.stopPropagation();
+      // (Space or Enter on the Creep button holds it down)
+      if ((e.key === ' ' || e.key === 'Enter') && e.target === creepEl) { e.preventDefault(); if (e.type === 'keyup') creepOff(); else if (!e.repeat && !over && shots === 3) { creeping = true; creepEl.classList.add('on'); } return; }
+      if (e.key === 'Escape' && e.type === 'keydown') end(true);
+    };
     document.addEventListener('keydown', keys, true); document.addEventListener('keyup', keys, true);
 
     const r0 = cv.getBoundingClientRect.bind(cv);
@@ -227,7 +277,7 @@
     }
 
     // ---------- every frame ----------
-    let last = performance.now(), raf = 0;
+    let last = performance.now(), raf = 0, saidGraze = false;
     function step(dt) {
       for (const a of A) {
         if (a.gone) continue;
@@ -247,8 +297,12 @@
           if (!inView(p, 3) && (a.st === 'flush' || Math.sign(a.v.x) === Math.sign(p.x - (box()[0] + box()[1]) / 2))) a.gone = true;
           continue;
         }
-        // on the ground: wait, feed, move, run
+        // on the ground: wait, feed, move, run. A grazing animal lifts its head now and then to look round.
         let speed = 0;
+        if (a.st === 'graze' && stalk) {
+          if (a.look > 0) { a.look -= dt; if (a.look <= 0) a.lookT = rr(1.3, 2.8) / (a.kind === 'ghostbuck' ? 1.6 : 1); }
+          else { a.lookT = (a.lookT === undefined ? rr(0.8, 1.8) : a.lookT) - dt; if (a.lookT <= 0) { a.look = rr(0.8, 1.5) * (a.kind === 'ghostbuck' ? 1.5 : 1); a.t += a.look; } }
+        } else a.look = 0;
         if (a.st === 'feed' || a.st === 'graze' || a.st === 'wait') {
           if (a.t <= 0) { if (a.kind === 'quail') { a.to = p.clone().add(new THREE.Vector3(rr(-0.4, 0.4), 0, rr(-0.3, 0.3))); a.st = 'move'; a.t = rr(0.4, 1); } else { a.to = openIn(0.2, 0.8, 0.15, 0.65); if (a.herd) a.to = p.clone().add(new THREE.Vector3(rr(-1.5, 1.5), 0, rr(-1, 1))); a.st = 'move'; } }
         } else if (a.st === 'move' || a.st === 'flee') {
@@ -267,14 +321,14 @@
           }
         }
         a.m.root.rotation.y = a.face;
-        a.m.animate(dt, t, speed, a.st === 'graze' || a.st === 'feed', false);
+        a.m.animate(dt, t, speed, (a.st === 'graze' && !(a.look > 0)) || a.st === 'feed', false);
       }
       for (const a of A) if (a.gone && a.m.root.visible) { a.m.root.visible = false; }
     }
     function frame(now) {
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
-      step(dt);
+      step(dt); creep(dt);
       S.setView(view.cx, view.cy, view.w, view.h); S.update(t, dt); S.render();
       const s2 = sightAt();
       if (s2) { sightEl.style.display = 'block'; sightEl.style.transform = `translate(${s2.x.toFixed(1)}px,${s2.y.toFixed(1)}px)`; sightEl.classList.toggle('steady', s2.steady); }
@@ -282,12 +336,12 @@
       if (saidT && t > saidT) { sayEl.setAttribute('data-off', ''); saidT = 0; }
       // over when everything is down or gone, or after long enough
       if (!over && (A.every(a => a.gone || !a.alive) || t > maxT)) setTimeout(() => end(false), A.some(a => !a.alive) ? 900 : 300), over = true;
-      if (!over && !birds && A.some(a => a.alive && !a.gone && a.st === 'graze') && t > 2 && t < 2.1 && !aim) say('It stopped. Now: press, hold steady, let go.', 2.2);
+      if (!over && stalk && !saidGraze && A.some(a => a.alive && !a.gone && a.st === 'graze') && !aim) { saidGraze = true; say('It\'s grazing. Hold Creep closer while its head is down; freeze when it looks up. Or press, hold steady, let go.', 4.5); }
     }
     raf = requestAnimationFrame(frame);
     let ended = false;
     function end(quit) {
-      if (ended) return; ended = true; over = true; aim = null; sightEl.style.display = 'none';
+      if (ended) return; ended = true; over = true; aim = null; sightEl.style.display = 'none'; creepOff(); creepEl.hidden = true;
       const used = 3 - shots;
       const box2 = document.createElement('div'); box2.className = 'h-end';
       const head = hits ? (hits > 1 ? hits + ' ' + plural + '!' : 'Got it!') : used ? 'Missed' : 'It got away';
@@ -300,7 +354,8 @@
       box2.querySelector('button').focus();
     }
     // the game that's up, for the test players (tools/minigames-check.mjs)
-    const handle = {ov, stage: S, animals: A, fire: (x, y) => fire(x, y), end: () => end(true), state: () => ({shots, hits, t, over}), rectOf, lastShot: () => lastShot};
+    const handle = {ov, stage: S, animals: A, fire: (x, y) => fire(x, y), end: () => end(true), state: () => ({shots, hits, t, over, zoom, zmin: ZMIN, creeping, stalk}), rectOf, lastShot: () => lastShot,
+      creep: on => { if (on && !over && shots === 3) { creeping = true; creepEl.classList.add('on'); } else creepOff(); }};
     root.Hunt.current = handle;
     return handle;
   }

@@ -63,10 +63,12 @@ window.TRACES.prairie = {
     // west to camp: in from the left edge, round the south side of the dry grass
     [40, [0, 556], [57, 561], [100, 576], [129, 597], [164, 626], [207, 654], [257, 676], [321, 686], [393, 686], [464, 679], [530, 664], [600, 644]],
     // on east past the foot of the hackberry, behind the little cedar, and out into the far prairie
-    [36, [600, 644], [680, 610], [760, 584], [840, 584], [910, 566], [980, 544], [1060, 516], [1130, 498], [1188, 494], [1272, 485], [1347, 472], [1413, 456], [1463, 447], [1500, 440]]
+    [36, [600, 644], [680, 610], [760, 584], [840, 584], [910, 566], [980, 544], [1060, 516], [1130, 498], [1188, 494], [1272, 485], [1347, 472], [1413, 456], [1463, 447], [1500, 440]],
+    // the faint game trail down through the cedars in the bottom right corner to the salt lick, hidden until it is found
+    {w: 34, kind: 'H', to: 'lick', pts: [[1470, 736], [1488, 790], [1510, 846], [1536, 878], [1570, 884]]}
   ],
   hub: [600, 644],
-  exits: [['camp', 0, 556]],
+  exits: [['camp', 0, 556], ['lick', 1536, 878, 'hidden']],
   // the game's spots: the ridge's loose stones, the yuccas, the prickly pears, the lone hackberry, the rabbit runs,
   // the dry grass, and the far prairie
   spots: {ridge: [[1290, 272], [1030, 262]], yucca: [[468, 352], [468, 312], [656, 806], [656, 766]], pear: [[910, 828], [1300, 648]], hackberry: [[856, 518]],

@@ -267,6 +267,10 @@ making every minute count and giving a kid things to chase. Items marked *propos
   in the two-person game as alone (117 days against 114), where before the partner's help couldn't keep up with a
   second mouth (79 days). His old bonuses on your work (more from foraging, faster building, a better fire) are gone:
   his help is now his own work.
+- **Re-balanced October 5, 2026,** with the realistic kit and the huts in: two-person robot games had pulled well
+  ahead (220 days against 148), since his share of food plus his chores leave you free to gather. He now brings back
+  about 30% of what you would (`MATE_YIELD`), and over 120 robot games each, one person and two people both last 160
+  days on average. He still does the chores, so in the two-person game you have more time for everything else.
 
 In the two-person game the partner works on their own. They decide what camp needs (water, wood, food), say so
 ("I'm going to the river for water"), and go. You can follow and watch them do it, or not.
@@ -332,10 +336,51 @@ a long, patient fight. Muddy river water shows shadows; the clear creek shows co
   - Skills: exploring, hunting, fishing, foraging, building, fire, tracking, crafting.
   - Doing the same job again in one day earns less, so mashing one button still doesn't pay.
 
+### Secret places and legends
+
+**Built October 5, 2026.** Three secret places beyond the nine, each found by exploring, each at the end of a faint
+trail that stays hidden in the brush until you've found it (the same way as the Hidden Spring):
+
+- **Bluff Cave**, found exploring the Creek Bottom; its trail leaves through the brush east of the bois d'arc grove.
+  A cave in the foot of a limestone bluff: it stays about 64 °F all year, so it's the best place to sleep out on a hot
+  or freezing night. Chert in the bluff makes stone arrowheads (arrows hit more often and break less). At dusk the bats
+  pour out of it.
+- **Salt Lick**, found exploring the Prairie; its trail leaves through the cedars in the bottom right corner. Bare,
+  trampled mud where every animal comes for salt, most at dawn and dusk. Watch it from the brush blind to hunt, and
+  scrape salt from the dry crust: salted meat on the rack lasts much longer.
+- **Beaver Pond**, found exploring the Creek Bottom; its trail goes upstream through the woods on the far bank. Still,
+  deep water behind a dam: fishing from the dam, ducks, cattails, and beavers to watch at dusk. Boil the water.
+
+Until Chris paints them (`docs/art-requests/batch-07-secret-places.md`), the game draws them in its own pixel style,
+and the hunting and fishing games there borrow the Prairie and Pond paintings. Robot players find the cave and the
+beaver pond in about two games of three, and the lick about as often.
+
+**Legends**, each a side quest in steps that says where to go:
+
+- **The Ghost Buck**: a white deer. Find his sign in the Oak Woods, find the salt lick, wait for him there at dawn or
+  dusk, and bring him home. He looks up more often and longer than any deer, so creeping up on him is hard.
+- **The Old Bull**: the biggest, oldest bison. While the herd is on the Prairie, find his wallow at the lick, then
+  face him there. If you miss, he charges.
+- **The River Giant**: an alligator gar. See it roll by the snag at the River Bank, keep a fish of 2 pounds or more
+  alive for bait, then fish the river at dusk or after dark.
+- **Old Whiskers**: a flathead catfish older than the beaver dam, on the bottom at night.
+
+### Hunting and fishing, better (October 5, 2026)
+
+- **Stalking.** On the ground you now start a little farther off. A grazing animal lifts its head every second or
+  two to look round. Hold **Creep closer** while its head is down and you get nearer, and the shot gets bigger; move
+  while it's looking and it bolts. A careful stalker gets the same size of shot as before, so the balance holds; a
+  player who doesn't creep has a slightly harder shot. (On a tall phone screen the view can't step back as far without
+  showing past the painting's edges, so there you start at the old distance and creep a little closer.) Robot hunters
+  that track the animal and hold steady hit with nearly every first shot, before and after, rabbits to deer.
+- **Reading the water.** Fish hold by the weeds near the bank and by the sunken log. Now and then a fish rises and
+  leaves rings on the water. A bait cast close to cover gets more bites, and more still near a fresh rise; the cast
+  swing says "by the weeds", "by the log" or "on the rise" when you're on it. Robot anglers, a whole hour each:
+  casting anywhere lands 1.6 to 1.9 fish an hour (about the dice's 1.6), casting by cover 2.4 to 2.5 (about what a
+  careful player landed before).
+
 ### Kept from the brainstorm
 
-- **Secret places** beyond the nine, found by exploring. Each needs a background painting from Chris.
-- **Legends:** big rare animals with a hunt in steps.
 - **A rival:** the raccoon who raids camp.
 - **A wolf pup** that grows up beside you.
 
@@ -347,7 +392,8 @@ comes in twos. The food is ration bars: 6 days' worth on Easy, 4 on Medium, 3 on
 one tap (a little less often in rain); with three left, a side quest, "Fire without matches", teaches the bow drill.
 The nylon cord does for any cordage (and makes the best bowstring). The bottle holds a liter, and can't go on a fire.
 The first-aid kit has three uses: it heals cuts, wraps a sprain, and calms poison ivy. Not built yet: the tarp wearing out.
-Robot players with the realistic kit: one person lasts 134 days on average, two people 126.
+Robot players with the realistic kit (120 games each, up to a year): one person and two people both last 160 days on
+average (October 5, 2026, after the partner was re-balanced).
 
 The plan, as it was proposed:
 
