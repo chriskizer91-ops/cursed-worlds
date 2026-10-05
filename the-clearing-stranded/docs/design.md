@@ -283,6 +283,37 @@ In the two-person game the partner works on their own. They decide what camp nee
   walking about is 24 real minutes; jobs and trips still jump the clock as they do now.
 - Two jobs now happen at once, so the engine has to let the partner's work run beside yours.
 
+### A crew: up to three partners who plan together
+
+**Built October 5, 2026,** at Chris's request: four sizes of game, alone or with one, two or three others, and the others
+"have to be smart at deciding what to do and coordination". With one partner nothing changes (he's "your partner").
+With more, they have names, looks and strengths (`D.CREW`): **Wade** (the bearded man of the model sheet; firewood,
+building, materials), **June** (red shirt, ponytail; food, water, boiling) and **Abe** (mustard shirt; fishing, traps,
+the fire). The names are placeholders for Dagr to change.
+
+How they decide (`mateChoose` in the engine), each time one of them finishes something, earliest first, so each plan
+sees what the others have just taken on:
+- Every job scores by what camp needs, as before (water low, wood low, the fire burning down, food short, materials for
+  the next build).
+- What someone else is already doing counts for much less: nothing at all for jobs one person covers (water, boiling,
+  the fire, checking the snares or the fish trap, the same building material); food and fishing spread out over
+  different places; a second firewood run only when it's bitter cold and nearly out.
+- A build can take two: the second says "I'll help Wade with the lean-to", and both add to it.
+- When two or more are out and the fire is lit, someone stays to mind camp (and the fire is kept higher with more of you).
+- Each leans toward what they're best at.
+- In rain or bitter cold, long trips wait unless they're needed now (water nearly gone, food very short).
+- In the evening only one stocks the fire; at night they all sleep at camp.
+- They say how their job fits: "June is getting water, so I'll bring firewood", "Since Abe is fishing, I'll gather
+  pecans", "Everyone else is out, so I'll stay at camp." On the walk their bubbles take turns, one at a time.
+
+The realistic kit comes once per person (four boxes of matches in a crew of four), and the ration bars too unless you
+pick "One share for all of you". A bison or the Old Bull: more hands carry more meat home.
+
+Balance (`MATE_YIELD`, what each partner brings back of what you would: 0.3 with one partner, 0.42 with two, 0.39
+with three; their chores count for a lot, but past the first partner most of the extra hands go to food). Over 240
+robot games, a year each, with the realistic kit: alone 159 days on average, with one partner 158, with two 164, with
+three 148. In a crew of three each partner brings home about 890 Calories a day, of the 1,700 each person eats.
+
 ### Hunting is a target game; fishing is a fishing game
 
 **Built October 4, 2026** (`living/hunt.js`, `living/fishing.js`; how they play is below the list).

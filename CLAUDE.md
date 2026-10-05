@@ -32,8 +32,10 @@ Games Chris builds from what his son Dagr describes. Each game gets its own fold
 - The robot players (`tools/autoplay.mjs`), the phone test (`tools/phone-check.mjs`), the hunting and fishing
   test (`tools/minigames-check.mjs`) and the partner test (`tools/partner-check.mjs`) must all end with "all good"
   before a push.
-- In the two-person game the partner picks his own jobs (`s.mate` in the engine). His work is measured with
-  `tools/autoplay.mjs --mate`; keep the two-person game close to the one-person game in days survived (with the
+- You can play alone or with one, two or three partners (`D.PARTY`, `s.mates` in the engine). Each picks their own jobs,
+  and with more than one they plan together (`mateChoose`): no two chase the same job, food is spread out, builds are
+  shared, someone minds camp. The partner test covers a two-person game and a crew of four. Their work is measured
+  with `tools/autoplay.mjs --mate`; keep every party size close to the one-person game in days survived (with the
   realistic kit, the default; Dagr's first kit, `--kit first`, is the generous one).
 - Hunting and fishing are games of their own (`living/hunt.js`, `living/fishing.js`). Their balance is measured
   against the engine's own dice, which the robot players use; keep a careful player near those odds.

@@ -1,7 +1,8 @@
 // survivor.js: the survivor, built in code. three.js r128 (global THREE). Defines makeSurvivor(opts).
 //
 // A grown-up as the game has always drawn them: blaze-orange cap, slate-blue work shirt, dark work trousers, boots, and a
-// canvas pack with a rolled bedroll (the partner in a two-person game: an olive shirt and no pack). About 1.77 m tall
+// canvas pack with a rolled bedroll (a partner: no pack; the first partner an olive shirt and a short beard; others
+// in their own colors, opts.colors, with or without a beard, opts.beard, or a ponytail, opts.ponytail). About 1.77 m tall
 // with the cap. Toon-shaded with a thin dark outline, so the figure reads against a busy painting at a phone's size.
 // Built as rigid parts on a skeleton of joints, one merged mesh per joint, so the whole figure is about 30 draw calls.
 //
@@ -15,7 +16,7 @@
 
   function makeSurvivor(opts) {
     opts = opts || {};
-    const partner = !!opts.partner;
+    const partner = !!opts.partner, beard = opts.beard != null ? !!opts.beard : partner, shaved = !!opts.ponytail;
     // the colors of the model sheets (docs/model-sheets/20-survivor-turnaround and 26-partner-turnaround)
     const C = Object.assign({
       skin: '#c68a64', stubble: '#8e6a52', hair: '#3b2a1e', shirt: partner ? '#6e7a4c' : '#5877a2', tee: '#8b8b86', pants: '#4a4a4c', pack: '#c19c62', bedroll: '#7e8186',
@@ -152,7 +153,7 @@
     add(neck, put(capsule(0.08, 0.05, 0.053), 0, 0.08, 0), C.skin);
     add(headS, put(ball(0.1, 0.112, 0.104), 0, 0.085, 0), C.skin);
     add(headS, put(ball(0.08, 0.062, 0.082), 0, 0.03, 0.022), C.skin);
-    add(headS, put(new THREE.SphereGeometry(0.084, SEG, 6, 0, TAU, PI * 0.42, PI * 0.5), 0, 0.034, 0.026, 0, 0, 0, 1, partner ? 0.78 : 0.74, 1), partner ? C.hair : C.stubble, true);
+    if (beard || !shaved) add(headS, put(new THREE.SphereGeometry(0.084, SEG, 6, 0, TAU, PI * 0.42, PI * 0.5), 0, 0.034, 0.026, 0, 0, 0, 1, beard ? 0.78 : 0.74, 1), beard ? C.hair : C.stubble, true);
     for (const s of [1, -1]) {
       add(headS, put(ball(0.016, 0.03, 0.022, 8, 6), 0.1 * s, 0.075, -0.004), C.skin);
       add(headS, put(ball(0.013, 0.016, 0.008, 8, 6), 0.037 * s, 0.09, 0.096), C.eye, true);
@@ -161,6 +162,8 @@
     add(headS, put(ball(0.017, 0.026, 0.024, 8, 6), 0, 0.068, 0.107), C.skin, true);
     add(headS, put(rbox(0.032, 0.007, 0.008, 0.003, 1), 0, 0.036, 0.101), C.lip, true);
     add(headS, put(new THREE.SphereGeometry(0.108, SEG + 2, 8, PI * 0.82, PI * 1.36, 0, PI * 0.6), 0, 0.09, -0.006, 0, 0, 0, 1, 1.06, 1.02), C.hair);
+    // a ponytail out the back of the cap, tied off
+    if (opts.ponytail) { add(headS, put(capsule(0.17, 0.034, 0.026), 0, 0.12, -0.112, -0.32), C.hair); add(headS, put(ball(0.03, 0.018, 0.03, 8, 6), 0, 0.115, -0.115), C.strap, true); }
     // the cap: crown, brim and button
     add(headS, put(new THREE.SphereGeometry(0.112, SEG + 4, 8, 0, TAU, 0, PI * 0.46), 0, 0.132, -0.008, -0.14, 0, 0, 1, 0.78, 1.03), C.cap);
     add(headS, put(new THREE.CylinderGeometry(0.1, 0.1, 0.011, 16, 1, false, -PI * 0.42, PI * 0.84), 0, 0.142, 0.03, -0.05, 0, 0, 1, 1, 1.12), C.cap2);

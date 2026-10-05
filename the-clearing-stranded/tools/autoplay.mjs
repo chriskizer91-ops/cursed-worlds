@@ -1,7 +1,8 @@
 // Plays many games with no browser, the way a player who always follows the Next step card would,
 // and checks after every move that nothing has gone wrong: no broken numbers, no dead ends, no crashes.
 //
-//   node tools/autoplay.mjs                 # 48 games, every start, solo and duo, every difficulty
+//   node tools/autoplay.mjs                 # 48 games: every start, alone and with one, two or three partners, every difficulty
+//   node tools/autoplay.mjs --parties solo,four --mate   # only those party sizes, and what the partners did
 //   node tools/autoplay.mjs --games 200 --days 400
 //   node tools/autoplay.mjs --kit first            # with Dagr's first kit instead of the realistic one
 //
@@ -12,7 +13,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const GAMES = +opt('games', 48), MAX_DAYS = +opt('days', 365), VERBOSE = args.includes('--verbose');
 const SMART = args.includes('--smart'), QUESTS = args.includes('--quests'), MATE = args.includes('--mate');
-const MSTAT = {days: 0, games: 0, eaten: 0, tally: {}};   // what the partners did in the two-person games
+const MSTAT = {};   // what the partners did, by how many of you there were: {P: {days, games, eaten, tally}}
 const QSTAT = {};   // quest id -> {done: games that finished it, days: total day it was finished on, stuck: games that ended on it}
 const KIT = opt('kit'), FILE = opt('file'), TRACE = opt('trace'), TRIAL = args.includes('--trial'), LEVELS = (opt('levels', '') || '').split(',').filter(Boolean);
 
@@ -213,14 +214,15 @@ function play(seed, start, party, diff){
     const cur = E.quests(s).current; if (cur){ const Q = QSTAT[cur.id] = QSTAT[cur.id] || {done: 0, days: 0, stuck: 0}; Q.stuck++; }
   }
   if (moves >= 40000) problem('a game ran 40,000 moves without ending', tag);
-  if (s.mate){ MSTAT.games++; MSTAT.days += (s.t - s.t0) / 24; MSTAT.eaten += s.stats.kcal; for (const k in s.mate.tally || {}) MSTAT.tally[k] = (MSTAT.tally[k] || 0) + s.mate.tally[k]; }
+  if (s.mates){ const Q = MSTAT[s.P] || (MSTAT[s.P] = {days: 0, games: 0, eaten: 0, tally: {}}); Q.games++; Q.days += (s.t - s.t0) / 24; Q.eaten += s.stats.kcal;
+    for (const M of s.mates) for (const k in M.tally || {}) Q.tally[k] = (Q.tally[k] || 0) + M.tally[k]; }
   return {s, tag, errs, moves, food};
 }
 
-const STARTS = Object.keys(D.STARTS), PARTIES = ['solo', 'duo'], DIFFS = LEVELS.length ? LEVELS : (D.LEVELS ? Object.keys(D.LEVELS) : ['real', 'easy']);
+const STARTS = Object.keys(D.STARTS), PARTIES = (opt('parties', 'solo,duo,trio,four') || '').split(',').filter(k => D.PARTY ? D.PARTY[k] : k === 'solo' || k === 'duo'), DIFFS = LEVELS.length ? LEVELS : (D.LEVELS ? Object.keys(D.LEVELS) : ['real', 'easy']);
 const results = [];
 for (let g = 0; g < GAMES; g++){
-  const start = STARTS[g % 4], party = TRIAL ? 'solo' : PARTIES[(g >> 2) % 2], diff = DIFFS[Math.floor(g / (TRIAL ? 4 : 8)) % DIFFS.length];
+  const start = STARTS[g % 4], party = TRIAL ? 'solo' : PARTIES[(g >> 2) % PARTIES.length], diff = DIFFS[Math.floor(g / (TRIAL ? 4 : 4 * PARTIES.length)) % DIFFS.length];
   const r = play(1000 + g, start, party, diff);
   const m = E.summary(r.s);
   results.push({start, party, diff, days: m.days + m.hours / 24, cause: r.s.dead ? r.s.cause : 'alive', bars: r.s.gear.bars, built: Object.keys(r.s.tools).filter(k => r.s.tools[k] === true).length, shelter: r.s.shelter, huts: (r.s.huts || []).length, badges: m.ach,
@@ -253,9 +255,10 @@ if (QUESTS && D.QUESTS){
   console.log('  quests (games that finished it, average day finished, games that ended while on it):');
   for (const q of D.QUESTS){ const Q = QSTAT[q.id]; if (!Q) continue; console.log('   ', (q.side ? '(side) ' : 'ch' + q.ch + ' ') + q.title.padEnd(24), String(Q.done).padStart(4), Q.done ? ('day ' + Math.round(Q.days / Q.done)).padStart(9) : '         ', Q.stuck ? '  ended on it: ' + Q.stuck : ''); }
 }
-if (MATE && MSTAT.games){
-  const T = MSTAT.tally, d = MSTAT.days;
-  console.log('  the partner, per day: ' + Object.keys(T).filter(k => k !== 'kcal').map(k => k + ' ' + (T[k] / d).toFixed(2)).join(', ') + '; food he brought ' + Math.round((T.kcal || 0) / d) + ' Cal/day, of ' + Math.round(MSTAT.eaten / d) + ' Cal/day eaten by the two');
+if (MATE) for (const P in MSTAT){
+  const T = MSTAT[P].tally, d = MSTAT[P].days, n = P - 1, Q = MSTAT[P];
+  for (const k in T) T[k] /= n;   // (each partner's share)
+  console.log('  ' + P + ' of you: each partner, per day: ' + Object.keys(T).filter(k => k !== 'kcal').map(k => k + ' ' + (T[k] / d).toFixed(2)).join(', ') + '; food each brought ' + Math.round((T.kcal || 0) / d) + ' Cal/day, of ' + Math.round(Q.eaten / d) + ' Cal/day eaten by all ' + P + '.');
 }
 if (!problems.size){ console.log('\nall good'); process.exit(0); }
 console.log('\nProblems:');

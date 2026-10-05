@@ -10,6 +10,16 @@ light from dawn to night, the weather and the seasons. The camp and the Cedar St
 paintings; the other places are turned toward the season in code. If a phone can't do 3D, the game falls back to its
 own pixel drawing on top of the painting. The camp on its own, to play with: https://claude.ai/artifact/AZrgkoinHZgrpD8rup55dT
 
+**A crew of up to four (October 5, 2026).** On the title screen, pick "Just you", "You and a partner", "You and two
+others" or "You and three others". With two or three others, they're **Wade** (best at firewood and building),
+**June** (best at finding food and water) and **Abe** (best at fishing, traps and the fire), each drawn in their own
+colors. They plan the day together: when Wade goes for water, June brings in firewood instead of doubling up;
+nobody chases a job someone else is already on; two can work on one build; someone stays to mind camp while the rest
+are out; and in rain or bitter cold, long trips wait unless they're needed. They tell you how it fits ("Wade is getting
+water, so I'll bring firewood from the Oak Woods"), taking turns to talk. Each has a line under the place name; tap any
+of them to see the whole crew's plan. More people means more mouths to feed, so a bigger crew isn't an easier game:
+the robot players last about as long in every size.
+
 **Secret places and legends (October 5, 2026).** Explore the Creek Bottom and you may find the **Bluff Cave** (cool
 all summer, mild all winter, with chert for stone arrowheads and bats at dusk) and the **Beaver Pond** (fishing from the
 dam, ducks, beavers). Explore the Prairie and you may find the **Salt Lick**, where every animal comes for salt. Each

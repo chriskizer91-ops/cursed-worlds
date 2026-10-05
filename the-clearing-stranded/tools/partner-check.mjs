@@ -1,6 +1,8 @@
 // Plays the two-person game on a phone-sized screen and checks the partner: he says what he'll do and goes, the clock
 // runs while you're out walking (and stops while a card is open), you can follow him and find him at his job, tapping
-// him tells you what he's doing, and what he brings back shows up in your next result. Saves screenshots.
+// him tells you what he's doing, and what he brings back shows up in your next result. Then a four-person game: the crew
+// share out the work (nobody takes a job one person covers twice over), each has a line under the place name, all three
+// are drawn, and tapping one shows the crew's plan. Saves screenshots.
 //   node tools/partner-check.mjs [--out shots-folder] [--file some.html]   (Stranded.html, from tools/build-game.mjs, by default)
 // Ends with "all good" when everything worked and the page threw no errors.
 import path from 'node:path';
@@ -28,7 +30,7 @@ const shot = async name => { await page.waitForTimeout(250); await page.screensh
 const until = async (fn, ms = 12000, arg) => { for (let t = 0; t < ms; t += 150){ if (await page.evaluate(fn, arg)) return true; await page.waitForTimeout(150); } return false; };
 const closeSheets = async () => { for (let k = 0; k < 4 && await page.$('#scrim'); k++){ const b = await page.$('.sheet [data-close]'); if (!b) break; await b.click(); await page.waitForTimeout(250); } };
 const clock = () => page.evaluate(() => World._v.S.t);
-const mate = () => page.evaluate(() => { const S = World._v.S, j = S.mate && S.mate.job; return j && {k: j.k, at: j.at, t1: j.t1, t2: j.t2, t3: j.t3, pos: World.matePos()}; });
+const mate = () => page.evaluate(() => { const S = World._v.S, j = S.mates && S.mates[0].job; return j && {k: j.k, at: j.at, t1: j.t1, t2: j.t2, t3: j.t3, pos: World.matePos()}; });
 const tapTile = async (x, y) => { const r = await page.evaluate(([x, y]) => World.client(x, y), [x, y]); if (r) await page.touchscreen.tap(r.cx, r.cy); };
 const onScreen = async (x, y) => page.evaluate(([x, y]) => { const c = World.client(x, y); if (!c) return true; const r = World._v.box.getBoundingClientRect(); return c.cx > r.left + 12 && c.cx < r.right - 12 && c.cy > r.top + 50 && c.cy < r.bottom - 12; }, [x, y]);
 const tapToward = async (x, y) => {
@@ -53,7 +55,7 @@ const goTo = async k => {
 const useSpot = async (pred, job) => {
   await closeSheets();
   // (not the thing he's working at: a tap there could land on him)
-  const T = await page.evaluate(pred => { const S = World._v.map.spots, j = World._v.S.mate && World._v.S.mate.job, his = j && j.act;
+  const T = await page.evaluate(pred => { const S = World._v.map.spots, j = World._v.S.mates && World._v.S.mates[0].job, his = j && j.act;
     for (const id in S){ const acts = S[id].acts || []; if (new RegExp(pred).test(acts.join(' ')) && acts.indexOf(his) < 0) return S[id].tiles; } return null; }, pred);
   if (!T) return false;
   let open = false;
@@ -127,6 +129,30 @@ for (let k = 0; k < 4 && !said; k++){
 }
 check(said, 'a result tells you what the partner said or brought back meanwhile');
 await page.evaluate(() => window.scrollTo(0, 420)); await shot('p07-his-line');
+
+// ---- a crew of four: three partners who plan together
+await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForSelector('#newgame');
+await page.click('[data-opt="party"][data-v="four"]'); await page.waitForTimeout(300);
+await page.click('#newgame'); await page.waitForSelector('.sheet');
+check(await page.evaluate(() => /Your crew: Wade, June and Abe/.test(document.querySelector('.sheet').textContent)), 'the first morning names the crew and what each is best at');
+await shot('p08-crew-day1');
+await page.click('.sheet [data-close]');
+check(await until(() => World.living(), 20000), 'the camp is drawn alive for the crew');
+const plan = await page.evaluate(() => World._v.S.mates.map(M => M.job && {k: M.job.k, at: M.job.at, say: M.job.say}));
+const one = plan.filter(j => j && ['water', 'boil', 'fire', 'snares', 'trap'].indexOf(j.k) >= 0).map(j => j.k);
+check(plan.length === 3 && plan.every(Boolean), 'all three partners have a job on the first morning');
+check(new Set(one).size === one.length, 'no two partners take the same one-person job (' + plan.map(j => j && j.k).join(', ') + ')');
+check(plan.some(j => / so |Since |covered/.test(j.say)), 'a partner says how their job fits the others\' ("' + plan.map(j => j && j.say).join('" / "') + '")');
+check(await page.evaluate(() => document.querySelectorAll('#mateline .ml').length === 3), 'a line for each partner under the place name');
+await page.waitForTimeout(1500);
+const seen = await page.evaluate(() => [0, 1, 2].filter(i => !!World.matePos(i)).length);
+check(seen >= 2, 'the crew are drawn at camp as they set off (' + seen + ' of 3 in sight)');
+await shot('p09-crew-camp');
+const who = await page.evaluate(() => { const L = World._lv; for (let i = 0; i < 3; i++){ const P = L.partners[i]; if (!P.root.visible) continue; const S = L.S, v = S.view, r = L.cv.getBoundingClientRect(), w = P.root.position.clone(); w.y = 0.9; const q = S.toPaint(w); return [r.left + (q[0] - (v.cx - v.w / 2)) / v.w * r.width, r.top + (q[1] - (v.cy - v.h / 2)) / v.h * r.height]; } return null; });
+if (who) await page.touchscreen.tap(who[0], who[1]);
+check(!!who && await until(() => /The crew's plan/.test((document.querySelector('.sheet') || {}).textContent || '') && document.querySelectorAll('.sheet .crew').length === 3, 3000), 'tapping a partner shows the crew\'s plan, all three');
+await shot('p10-crew-plan');
+await closeSheets();
 const ms = Date.now() - t0;
 await browser.close();
 
