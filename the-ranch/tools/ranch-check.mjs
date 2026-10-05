@@ -1,6 +1,9 @@
 // Opens the built ranch page on a phone-sized screen and uses it the way a person would: look at the whole ranch, zoom
 // down to the farmyard so things stand up, put out hay and fill the troughs, let the chickens out, and look a cow over.
-// Saves screenshots.
+// Checks the land is drawn for real (3D trees, grass, the painting's colors) and the herd is the cartoon cattle. Saves
+// screenshots.
+// A computer with no graphics chip draws the ranch only a frame or two a second, so the check moves the world on with
+// RANCH.skip(seconds) where a person would simply wait.
 //   node the-ranch/tools/ranch-check.mjs [--file the-ranch/The_Ranch.html] [--out the-ranch/shots/phone]
 // Ends with "all good" when everything worked and the page threw no errors.
 import path from 'node:path';
@@ -30,12 +33,17 @@ check(await until(() => window.READY || window.ERR, 40000), 'the page finished l
 const err = await page.evaluate(() => window.ERR); if (err) errors.push(err);
 check(await until(() => RANCH.tilesLoaded === 6), 'all six pieces of the map loaded');
 check(/The Ranch/.test(await page.title()), 'the page is called The Ranch');
+await page.evaluate(() => RANCH.skip(0.2));
+check(await page.evaluate(() => RANCH.land.painted), "the land takes its colors from the painting");
+check(await page.evaluate(() => RANCH.HERD.every(c => c.z.style === 'storybook' && c.z.tris > 5000)), 'Henry and the herd are the cartoon cattle');
 await shot('01-whole-ranch', 1500);
 console.log('whole ranch:', JSON.stringify(await info()));
 
 // zoom down over the farmyard: the trees, buildings and signs stand up
-await page.evaluate(() => RANCH.flyTo(RANCH.PL.hay.x + 10, RANCH.PL.hay.z - 25, 120, 0.2));
-await shot('02-farmyard-from-above', 3200);
+await page.evaluate(() => { RANCH.flyTo(RANCH.PL.hay.x + 10, RANCH.PL.hay.z - 25, 120, 0.2); RANCH.skip(3); });
+await shot('02-farmyard-from-above', 2500);
+check(await page.evaluate(() => RANCH.land.stats().trees > 100), 'the trees stand up as 3D trees round the farmyard');
+check(await page.evaluate(() => RANCH.land.realGround > 0.5), 'the ground turns real as you come down');
 const signs = await page.evaluate(() => [...document.querySelectorAll('.sign:not(.off)')].map(b => b.textContent));
 check(signs.includes('Hay ring'), 'the Hay ring sign pops up near the farmyard');
 console.log('farmyard:', JSON.stringify(await info()), 'signs:', signs.join(', '));
@@ -53,16 +61,17 @@ check(await page.evaluate(() => RANCH.done.water), 'filling the troughs ticks th
 // the chickens
 await page.evaluate(() => RANCH.openPlace('coop'));
 await page.locator('#sheetBtns button', {hasText: 'Let them out'}).tap();
-await page.waitForTimeout(2500);
+await page.evaluate(() => RANCH.skip(2.5));
 await page.locator('#sheetBtns button', {hasText: 'Scatter feed'}).tap();
 check(await page.evaluate(() => RANCH.done.chickens), 'letting the chickens out and feeding them ticks the job off');
+await page.evaluate(() => RANCH.skip(3));
 await shot('03-chickens-and-hay', 2500);
 
 // the herd heads for the hay: speed time up and wait for them to walk in
 await page.locator('#speedBtn').tap();
 await page.evaluate(() => RANCH.flyTo(RANCH.PL.hay.x, RANCH.PL.hay.z + 6, 45, 0.3));
 const startD = await page.evaluate(() => RANCH.HERD.map(c => Math.hypot(c.x - RANCH.PL.hay.x, c.zz - RANCH.PL.hay.z)));
-await page.waitForTimeout(12000);
+await page.evaluate(() => RANCH.skip(12));
 const endD = await page.evaluate(() => RANCH.HERD.map(c => Math.hypot(c.x - RANCH.PL.hay.x, c.zz - RANCH.PL.hay.z)));
 const closer = endD.filter((d, i) => d < startD[i] - 3 || d < 4).length;
 console.log('herd distance to the hay (m):', startD.map(Math.round).join(' '), '->', endD.map(Math.round).join(' '));
@@ -70,17 +79,19 @@ check(closer >= 4, 'most of the herd walks toward the hay');
 await shot('04-herd-coming-to-hay', 400);
 
 // look Henry over: tap his name, then make him lie down and get up
-await page.evaluate(() => RANCH.lookAt(RANCH.HERD[0]));
-await shot('05-henry-close', 5000);
+await page.evaluate(() => { RANCH.lookAt(RANCH.HERD[0]); RANCH.skip(3); });
+await shot('05-henry-close', 2500);
+check(await page.evaluate(() => RANCH.land.grassGrows > 0.5), 'grass grows round Henry close up');
 check(await page.evaluate(() => document.getElementById('sheetTitle').textContent === 'Henry'), "tapping Henry opens his sheet");
 await page.locator('#sheetBtns button', {hasText: 'Lie down'}).tap();
-check(await until(() => RANCH.HERD[0].z.state === 'lie', 15000), 'Henry lies down');
+check(await until(() => { RANCH.skip(0.5); return RANCH.HERD[0].z.state === 'lie'; }, 40000), 'Henry lies down');
 await shot('06-henry-lying', 600);
 await page.locator('#sheetBtns button', {hasText: 'Stand'}).tap();
-check(await until(() => RANCH.HERD[0].z.state === 'stand', 15000), 'Henry gets up again');
+check(await until(() => { RANCH.skip(0.5); return RANCH.HERD[0].z.state === 'stand'; }, 40000), 'Henry gets up again');
 console.log('close up:', JSON.stringify(await info()));
 await page.locator('#sheetBtns button', {hasText: 'Back to the map'}).tap();
 await page.locator('#homeBtn').tap();
+await page.evaluate(() => RANCH.skip(2));
 await shot('07-back-out', 2500);
 
 await browser.close();

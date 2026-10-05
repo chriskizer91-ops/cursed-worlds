@@ -7,23 +7,36 @@ The animals are kept in [`animal-3d-models/zebu-cattle/`](../animal-3d-models/ze
 
 ## Try it
 
-The first playable look (October 4, 2026) is the ranch from the sky, in 3D. The link is in the chat where it was made;
-`The_Ranch.html` is the same page as one file, built with `node the-ranch/tools/build.mjs` (it isn't kept in the
-repository, because it's rebuilt every time).
+The link is in the chat where it was made. `The_Ranch.html` is the same page as one file, built with
+`node the-ranch/tools/build.mjs` (it isn't kept in the repository, because it's rebuilt every time).
 
-- Zoomed all the way out you look straight down at your map of the ranch. Drag to move, pinch to zoom, twist with two
+**The second look (October 5, 2026): cartoon animals in a real-looking ranch.** Chris asked for Henry as the cute
+cartoon, in a realistic place. So Henry, the herd and the chickens are soft 3D cartoons, and everything else is drawn
+to look real, the way envoi's *Colossus in the Meadow* draws its meadow:
+
+- From the sky you see your map of the ranch, exactly as it was painted. Drag to move, pinch to zoom, twist with two
   fingers to turn.
-- Zoom in and the view tips over, and the trees, the houses and sheds, the barn, the fences and the things you work
-  with stand up out of the map around you, with a little bounce. Pull back out and they sink back into the painting.
-- The herd (Henry and the five others) grazes along the cow trails, wanders, and lies down now and then. Henry is the
-  head of the herd: he decides where to go, and the others follow him (the calf keeps by its mother).
+- Come down and the painting turns into real ground under you: turf where the map is green, packed dirt on the trails
+  and round the farmyard, plowed furrows in the field, gravel under the railroad, and water in the pond. Cloud shadows
+  drift over it all, and the sun stands high in the north-west, where the painting has it.
+- Every painted tree stands up as a real-looking tree (post oaks, cedars and taller round trees), swaying in the wind
+  and casting its shadow. The houses and sheds have metal roofs and siding or old boards, the barn is corrugated metal,
+  the fences are cedar posts and barbed wire, the bull pens are steel pipe, and the railroad has rails, ties and gravel.
+- Get close to the herd and grass grows round you, and bends out of the way of the animal you're watching.
+- The herd (Henry and the five others) are the same cartoon cattle as on Henry's own page. They graze along the cow
+  trails, wander, lie down now and then, swat flies, shake their heads, lick their noses and moo. Henry leads; the others
+  follow him, and the calf keeps by its mother.
 - **Today's work** (top left) has the first four jobs of your day: put out a bale in the hay ring (the herd walks in
   along the trails to eat), fill the troughs up by the house in the bottom-left corner (thirsty cattle come to drink),
-  let the chickens out of the coop by the same house and feed them, and
-  look the cattle over (tap each one to see it up close, walk round it, and make it walk, eat, lie down or stand).
+  let the chickens out of the coop by the same house and feed them, and look the cattle over (tap each one to see it
+  up close, walk round it, and make it walk, eat, lie down, stand or moo).
 - **1×** makes time go four times faster. **Whole ranch** goes back to the full map.
+- If a phone can't keep up, the page lightens its picture by itself (fewer pixels first, then a little less grass).
 
 Signs for the bull pens, the fence line, the salt, the pond, the barn and the house are there, but those jobs come later.
+
+The first look (the toy-like 3D with flat-colored trees, October 4, 2026) is kept as it was in
+`versions/the-ranch-2026-10-04.html`; open it in a browser to compare.
 
 ## A day on the ranch (Chris, October 4, 2026)
 
@@ -62,7 +75,11 @@ The street address on the satellite picture is covered, because this repository 
   dirt of the trails, the grass, the dark green of the trees) and adds what was measured by hand: the pasture's edge,
   the buildings, the yards, the pond, the fences and the places of the day's work. The cattle prefer the trails, the
   way real cattle do, and walk round the trees.
-- Each painted tree gets a 3D tree in the same spot, coloured from the painting under it.
+- Each painted tree gets a 3D tree in the same spot, its green taken from the painting under it.
+- `ranch-land.js` draws the land for real. It works out from the painting's colors what each spot is (grass, dirt,
+  plowed field, water) and builds the trees, buildings, fences and railroad. It uses the land kit that Henry's page uses
+  too (`animal-3d-models/viewer/land-kit.js`: the sky, the sunlight, the wind, the grass and the painted textures) and
+  envoi's film camera (`animal-3d-models/viewer/cinema.js`).
 
 ## Changing the map in Walking Paths
 
@@ -86,6 +103,7 @@ node the-ranch/tools/make-trace.mjs      # after changing the map or the places
 node the-ranch/tools/trace-check.mjs     # draws the trace over the map into the-ranch/shots/; ends with "trace ok"
 node the-ranch/tools/build.mjs           # builds The_Ranch.html
 node the-ranch/tools/ranch-check.mjs     # plays it on a phone-sized screen; must end with "all good"
+                                         # (it also checks the 3D trees, the grass, the painting's colors and the cartoon herd)
 ```
 
 ## Reference pictures

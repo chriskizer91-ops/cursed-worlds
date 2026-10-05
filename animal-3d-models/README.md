@@ -19,6 +19,9 @@ way Stranded makes its animals: rounded parts on joints, coloured flat like a ca
     the Meadow* draws its wild meadow (`henry-meadow.js`), and filmed through envoi's own film camera (`cinema.js`, copied
     from envoi). The cartoon is the storybook Henry lit softly, the way a 3D cartoon film lights its characters.
   - **Henry Three Ways** (`henry.html`): full detail, storybook and the ranch game, to turn by hand.
+  - `land-kit.js` is envoi's way of drawing land for real, in parts: the sky, the sunlight and the haze, one wind for
+    everything, the grass, the swaying trees and their painted textures. Henry's pasture (`henry-meadow.js`) and the
+    ranch game (`the-ranch/ranch-land.js`) are both built from it.
   - `tools/build-viewer.mjs --page henry-motion` (or `--page henry`) makes either page one file that works offline
     (`Henry_In_Motion.html`, `Henry_Three_Ways.html`).
 - `vendor/three.r128.min.js` is three.js, the 3D library, kept here so everything works with no internet (the same

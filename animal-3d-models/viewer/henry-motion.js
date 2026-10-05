@@ -1,7 +1,7 @@
 // henry-motion.js: Henry in Motion. Henry as a cartoon (the storybook model, lit softly like a 3D cartoon film) or realistic
 // (envoi's style), standing in the ranch pasture by day, at dusk or at night, with a button for everything he does, a
 // camera that follows him round, and his sounds, all made in code.
-// Needs three.js r128, cinema.js, zebu.js, zebu-moves.js, zebu-hd.js, henry-meadow.js and henry-scenes.js.
+// Needs three.js r128, cinema.js, zebu.js, zebu-moves.js, zebu-hd.js, land-kit.js, henry-meadow.js and henry-scenes.js.
 //
 // Opened with ?test, it doesn't run by itself: window.HM lets a check build either look, step time, play moves and take
 // pictures (animal-3d-models/tools/henry-motion-check.mjs).

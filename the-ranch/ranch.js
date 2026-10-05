@@ -1,9 +1,12 @@
-// ranch.js: the ranch seen from the sky, in 3D. three.js r128 (global THREE), zebu.js (makeZebu) and map/trace.js.
+// ranch.js: the ranch seen from the sky, in 3D. three.js r128 (global THREE), the cartoon cattle (zebu.js, zebu-moves.js,
+// zebu-hd.js), the land (ranch-land.js, through animal-3d-models/viewer/land-kit.js and cinema.js) and map/trace.js.
 //
-// The painted map lies flat as the ground. Zoomed out you look straight down at it; zoom in and the view tips over, and
-// the trees, buildings, fences and the things of the day's work stand up out of the painting around you (the way the
-// towns stand up off the world map in What the Map Forgot). The herd walks the cow trails, grazes, lies down, and comes
-// to the hay ring and the troughs when you put out hay and fill them.
+// The painted map lies flat as the ground. Zoomed out you look straight down at it, just as it was painted; zoom in and the
+// view tips over, the painting turns into real ground (turf, dirt, furrows, gravel, water, with grass growing round where
+// you look), and the trees, buildings, fences, the railroad and the things of the day's work stand up out of it around you
+// (the way the towns stand up off the world map in What the Map Forgot). The land is drawn for real, the way envoi's
+// Colossus in the Meadow draws its meadow; Henry, the herd and the chickens are soft cartoons (Chris, October 4, 2026). The
+// herd walks the cow trails, grazes, lies down, and comes to the hay ring and the troughs when you put out hay and fill them.
 //
 // Map pixels are those of the 1024 x 1536 map (x across, y down); 1 map pixel is 0.3 m. In the world, x is east, z is
 // south, y is up. window.RANCH is the page's handle for the checks (tools/ranch-check.mjs).
@@ -18,78 +21,27 @@
   const rnd = (a, b) => a + Math.random() * (b - a);
   const $ = id => document.getElementById(id);
 
-  // ---------- renderer, scene, light ----------
+  // ---------- renderer, scene, and the land ----------
   const canvas = $('view');
-  const renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'});
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const renderer = new THREE.WebGLRenderer({canvas, antialias: false, powerPreference: 'high-performance'});   // the film camera does its own smoothing
+  renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
   const scene = new THREE.Scene();
-  const SKY = new THREE.Color(0xb9d3df);
-  scene.background = SKY; scene.fog = new THREE.Fog(SKY, 400, 1400);
-  scene.add(new THREE.HemisphereLight(0xfff4dc, 0x6a7a48, 0.62));
-  const sun = new THREE.DirectionalLight(0xfff1d6, 0.78); sun.position.set(-60, 120, -70); scene.add(sun);   // the painting's sun: high in the north-west
+  const land = makeRanchLand(renderer, scene, T);
+  renderer.info.autoReset = false;   // a frame is several passes through the film camera; count them all
   const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 4000);
 
   // ---------- the painted ground ----------
-  // six pieces, each 512 map pixels square; a fine grass grain is laid over them when you get close
-  const grain = (() => {
-    // short light and dark blades of grass, grey so the painting gives them their colour
-    const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
-    g.fillStyle = 'rgb(150,150,150)'; g.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 2600; i++) {
-      const x = Math.random() * 256, y = Math.random() * 256, l = 4 + Math.random() * 9, v = Math.random() < 0.5 ? 70 + Math.random() * 50 : 190 + Math.random() * 60, a = (Math.random() - 0.5) * 0.7;
-      g.strokeStyle = `rgba(${v},${v},${v},0.7)`; g.lineWidth = 1 + Math.random() * 1.2;
-      for (const dx of [-256, 0, 256]) for (const dy of [-256, 0, 256]) { g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx + Math.sin(a) * l, y + dy - Math.cos(a) * l); g.stroke(); }
-    }
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
-  })();
-  const groundU = {uNear: {value: 0}, uGrain: {value: grain}};
+  // six pieces, each 512 map pixels square
   const art = window.RANCH_ART || {};
   const loader = new THREE.TextureLoader();
   let tilesLoaded = 0;
-  const groundMats = [];
-  for (let i = 0; i < 6; i++) {
-    const col = i % 2, row = (i / 2) | 0, size = 512 * MPP;
-    const tex = loader.load(art['tile' + i] || `map/tiles/${i}.webp`, () => { tilesLoaded++; });
-    tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-    const m = new THREE.ShaderMaterial({
-      uniforms: Object.assign({uMap: {value: tex}}, groundU, THREE.UniformsLib.fog), fog: true,
-      vertexShader: '#include <fog_pars_vertex>\nvarying vec2 vUv; varying vec2 vW; varying float vD; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.); vW = w.xz; vec4 mvPosition = viewMatrix * w; vD = -mvPosition.z; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
-      fragmentShader: [
-        'uniform sampler2D uMap; uniform sampler2D uGrain; uniform float uNear; varying vec2 vUv; varying vec2 vW; varying float vD;',
-        '#include <fog_pars_fragment>',
-        'void main(){',
-        '  vec3 sharp = texture2D(uMap, vUv).rgb;',
-        '  float k = uNear * (1. - smoothstep(30., 110., vD));',
-        '  vec3 c = sharp;',
-        '  if (k > 0.001) {',
-        '    vec3 soft = (texture2D(uMap, vUv + vec2(0.006, 0.002), 3.3).rgb + texture2D(uMap, vUv + vec2(-0.002, 0.006), 3.3).rgb + texture2D(uMap, vUv + vec2(-0.006, -0.002), 3.3).rgb + texture2D(uMap, vUv + vec2(0.002, -0.006), 3.3).rgb) * 0.25;',
-        '    float dirt = smoothstep(0.04, 0.16, soft.r - soft.g);',
-        '    float g1 = texture2D(uGrain, vW * 0.42).r, g2 = texture2D(uGrain, vW * 0.11 + 0.37).r;',
-        '    vec3 grass = soft * (0.55 + 0.75 * g1) * (0.88 + 0.24 * g2);',
-        '    vec3 earth = soft * (0.86 + 0.24 * g2) * (0.95 + 0.1 * g1);',
-        '    c = mix(sharp, mix(grass, earth, dirt), k);',
-        '  }',
-        '  gl_FragColor = vec4(c, 1.);',
-        '#include <fog_fragment>',
-        '}'].join('\n')
-    });
-    groundMats.push(m);
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(size, size), m); p.rotation.x = -PI / 2;
-    const c = toW(col * 512 + 256, row * 512 + 256); p.position.set(c.x, 0, c.z); scene.add(p);
-  }
-  // the country beyond the map
-  const beyond = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), new THREE.MeshBasicMaterial({color: 0x6f8a3e})); beyond.rotation.x = -PI / 2; beyond.position.y = -0.05; scene.add(beyond);
+  const tileTex = [];
+  for (let i = 0; i < 6; i++) { const tex = loader.load(art['tile' + i] || `map/tiles/${i}.webp`, () => { tilesLoaded++; }); tileTex.push(tex); land.groundTile(i, tex); }
 
-  // ---------- toon look shared by everything made in code ----------
-  const grad = (() => { const d = new Uint8Array([105, 105, 105, 255, 180, 180, 180, 255, 240, 240, 240, 255]); const t = new THREE.DataTexture(d, 3, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
-  const MAT = {}; const toon = c => MAT[c] || (MAT[c] = new THREE.MeshToonMaterial({color: c, gradientMap: grad}));
-  const outline = w => new THREE.ShaderMaterial({uniforms: {uW: {value: w}}, side: THREE.BackSide,
-    vertexShader: 'uniform float uW; void main(){ vec3 p = position + normal * uW; vec4 q = vec4(p, 1.);\n#ifdef USE_INSTANCING\nq = instanceMatrix * q;\n#endif\ngl_Position = projectionMatrix * modelViewMatrix * q; }',
-    fragmentShader: 'void main(){ gl_FragColor = vec4(.16, .13, .09, 1.); }'});
-  // a soft round shadow on the ground
-  const blobTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 2, 32, 32, 31); r.addColorStop(0, 'rgba(20,24,10,0.55)'); r.addColorStop(1, 'rgba(20,24,10,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+  // a soft round shadow on the ground, under the animals (the sun's own shadows are sharp only near where you look)
+  const blobTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = g.createRadialGradient(32, 32, 2, 32, 32, 31); r.addColorStop(0, 'rgba(14,16,8,0.5)'); r.addColorStop(1, 'rgba(14,16,8,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
   const blobMat = new THREE.MeshBasicMaterial({map: blobTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2});
-  function blob(w, l) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, l), blobMat); m.rotation.x = -PI / 2; m.position.y = 0.03; m.renderOrder = 1; return m; }
+  function blob(w, l) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, l), blobMat); m.rotation.x = -PI / 2; m.position.y = 0.03; m.renderOrder = 2; return m; }
 
   // ---------- things that pop up ----------
   // Each pops up out of the ground when the view is close enough and near it, and sinks back when you pull away.
@@ -97,7 +49,7 @@
   function popper(obj, x, z, opt) { opt = opt || {}; const p = {obj, x, z, r: opt.r || 0, s: 0, v: 0, on: false, always: !!opt.always, delay: 0}; obj.scale.set(1, 0.001, 1); obj.visible = false; scene.add(obj); POPS.push(p); return p; }
   function stepPops(dt, near, cx, cz, radius) {
     for (const p of POPS) {
-      const d = Math.hypot(p.x - cx, p.z - cz), want = p.always || (near && d < radius && !(p.r && inTheWay(p)));
+      const d = Math.hypot(p.x - cx, p.z - cz), want = p.always || (near && d < radius && !(p.r && view.follow && inTheWay(p)));
       if (want !== p.on) { p.on = want; p.delay = want ? d / radius * 0.45 + Math.random() * 0.08 : Math.random() * 0.1; }
       if (p.delay > 0) { p.delay -= dt; continue; }
       const goal = p.on ? 1 : 0;
@@ -108,43 +60,16 @@
   }
 
   // ---------- the painted trees, standing up ----------
-  // one instanced crown and trunk for all of them, each tinted from the painting under it
-  const TREES = T.trees.map(([mx, my, r]) => { const w = toW(mx, my); return {x: w.x, z: w.z, r: r * MPP * 0.95, s: 0, v: 0, on: false, delay: 0, seed: Math.random()}; });
-  const crownGeo = new THREE.IcosahedronGeometry(1, 1); crownGeo.scale(1, 0.82, 1);
-  { const p = crownGeo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 1 + 0.12 * Math.sin(x * 5.1 + z * 3.7) * Math.cos(y * 4.3); p.setXYZ(i, x * k, y * k, z * k); } crownGeo.computeVertexNormals(); }
-  const trunkGeo = new THREE.CylinderGeometry(0.16, 0.24, 1, 7); trunkGeo.translate(0, 0.5, 0);
-  const crowns = new THREE.InstancedMesh(crownGeo, new THREE.MeshToonMaterial({color: 0xffffff, gradientMap: grad}), TREES.length);
-  const crownLines = new THREE.InstancedMesh(crownGeo, outline(0.035), TREES.length);
-  const trunks = new THREE.InstancedMesh(trunkGeo, toon(0x5a3d26), TREES.length);
-  for (const m of [crowns, crownLines, trunks]) { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; scene.add(m); }
-  const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S3 = new THREE.Vector3(), P3 = new THREE.Vector3(), E = new THREE.Euler();
-  function tintTrees(img) {
-    // the crown takes the painting's green at its middle, a touch brighter so it reads against the painted ground
-    const c = document.createElement('canvas'), W = 256, H = 384; c.width = W; c.height = H; const g = c.getContext('2d');
-    for (let i = 0; i < 6; i++) if (img[i]) g.drawImage(img[i], (i % 2) * W / 2, ((i / 2) | 0) * H / 3, W / 2, H / 3);
-    const d = g.getImageData(0, 0, W, H).data, col = new THREE.Color();
-    TREES.forEach((t, i) => {
-      const m = toM(t.x, t.z), x = cl(Math.round(m.x / 4), 0, W - 1), y = cl(Math.round(m.y / 4), 0, H - 1), k = (y * W + x) * 4;
-      col.setRGB(d[k] / 255, d[k + 1] / 255, d[k + 2] / 255).multiplyScalar(1.4); col.g = Math.max(col.g, col.r * 1.2);
-      t.col = new THREE.Color(0x3d7a36).lerp(col, 0.45);
-    });
-  }
-  { const c = new THREE.Color(0x3d7a36); TREES.forEach((t, i) => { t.col = c.clone(); crowns.setColorAt(i, c); }); }
-  function placeTree(i, slot) {
-    const t = TREES[i], s = t.s;
-    crowns.setColorAt(slot, t.col); i = slot;
-    const h = t.r * (1.05 + t.seed * 0.35), k = Math.max(0.0001, s);
-    E.set(0, t.seed * TAU, 0); Q.setFromEuler(E);
-    S3.set(t.r * k, h * 0.95 * k, t.r * k); P3.set(t.x, (h * 0.55 + t.r * 0.62) * k, t.z); M4.compose(P3, Q, S3); crowns.setMatrixAt(i, M4); crownLines.setMatrixAt(i, M4);
-    S3.set(t.r * 0.35 * k + 0.0001, (h * 0.55 + t.r * 0.3) * k, t.r * 0.35 * k + 0.0001); P3.set(t.x, 0, t.z); M4.compose(P3, Q, S3); trunks.setMatrixAt(i, M4);
-  }
-  // in a close-up, trees between the camera and the animal step out of the way
+  // each a tree of leaves on branches, its green taken from the painting under it (ranch-land.js)
+  const TREES = land.trees.list;
+  // close in, trees between the camera and the animal (or the spot you are looking at) step out of the way
   function inTheWay(t) {
-    if (!view.follow) return false; const ax = camera.position.x, az = camera.position.z, bx = view.follow.x, bz = view.follow.zz, dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz || 1;
+    if (!view.follow && view.d > 80) return false;
+    const ax = camera.position.x, az = camera.position.z, bx = view.follow ? view.follow.x : view.x, bz = view.follow ? view.follow.zz : view.z, dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz || 1;
     const u = cl(((t.x - ax) * dx + (t.z - az) * dz) / L, 0, 1); return Math.hypot(ax + dx * u - t.x, az + dz * u - t.z) < (t.r || 0) + 1.5;
   }
   function stepTrees(dt, near, cx, cz, radius) {
-    let n = 0;
+    land.trees.begin();
     for (let i = 0; i < TREES.length; i++) {
       const t = TREES[i], d = Math.hypot(t.x - cx, t.z - cz), want = near && d < radius && !inTheWay(t);
       if (want !== t.on) { t.on = want; t.delay = want ? d / radius * 0.5 + t.seed * 0.12 : t.seed * 0.15; }
@@ -154,103 +79,33 @@
         if (!t.on && t.s < 0.02) { t.s = 0; t.v = 0; }
         if (t.on && Math.abs(t.s - 1) < 0.002 && Math.abs(t.v) < 0.01) { t.s = 1; t.v = 0; }
       }
-      if (t.s > 0) placeTree(i, n++);
+      if (t.s > 0) land.trees.put(t, t.s, camera.position);
     }
-    crowns.count = trunks.count = crownLines.count = n;
-    crowns.instanceMatrix.needsUpdate = trunks.instanceMatrix.needsUpdate = crownLines.instanceMatrix.needsUpdate = true; if (crowns.instanceColor) crowns.instanceColor.needsUpdate = true;
+    land.trees.end();
   }
-  crowns.count = trunks.count = crownLines.count = 0;
 
-  // ---------- buildings ----------
-  function building([name, mx, my, w, d, h, roof, kind]) {
-    const W = w * MPP, D = d * MPP, g = new THREE.Group(), wall = kind === 'house' ? 0x9a6a44 : kind === 'haybarn' ? 0x7a5634 : 0x84644a;
-    const wallH = h * 0.55, ridge = h - wallH;
-    const add = (geo, c, line) => { const m = new THREE.Mesh(geo, toon(c)); g.add(m); if (line !== false) m.add(new THREE.Mesh(geo, outline(0.06))); return m; };
-    add(new THREE.BoxGeometry(W * 0.9, wallH, D * 0.82), wall).position.y = wallH / 2;
-    // a gable roof of corrugated metal (the hay barn's is open-sided with bales under it)
-    const across = W >= D ? D : W, along = W >= D ? W : D, shape = new THREE.Shape();
-    shape.moveTo(-across * 0.54, 0); shape.lineTo(across * 0.54, 0); shape.lineTo(0, ridge); shape.lineTo(-across * 0.54, 0);
-    const rg = new THREE.ExtrudeGeometry(shape, {depth: along * 1.04, bevelEnabled: false}); rg.translate(0, wallH, -along * 0.52);
-    if (W >= D) rg.rotateY(PI / 2);
-    add(rg, roof);
-    if (kind === 'haybarn') for (let i = 0; i < 6; i++) { const b = add(new THREE.BoxGeometry(1.2, 0.8, 1.8), 0xd9b25c); b.position.set(-W * 0.3 + (i % 3) * 1.3, 0.4 + (i > 2 ? 0.8 : 0), D * 0.2); }
-    // the door on the south side, facing the road
-    const door = new THREE.Mesh(new THREE.PlaneGeometry(kind === 'barn' ? W * 0.35 : Math.min(1.1, W * 0.3), kind === 'barn' ? wallH * 0.85 : Math.min(2.1, wallH * 0.8)), toon(kind === 'barn' ? 0x2a2018 : 0x4a3322));
-    door.position.set(0, door.geometry.parameters.height / 2, D * 0.41 + 0.02); g.add(door);
-    if (kind === 'house') for (const s of [-1, 1]) { const win = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.0), toon(0xc9d7dd)); win.position.set(s * W * 0.27, wallH * 0.58, D * 0.41 + 0.02); g.add(win); }
-    const pos = toW(mx, my + d * 0.18); g.position.set(pos.x, 0, pos.z);
-    return popper(g, pos.x, pos.z, {r: Math.max(W, D) * 0.55});
-  }
-  T.buildings.forEach(building);
-
-  // ---------- fences ----------
-  function fence(f) {
-    const pts = f.pts.map(([x, y]) => toW(x, y)), gap = f.kind === 'wire' ? 3.5 : 2.6, posts = [];
-    for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(1, Math.round(L / gap)); for (let k = 0; k < n; k++) posts.push({x: lerp(a.x, b.x, k / n), z: lerp(a.z, b.z, k / n), a: Math.atan2(b.x - a.x, b.z - a.z)}); }
-    posts.push({x: pts[pts.length - 1].x, z: pts[pts.length - 1].z, a: posts.length ? posts[posts.length - 1].a : 0});
-    // group the posts into stretches of about 40 m, each popping up on its own
-    for (let s = 0; s < posts.length; s += 12) {
-      const run = posts.slice(s, s + 13), g = new THREE.Group(), cx = run.reduce((a, p) => a + p.x, 0) / run.length, cz = run.reduce((a, p) => a + p.z, 0) / run.length;
-      g.position.set(cx, 0, cz);
-      const geo = f.kind === 'wire' ? new THREE.BoxGeometry(0.07, 1.4, 0.07) : new THREE.BoxGeometry(0.16, f.kind === 'pen' ? 1.7 : 1.3, 0.16);
-      const pm = new THREE.InstancedMesh(geo, toon(f.kind === 'wire' ? 0x4c5a48 : 0x6b4a2e), run.length);
-      run.forEach((p, i) => { M4.makeTranslation(p.x - cx, geo.parameters.height / 2, p.z - cz); pm.setMatrixAt(i, M4); }); g.add(pm);
-      const rails = f.kind === 'wire' ? [0.45, 0.75, 1.05, 1.32] : f.kind === 'pen' ? [0.4, 0.9, 1.4] : [0.45, 1.0];
-      const rg = f.kind === 'wire' ? new THREE.BoxGeometry(0.015, 0.015, 1) : new THREE.BoxGeometry(0.06, 0.14, 1);
-      const rm = new THREE.InstancedMesh(rg, toon(f.kind === 'wire' ? 0x8a8f8c : 0x7a5638), Math.max(1, (run.length - 1) * rails.length)); let ri = 0;
-      for (let i = 0; i < run.length - 1; i++) {
-        const a = run[i], b = run[i + 1], L = Math.hypot(b.x - a.x, b.z - a.z);
-        for (const y of rails) { E.set(0, Math.atan2(b.x - a.x, b.z - a.z), 0); Q.setFromEuler(E); P3.set((a.x + b.x) / 2 - cx, y, (a.z + b.z) / 2 - cz); S3.set(1, 1, L); M4.compose(P3, Q, S3); rm.setMatrixAt(ri++, M4); }
-      }
-      rm.count = ri; g.add(rm);
-      popper(g, cx, cz);
-    }
-  }
-  T.fences.forEach(fence);
+  // ---------- buildings, fences and the railroad (ranch-land.js) ----------
+  T.buildings.forEach((b, i) => { const B = land.building(b, i); popper(B.group, B.x, B.z, {r: B.r}); });
+  T.fences.forEach(f => land.fence(f).forEach(c => popper(c.group, c.x, c.z)));
+  land.railroad().forEach(c => popper(c.group, c.x, c.z));
 
   // ---------- the day's work: the hay ring, the troughs, the salt, the coop ----------
   const PL = {}; for (const k in T.places) { const p = T.places[k], w = toW(p.x, p.y); PL[k] = {label: p.label, mx: p.x, my: p.y, x: w.x, z: w.z}; }
-  const hayTex = (() => { const c = document.createElement('canvas'); c.width = 128; c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#d5ad58'; g.fillRect(0, 0, 128, 64); for (let i = 0; i < 260; i++) { g.strokeStyle = `rgba(${120 + Math.random() * 80},${90 + Math.random() * 50},30,0.5)`; g.beginPath(); const x = Math.random() * 128, y = Math.random() * 64; g.moveTo(x, y); g.lineTo(x + rnd(-6, 6), y + rnd(2, 8)); g.stroke(); } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
   // the hay ring: a round bale stood on end inside a steel ring feeder
-  const hayRing = new THREE.Group(); hayRing.position.set(PL.hay.x, 0, PL.hay.z);
-  { const steel = toon(0x6d7b83);
-    for (const y of [0.55, 1.15]) { const r = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.045, 6, 28), steel); r.rotation.x = PI / 2; r.position.y = y; hayRing.add(r); }
-    for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, b = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 5), steel); b.position.set(Math.cos(a) * 1.25, 0.6, Math.sin(a) * 1.25); b.rotation.z = (i % 2 ? 0.35 : -0.35) * Math.cos(a); b.rotation.x = (i % 2 ? -0.35 : 0.35) * Math.sin(a); hayRing.add(b); }
-    hayRing.add(blob(3.4, 3.4)); }
-  const bale = new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.85, 1.3, 20), new THREE.MeshToonMaterial({map: hayTex, gradientMap: grad, color: 0xffffff}));
-  bale.position.y = 0.65; bale.add(new THREE.Mesh(bale.geometry, outline(0.04))); bale.visible = false; hayRing.add(bale);
-  const hayLitter = new THREE.Mesh(new THREE.CircleGeometry(2.1, 24), new THREE.MeshBasicMaterial({color: 0xc8a050, transparent: true, opacity: 0, depthWrite: false})); hayLitter.rotation.x = -PI / 2; hayLitter.position.y = 0.02; hayRing.add(hayLitter);
+  const HR = land.hayRing(), hayRing = HR.group, bale = HR.bale; hayRing.position.set(PL.hay.x, 0, PL.hay.z);
   popper(hayRing, PL.hay.x, PL.hay.z);
-  // two round galvanised water troughs
-  const troughs = [], waterMat = new THREE.MeshToonMaterial({color: 0x5f8fa6, gradientMap: grad, transparent: true, opacity: 0.9});
+  // two round galvanized stock tanks
+  const troughs = [];
   for (let i = 0; i < 2; i++) {
-    const g = new THREE.Group(), x = PL.troughs.x + (i ? 2.6 : -0.4), z = PL.troughs.z + (i ? 0.6 : -0.6); g.position.set(x, 0, z);
-    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.62, 24, 1, true), new THREE.MeshToonMaterial({color: 0xa7b1b3, gradientMap: grad, side: THREE.DoubleSide})); tank.position.y = 0.31; g.add(tank);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.035, 5, 28), toon(0x8d989b)); rim.rotation.x = PI / 2; rim.position.y = 0.62; g.add(rim);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(0.94, 24), toon(0x6d7579)); floor.rotation.x = -PI / 2; floor.position.y = 0.05; g.add(floor);
-    const water = new THREE.Mesh(new THREE.CircleGeometry(0.93, 24), waterMat); water.rotation.x = -PI / 2; water.position.y = 0.12; g.add(water);
-    g.add(blob(2.4, 2.4)); popper(g, x, z); troughs.push({g, water, x, z, level: 0.15});
+    const tr = land.trough(), g = tr.group, x = PL.troughs.x + (i ? 2.6 : -0.4), z = PL.troughs.z + (i ? 0.6 : -0.6); g.position.set(x, 0, z);
+    popper(g, x, z); troughs.push({g, water: tr.water, x, z, level: 0.15});
   }
   // a salt block on a stump of post
-  const salt = new THREE.Group(); salt.position.set(PL.salt.x, 0, PL.salt.z);
-  { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.5, 8), toon(0x6b4a2e)); post.position.y = 0.25; salt.add(post);
-    const blk = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.24, 0.28), toon(0xe8d3cf)); blk.position.y = 0.62; blk.add(new THREE.Mesh(blk.geometry, outline(0.02))); salt.add(blk); salt.add(blob(1, 1)); }
+  const salt = land.salt().group; salt.position.set(PL.salt.x, 0, PL.salt.z);
   const saltPop = popper(salt, PL.salt.x, PL.salt.z); salt.userData.out = false;
 
   // ---------- the chickens ----------
-  function makeChicken(hen) {
-    const g = new THREE.Group(), b = new THREE.Group(); g.add(b); b.position.y = 0.22;
-    const body = hen ? 0x9a5a2e : 0xf2ede2, P = (geo, c, p) => { const m = new THREE.Mesh(geo, toon(c)); b.add(m); m.add(new THREE.Mesh(geo, outline(0.012))); if (p) m.position.set(p[0], p[1], p[2]); return m; };
-    const ball = (x, y, z) => { const s = new THREE.SphereGeometry(1, 10, 8); s.scale(x, y, z); return s; };
-    P(ball(0.11, 0.1, 0.15), body); P(ball(0.05, 0.12, 0.08), body, [0, 0.07, -0.13]).rotation.x = 0.5;
-    const head = new THREE.Group(); head.position.set(0, 0.13, 0.11); b.add(head);
-    const hm = new THREE.Mesh(ball(0.05, 0.055, 0.055), toon(body)); head.add(hm);
-    const comb = new THREE.Mesh(ball(0.012, 0.03, 0.035), toon(0xc8261e)); comb.position.set(0, 0.055, 0.005); head.add(comb);
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.04, 5), toon(0xe2b23a)); beak.rotation.x = PI / 2; beak.position.set(0, -0.005, 0.06); head.add(beak);
-    const legs = [-1, 1].map(s => { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.13, 4), toon(0xe0a43a)); l.position.set(0.035 * s, -0.16, 0); l.geometry.translate(0, 0.0, 0); b.add(l); return l; });
-    g.add(blob(0.35, 0.4));
-    return {root: g, body: b, head, legs};
-  }
+  function makeChicken(hen) { const c = land.chicken(hen); c.root.add(blob(0.35, 0.4)); return c; }
   const CHICKENS = [];
   for (let i = 0; i < 7; i++) { const c = makeChicken(i % 3 === 0); c.root.visible = false; scene.add(c.root); CHICKENS.push(Object.assign(c, {x: PL.coop.x, z: PL.coop.z, h: rnd(0, TAU), tx: 0, tz: 0, t: rnd(0, 2), mode: 'in', ph: rnd(0, TAU)})); }
   let feed = null;
@@ -301,11 +156,13 @@
   const HERD = [];
   const startCells = herdCells.filter(i => { const w = cellW(i); return Math.hypot(w.x - PL.hay.x, w.z - PL.hay.z) < 85 && Math.hypot(w.x - PL.hay.x, w.z - PL.hay.z) > 22; });
   for (const k of ['henry', 'tan-cow', 'black-cow', 'red-brown-cow', 'speckled-cow', 'calf']) {
-    const z = makeZebu(k, {detail: 'low'}), w = cellW(startCells[(Math.random() * startCells.length) | 0]);
+    // the soft cartoon look (zebu-hd.js), light enough for the whole herd
+    const z = makeZebuHD(k, {style: 'storybook', shade: 'soft', detail: 0.45}), w = cellW(startCells[(Math.random() * startCells.length) | 0]);
+    z.root.traverse(m => { if (m.isMesh) m.castShadow = true; });
     const shadow = blob(1.6, 2.9); z.root.add(shadow);
     scene.add(z.root);
-    const cow = {key: k, name: z.look.name, z, x: w.x, zz: w.z, h: rnd(0, TAU), path: null, pi: 0, speed: 0, want: 0, mode: 'graze', timer: rnd(3, 20), goal: null, slot: 0, thirst: rnd(0.3, 1), held: 0, seen: false};
-    z.act('eat'); HERD.push(cow);
+    const cow = {key: k, name: z.look.name, z, x: w.x, zz: w.z, h: rnd(0, TAU), turn: 0, path: null, pi: 0, speed: 0, want: 0, mode: 'graze', timer: rnd(3, 20), goal: null, slot: 0, thirst: rnd(0.3, 1), held: 0, seen: false, fidget: rnd(4, 20)};
+    z.act('graze'); HERD.push(cow);
   }
   // the calf keeps near the black cow, as a calf does with its mother
   const mother = HERD.find(c => c.key === 'black-cow'), calf = HERD.find(c => c.key === 'calf'), leader = HERD[0];
@@ -330,23 +187,25 @@
   }
   let hayLeft = 0, waterOn = false;
   function slotAround(x, z, n, r) { return {x: x + Math.cos(n) * r, z: z + Math.sin(n) * r}; }
+  // things a cow does now and then while she stands about or grazes
+  const FIDGETS = ['swat', 'swat', 'shake', 'lick', 'lick', 'moo', 'stretch'];
   function stepCow(cow, dt) {
-    const Z = cow.z;
+    const Z = cow.z, h0 = cow.h, free = Z.state === 'stand';   // she walks only once she is up and standing
     if (cow.held > 0) cow.held -= dt;
     if (cow.path) {
       const p = cow.path[cow.pi], dx = p.x - cow.x, dz = p.z - cow.zz, d = Math.hypot(dx, dz);
       if (d < (cow.pi === cow.path.length - 1 ? 0.35 : 1.4)) { cow.pi++; if (cow.pi >= cow.path.length) { cow.path = null; cow.want = 0; arrive(cow); } }
       else {
         const want = Math.atan2(dx, dz); let dh = ((want - cow.h + PI) % TAU + TAU) % TAU - PI;
-        cow.h += cl(dh, -1.6 * dt, 1.6 * dt);
+        if (free) cow.h += cl(dh, -1.6 * dt, 1.6 * dt);
         const turnSlow = 1 - cl(Math.abs(dh) / 1.6, 0, 0.85);
-        cow.speed += (cow.want * turnSlow - cow.speed) * Math.min(1, dt * 2);
+        cow.speed += ((free ? cow.want * turnSlow : 0) - cow.speed) * Math.min(1, dt * 2);
       }
     } else cow.speed += (0 - cow.speed) * Math.min(1, dt * 3);
     cow.x += Math.sin(cow.h) * cow.speed * dt; cow.zz += Math.cos(cow.h) * cow.speed * dt;
     // keep a little room between animals
     for (const o of HERD) if (o !== cow) { const dx = cow.x - o.x, dz = cow.zz - o.zz, d = Math.hypot(dx, dz), m = (cow.z.look.size + o.z.look.size) * 1.1; if (d < m && d > 0.01) { const k = (m - d) * 0.5 * Math.min(1, dt * 4); cow.x += dx / d * k; cow.zz += dz / d * k; } }
-    if (cow !== leader && !cow.path && cow.held <= 0 && (cow.mode === 'graze' || cow.mode === 'walk') && cow.z.state !== 'lie') {
+    if (cow !== leader && !cow.path && cow.held <= 0 && (cow.mode === 'graze' || cow.mode === 'walk') && !/lie|sleep|lying|getting/.test(cow.z.state)) {
       const lead = cow === calf ? mother : leader;
       if (Math.hypot(lead.x - cow.x, lead.zz - cow.zz) > (cow === calf ? 8 : 22)) { wander(cow); cow.timer = rnd(6, 14); }
     }
@@ -357,21 +216,26 @@
       else if (cow.timer <= 0) {
         if (hayLeft > 0 && Math.random() < 0.9) callToHay(cow);
         else if (waterOn && cow.thirst > 0.5) callToWater(cow);
-        else if (Z.state === 'lie') { Z.act('eat'); cow.timer = rnd(20, 50); }
+        else if (Z.state === 'lie') { Z.act('graze'); cow.timer = rnd(20, 50); }
         else if (Math.random() < 0.12 && cow !== calf) { Z.act('lie'); cow.timer = rnd(40, 90); }
         else if (Math.random() < 0.55) { wander(cow); cow.timer = rnd(8, 25); }
-        else { Z.act(Math.random() < 0.8 ? 'eat' : 'stand'); cow.timer = rnd(6, 18); }
+        else { Z.act(Math.random() < 0.8 ? 'graze' : 'stand'); cow.timer = rnd(6, 18); }
       }
     }
     cow.thirst = Math.min(1, cow.thirst + dt * 0.004);
+    // now and then she swats a fly, shakes her head, licks her nose or moos
+    cow.fidget -= dt;
+    if (cow.fidget <= 0) { cow.fidget = rnd(8, 30); if (!cow.path && !Z.busy && (Z.state === 'stand' || Z.state === 'graze')) Z.play(FIDGETS[(Math.random() * FIDGETS.length) | 0]); }
+    cow.turn = dt > 0 ? (((cow.h - h0 + PI) % TAU + TAU) % TAU - PI) / dt : 0;
     Z.root.position.set(cow.x, 0, cow.zz); Z.root.rotation.y = cow.h;
-    Z.animate(dt, clock, cow.speed);
+    Z.update(dt, clock, {speed: cow.speed, turn: cl(cow.turn, -2, 2)});
+    Z.events.length = 0;   // steps, moos and thumps, for sounds the ranch doesn't make yet
   }
   function faceTo(cow, x, z, dt) { const want = Math.atan2(x - cow.x, z - cow.zz); let dh = ((want - cow.h + PI) % TAU + TAU) % TAU - PI; cow.h += cl(dh, -0.8 * dt, 0.8 * dt); }
   function arrive(cow) {
-    if (cow.goal === 'hay' && hayLeft > 0) { cow.mode = 'hay'; cow.z.act('eat'); }
-    else if (cow.goal && cow.goal.trough) { cow.mode = 'drink'; cow.z.act('eat'); }
-    else { cow.mode = 'graze'; cow.z.act(Math.random() < 0.7 ? 'eat' : 'stand'); cow.timer = rnd(6, 16); }
+    if (cow.goal === 'hay' && hayLeft > 0) { cow.mode = 'hay'; cow.z.act('graze'); }
+    else if (cow.goal && cow.goal.trough) { cow.mode = 'drink'; cow.z.act('graze'); }
+    else { cow.mode = 'graze'; cow.z.act(Math.random() < 0.7 ? 'graze' : 'stand'); cow.timer = rnd(6, 16); }
     cow.goal = null;
   }
   function callToHay(cow, i) {
@@ -463,7 +327,7 @@
   const placeSigns = {};
   for (const k of ['hay', 'troughs', 'coop', 'pens', 'fence', 'pond', 'barn', 'house']) placeSigns[k] = sign(PL[k].label, '', () => openPlace(k), () => ({x: PL[k].x, y: k === 'fence' ? 2 : 4.5, z: PL[k].z, range: k === 'fence' ? 600 : 420}));
   placeSigns.salt = sign('Salt', '', () => openPlace('salt'), () => ({x: PL.salt.x, y: 2, z: PL.salt.z, range: salt.userData.out ? 300 : 0}));
-  for (const c of HERD) c.sign = sign(c.name, 'cow', () => lookAt(c), () => ({x: c.x, y: (c.z.state === 'lie' ? 1.1 : 1.75) * c.z.root.scale.y, z: c.zz, range: 160}));
+  for (const c of HERD) c.sign = sign(c.name, 'cow', () => lookAt(c), () => ({x: c.x, y: (/lie|sleep/.test(c.z.state) ? 1.1 : 1.75) * c.z.root.scale.y, z: c.zz, range: 160}));
   const V = new THREE.Vector3();
   function stepSigns() {
     const r = canvas.getBoundingClientRect();
@@ -503,7 +367,9 @@
   function closeSheet() { $('sheet').hidden = true; sheetFor = null; if (view.follow) { view.follow = null; flyTo(view.x, view.z, 70, view.yaw); } }
   $('sheetClose').addEventListener('click', closeSheet);
   function openPlace(k) {
-    const p = PL[k]; view.follow = null; flyTo(p.x, p.z + 4, k === 'fence' ? 120 : 34); sheetFor = k; $('today').hidden = true;
+    const p = PL[k]; view.follow = null; sheetFor = k; $('today').hidden = true;
+    // the coop is looked at from the north-east, so the house doesn't stand in front of the chickens
+    if (k === 'coop') flyTo(p.x + 2, p.z + 2, 30, 2.4); else flyTo(p.x, p.z + 4, k === 'fence' ? 120 : 34);
     if (k === 'hay') sheet('Hay ring', hayLeft > 0 ? 'There is hay in the ring. The herd will eat at it until it is gone.' : 'The herd comes here for hay. Bring a round bale over with the tractor and drop it in the ring.', [
       {label: hayLeft > 0 ? 'Hay is out' : 'Put out a bale', main: true, disabled: hayLeft > 0, go: () => { putOutHay(); openPlace('hay'); }}]);
     else if (k === 'troughs') sheet('Water troughs', waterOn ? 'The troughs are full. Thirsty cattle will come and drink.' : 'Two round troughs. They are low. Run the hose and fill them up.', [
@@ -531,9 +397,10 @@
     const Z = cow.z, s = Z.state, walking = !!cow.path;
     sheet(cow.name, ABOUT[cow.key] + ` Drag sideways to walk round ${cow.z.look.bull ? 'him' : 'her'}; drag up and down to come closer.`, [
       {label: 'Walk', pressed: walking, go: () => { cow.held = 30; wander(cow, 40); cow.mode = 'graze'; setTimeout(() => cowSheet(cow), 50); }},
-      {label: 'Eat', pressed: !walking && s === 'eat', go: () => { cow.path = null; cow.held = 30; Z.act('eat'); setTimeout(() => cowSheet(cow), 50); }},
+      {label: 'Eat', pressed: !walking && s === 'graze', go: () => { cow.path = null; cow.held = 30; Z.act('graze'); setTimeout(() => cowSheet(cow), 50); }},
       {label: 'Lie down', pressed: s === 'lie' || s === 'lying-down', go: () => { cow.path = null; cow.held = 40; Z.act('lie'); setTimeout(() => cowSheet(cow), 50); }},
       {label: 'Stand', pressed: !walking && (s === 'stand' || s === 'getting-up'), go: () => { cow.path = null; cow.held = 30; Z.act('stand'); setTimeout(() => cowSheet(cow), 50); }},
+      {label: 'Moo', go: () => { Z.lookAt(camera.position.clone(), 2.5); Z.play('moo'); }},
       {label: 'Back to the map', main: true, go: closeSheet}]);
   }
 
@@ -545,11 +412,12 @@
   let hinted = false; function hideHint() { if (!hinted) { hinted = true; setTimeout(() => $('hint').classList.add('gone'), 1500); } }
 
   // ---------- each frame ----------
-  let clock = 0, last = performance.now(), frames = 0;
+  let clock = 0, wall = 0, last = performance.now(), frames = 0;
   function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; const wasFar = view.d >= FAR - 1; FAR = fitAll(); if (wasFar) view.d = FAR; frame.off = null; camera.clearViewOffset(); camera.updateProjectionMatrix(); }
   window.addEventListener('resize', resize); resize();
-  function frame(now) {
-    const real = Math.min(0.1, (now - last) / 1000); last = now; const dt = real * timeScale; clock += dt; frames++;
+  // the world moves on by real seconds (time runs faster with the 1× button); drawing it is the film camera's
+  function tick(real) {
+    const dt = real * timeScale; clock += dt; wall += real;
     if (fly) { fly.t += real / 1.3; const k = ease(cl(fly.t, 0, 1)); view.x = lerp(fly.from.x, fly.to.x, k); view.z = lerp(fly.from.z, fly.to.z, k); view.d = Math.exp(lerp(Math.log(fly.from.d), Math.log(fly.to.d), k)); let dy = ((fly.to.yaw - fly.from.yaw + PI) % TAU + TAU) % TAU - PI; view.yaw = fly.from.yaw + dy * k; if (fly.t >= 1) fly = null; }
     for (const c of HERD) stepCow(c, dt);
     if (fly && view.follow) { fly.to.x = view.follow.x; fly.to.z = view.follow.zz; }
@@ -559,16 +427,30 @@
     // up close the cattle are their real size; far out they are drawn bigger so you can find them on the map
     const big = view.follow ? 1 : 1 + 4 * sstep(150, 750, view.d);
     for (const c of HERD) c.z.root.scale.setScalar(c.z.look.size * big);
-    const near = view.d < 330, radius = cl(view.d * 1.1, 70, 260);
+    const near = view.d < 330, radius = cl(view.d * 1.35, 80, 260);
     stepPops(real, near, view.x, view.z, radius); stepTrees(real, near, view.x, view.z, radius);
-    groundU.uNear.value = 1 - sstep(60, 160, view.d);
-    scene.fog.near = view.d * 1.8 + 80; scene.fog.far = view.d * 4.5 + 400;
+    land.update(real, wall, camera, {x: view.x, z: view.z}, view.d, view.follow ? view.follow.z : null);
     // the hay bale drops into the ring, and is eaten down
-    if (bale.visible) { bale.position.y = Math.max(0.65 * bale.scale.y, bale.position.y - real * 12); bale.scale.y = 0.15 + 0.85 * cl(hayLeft, 0, 1); hayLitter.material.opacity = 0.6 * (1 - cl(hayLeft, 0, 1)) + 0.25; if (hayLeft <= 0) bale.visible = false; }
+    if (bale.visible) { bale.position.y = Math.max(0.65 * bale.scale.y, bale.position.y - real * 12); bale.scale.y = 0.15 + 0.85 * cl(hayLeft, 0, 1); if (hayLeft <= 0) bale.visible = false; }
     for (const t of troughs) { t.level += ((waterOn ? 0.55 : 0.15) - t.level) * Math.min(1, real * 0.6); t.water.position.y = t.level; }
     stepChickens(dt);
-    if (tilesLoaded === 6 && !frame.tinted) { frame.tinted = true; try { tintTrees(groundMats.map(m => m.uniforms.uMap.value.image)); } catch (e) { /* a page opened from a file can't read its own pictures back */ } }
-    renderer.render(scene, camera);
+    // once the painting has loaded, the land takes its colors from it (the grass, the dirt, the water, the trees' green)
+    if (tilesLoaded === 6 && !frame.tinted) { frame.tinted = true; land.setPaint(tileTex.map(t => t.image)); }
+  }
+  // a phone that can't keep up gets a lighter picture: first fewer pixels, then the film camera at a lower resolution
+  const perf = {t: 0, n: 0, level: 0};
+  function keepUp(real) {
+    if (frames < 40 || navigator.webdriver || document.visibilityState !== 'visible') return;
+    perf.t += real; perf.n++;
+    if (perf.t < 3) return;
+    const ms = perf.t / perf.n * 1000; perf.t = perf.n = 0;
+    if (ms > 42 && perf.level < 2) { perf.level++; if (perf.level === 1) { renderer.setPixelRatio(1); resize(); } else land.lighter(); }
+  }
+  function frame(now) {
+    const real = Math.min(0.1, (now - last) / 1000); last = now; frames++;
+    keepUp(real);
+    tick(real);
+    renderer.info.reset(); land.render(camera, real, view.d);
     stepSigns();
     if (frames === 3) { $('loading').classList.add('gone'); window.READY = true; }
     requestAnimationFrame(frame);
@@ -578,6 +460,10 @@
     HERD, PL, view, renderer, flyTo, openPlace, lookAt, putOutHay, fillTroughs, letChickensOut, feedChickens, done,
     get tilesLoaded() { return tilesLoaded; }, get hayLeft() { return hayLeft; },
     screenOf(x, y, z) { const v = new THREE.Vector3(x, y, z).project(camera), r = canvas.getBoundingClientRect(); return {x: (v.x + 1) / 2 * r.width + r.left, y: (1 - v.y) / 2 * r.height + r.top}; },
+    land, camera, get clock() { return clock; }, perf,
+    // for the checks: move the world on by some seconds without drawing each step (a computer with no graphics chip draws
+    // this slowly)
+    skip(seconds, fps) { fps = fps || 30; const n = Math.max(1, Math.round(seconds * fps)); for (let i = 0; i < n; i++) tick(1 / fps); },
     calls() { return renderer.info.render.calls; }, tris() { return renderer.info.render.triangles; }
   };
   try { requestAnimationFrame(frame); } catch (e) { window.ERR = String(e); }

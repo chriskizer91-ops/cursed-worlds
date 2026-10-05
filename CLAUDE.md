@@ -39,6 +39,7 @@ Games Chris builds from what his son Dagr describes. Each game gets its own fold
 - It is Chris's real job on the Zebu ranch in Bardwell, Texas; `the-ranch/README.md` has his day of work in order.
 - Cartoon, stylized 3D animals in a realistic environment (Chris, October 4, 2026): Henry and the herd are the cartoon
   models (`makeZebuHD(key, {style: 'storybook', shade: 'soft'})`), and the land, sky, light, trees, buildings and water
-  are drawn realistically, the way envoi's Colossus in the Meadow draws its meadow.
+  are drawn realistically, the way envoi's Colossus in the Meadow draws its meadow (`the-ranch/ranch-land.js`, built on
+  `animal-3d-models/viewer/land-kit.js`, which Henry's pasture uses too).
 - Only Henry's name is real; the other cattle go by how they look until Chris knows their names.
 - The ranch check (`the-ranch/tools/ranch-check.mjs`) must end with "all good" before a push.
