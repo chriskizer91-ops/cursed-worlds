@@ -71,7 +71,7 @@
   function stepTrees(dt, near, cx, cz, radius) {
     land.trees.begin();
     for (let i = 0; i < TREES.length; i++) {
-      const t = TREES[i], d = Math.hypot(t.x - cx, t.z - cz), want = near && d < radius && !inTheWay(t);
+      const t = TREES[i], d = Math.hypot(t.x - cx, t.z - cz), want = near && d < radius && !t.wet && !inTheWay(t);
       if (want !== t.on) { t.on = want; t.delay = want ? d / radius * 0.5 + t.seed * 0.12 : t.seed * 0.15; }
       if (t.delay > 0) { t.delay -= dt; if (t.s === 0) continue; }
       else if (t.s !== 0 || t.v !== 0 || t.on) {
@@ -101,7 +101,7 @@
     popper(g, x, z); troughs.push({g, water: tr.water, x, z, level: 0.15});
   }
   // a salt block on a stump of post
-  const salt = land.salt().group; salt.position.set(PL.salt.x, 0, PL.salt.z);
+  const SALT = land.salt(), salt = SALT.group; salt.position.set(PL.salt.x, 0, PL.salt.z); SALT.block.visible = false;
   const saltPop = popper(salt, PL.salt.x, PL.salt.z); salt.userData.out = false;
 
   // ---------- the chickens ----------
@@ -114,14 +114,17 @@
   const GW = T.w, GH = T.h, open = c => c === 't' || c === 'g';
   const cellOf = (x, z) => { const m = toM(x, z); return cl(Math.floor(m.y / T.cell), 0, GH - 1) * GW + cl(Math.floor(m.x / T.cell), 0, GW - 1); };
   const cellW = i => toW((i % GW) * T.cell + T.cell / 2, ((i / GW) | 0) * T.cell + T.cell / 2);
-  function nearestOpen(i) { if (open(T.grid[i])) return i; const seen = new Set([i]), q = [i]; for (let h = 0; h < q.length && h < 4000; h++) { const c = q[h], x = c % GW, y = (c / GW) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, j = ny * GW + nx; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH || seen.has(j)) continue; if (open(T.grid[j])) return j; seen.add(j); q.push(j); } } return i; }
+  const herdOk = i => open(T.grid[i]);
+  function nearestOpen(i, ok) { ok = ok || herdOk; if (ok(i)) return i; const seen = new Set([i]), q = [i]; for (let h = 0; h < q.length && h < 4000; h++) { const c = q[h], x = c % GW, y = (c / GW) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, j = ny * GW + nx; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH || seen.has(j)) continue; if (ok(j)) return j; seen.add(j); q.push(j); } } return i; }
   // the open ground the herd can reach from the hay ring
   const herdLand = new Uint8Array(GW * GH);
   { const s = nearestOpen(cellOf(PL.hay.x, PL.hay.z)), q = [s]; herdLand[s] = 1; for (let h = 0; h < q.length; h++) { const c = q[h], x = c % GW, y = (c / GW) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, j = ny * GW + nx; if (nx >= 0 && ny >= 0 && nx < GW && ny < GH && !herdLand[j] && open(T.grid[j])) { herdLand[j] = 1; q.push(j); } } } }
   const herdCells = []; for (let i = 0; i < herdLand.length; i++) if (herdLand[i]) herdCells.push(i);
   const COST = {t: 1, g: 1.7};
-  function route(from, to) {
-    from = nearestOpen(from); to = nearestOpen(to);
+  // ok: who can go where (the herd by default); cost: how much each step costs there
+  function route(from, to, ok, cost) {
+    ok = ok || herdOk; cost = cost || (j => COST[T.grid[j]]);
+    from = nearestOpen(from, ok); to = nearestOpen(to, ok);
     const g = new Float32Array(GW * GH).fill(Infinity), came = new Int32Array(GW * GH).fill(-1), heap = [], tx = to % GW, ty = (to / GW) | 0;
     const hfn = i => { const dx = Math.abs(i % GW - tx), dy = Math.abs(((i / GW) | 0) - ty); return (Math.max(dx, dy) + 0.414 * Math.min(dx, dy)); };
     const push = (i, f) => { heap.push([f, i]); let k = heap.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (heap[p][0] <= heap[k][0]) break; [heap[p], heap[k]] = [heap[k], heap[p]]; k = p; } };
@@ -132,9 +135,9 @@
       const x = c % GW, y = (c / GW) | 0;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue; const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= GW || ny >= GH) continue;
-        const j = ny * GW + nx, cj = T.grid[j]; if (!open(cj)) continue;
-        if (dx && dy && (!open(T.grid[y * GW + nx]) || !open(T.grid[ny * GW + x]))) continue;
-        const ng = g[c] + COST[cj] * (dx && dy ? 1.414 : 1); if (ng < g[j]) { g[j] = ng; came[j] = c; push(j, ng + hfn(j)); }
+        const j = ny * GW + nx; if (!ok(j)) continue;
+        if (dx && dy && (!ok(y * GW + nx) || !ok(ny * GW + x))) continue;
+        const ng = g[c] + cost(j) * (dx && dy ? 1.414 : 1); if (ng < g[j]) { g[j] = ng; came[j] = c; push(j, ng + hfn(j)); }
       }
     }
     if (came[to] < 0 && to !== from) return null;
@@ -143,6 +146,18 @@
     for (let k = 0; k < 2; k++) for (let i = 1; i < path.length - 1; i++) { path[i] = {x: (path[i - 1].x + path[i].x * 2 + path[i + 1].x) / 4, z: (path[i - 1].z + path[i].z * 2 + path[i + 1].z) / 4}; }
     return path;
   }
+
+  // ---------- where the rancher can walk and drive ----------
+  // anywhere but the pond, the painted trees' trunks, inside the buildings and across the fences
+  const crewBlock = new Uint8Array(GW * GH);
+  for (let i = 0; i < GW * GH; i++) if (T.grid[i] === 'w' || T.grid[i] === 'T') crewBlock[i] = 1;
+  const blockAt = (mx, my) => { const x = Math.floor(mx / T.cell), y = Math.floor(my / T.cell); if (x >= 0 && y >= 0 && x < GW && y < GH) crewBlock[y * GW + x] = 1; };
+  for (const [, mx, my, w, d] of T.buildings) { const cy = my + d * 0.18; for (let y = cy - d * 0.41 - 2; y <= cy + d * 0.41 + 2; y += 2) for (let x = mx - w * 0.45 - 2; x <= mx + w * 0.45 + 2; x += 2) blockAt(x, y); }
+  for (const f of T.fences) for (let k = 0; k < f.pts.length - 1; k++) { const [ax, ay] = f.pts[k], [bx, by] = f.pts[k + 1], n = Math.ceil(Math.hypot(bx - ax, by - ay) / 1.5); for (let s = 0; s <= n; s++) blockAt(lerp(ax, bx, s / n), lerp(ay, by, s / n)); }
+  const crewOk = i => !crewBlock[i];
+  function crewPath(a, b) { const p = route(cellOf(a.x, a.z), cellOf(b.x, b.z), crewOk, () => 1); if (!p) return null; p.push({x: b.x, z: b.z}); return p; }
+  // the nearest spot to (x, z) where he can stand
+  const free = (x, z) => { const i = cellOf(x, z); if (crewOk(i)) return {x, z}; const w = cellW(nearestOpen(i, crewOk)); return {x: w.x, z: w.z}; };
 
   // ---------- the herd ----------
   const ABOUT = {
@@ -205,6 +220,8 @@
     cow.x += Math.sin(cow.h) * cow.speed * dt; cow.zz += Math.cos(cow.h) * cow.speed * dt;
     // keep a little room between animals
     for (const o of HERD) if (o !== cow) { const dx = cow.x - o.x, dz = cow.zz - o.zz, d = Math.hypot(dx, dz), m = (cow.z.look.size + o.z.look.size) * 1.1; if (d < m && d > 0.01) { const k = (m - d) * 0.5 * Math.min(1, dt * 4); cow.x += dx / d * k; cow.zz += dz / d * k; } }
+    // and out of the way of the tractor and the rancher
+    for (const [ox, oz, m] of [[TRA.x, TRA.z, 2.8], [C.x, C.z, 1]]) { const dx = cow.x - ox, dz = cow.zz - oz, d = Math.hypot(dx, dz); if (d < m && d > 0.01) { const k = (m - d) * Math.min(1, dt * 3); cow.x += dx / d * k; cow.zz += dz / d * k; } }
     if (cow !== leader && !cow.path && cow.held <= 0 && (cow.mode === 'graze' || cow.mode === 'walk') && !/lie|sleep|lying|getting/.test(cow.z.state)) {
       const lead = cow === calf ? mother : leader;
       if (Math.hypot(lead.x - cow.x, lead.zz - cow.zz) > (cow === calf ? 8 : 22)) { wander(cow); cow.timer = rnd(6, 14); }
@@ -212,7 +229,7 @@
     if (!cow.path && cow.held <= 0) {
       cow.timer -= dt;
       if (cow.mode === 'hay') { if (hayLeft <= 0) { cow.mode = 'graze'; cow.timer = rnd(2, 8); Z.act('stand'); } else { faceTo(cow, PL.hay.x, PL.hay.z, dt); hayLeft -= dt * 0.0016; } }
-      else if (cow.mode === 'drink') { faceTo(cow, cow.goal.x, cow.goal.z, dt); cow.thirst -= dt * 0.08; if (cow.thirst <= 0) { cow.mode = 'graze'; cow.timer = rnd(2, 6); Z.act('stand'); } }
+      else if (cow.mode === 'drink') { faceTo(cow, cow.drinkAt.x, cow.drinkAt.z, dt); cow.thirst -= dt * 0.08; if (cow.thirst <= 0) { cow.mode = 'graze'; cow.timer = rnd(2, 6); Z.act('stand'); } }
       else if (cow.timer <= 0) {
         if (hayLeft > 0 && Math.random() < 0.9) callToHay(cow);
         else if (waterOn && cow.thirst > 0.5) callToWater(cow);
@@ -234,7 +251,7 @@
   function faceTo(cow, x, z, dt) { const want = Math.atan2(x - cow.x, z - cow.zz); let dh = ((want - cow.h + PI) % TAU + TAU) % TAU - PI; cow.h += cl(dh, -0.8 * dt, 0.8 * dt); }
   function arrive(cow) {
     if (cow.goal === 'hay' && hayLeft > 0) { cow.mode = 'hay'; cow.z.act('graze'); }
-    else if (cow.goal && cow.goal.trough) { cow.mode = 'drink'; cow.z.act('graze'); }
+    else if (cow.goal && cow.goal.trough) { cow.mode = 'drink'; cow.drinkAt = cow.goal; cow.z.act('graze'); }
     else { cow.mode = 'graze'; cow.z.act(Math.random() < 0.7 ? 'graze' : 'stand'); cow.timer = rnd(6, 16); }
     cow.goal = null;
   }
@@ -264,6 +281,63 @@
       const peck = !moving ? Math.max(0, Math.sin(clock * 6 + c.ph)) : 0;
       c.head.position.set(0, 0.13 - peck * 0.15, 0.11 + peck * 0.06); c.head.rotation.x = peck * 1.1;
     }
+  }
+
+  // ---------- the rancher and the tractor (ranch-crew.js), and his list of jobs (ranch-orders.js) ----------
+  const BLD = name => T.buildings.find(b => b[0] === name);
+  // the spot in front of a building's door (on its south side), so far out
+  const front = (name, out) => { const [, mx, my, , d] = BLD(name), p = toW(mx, my + d * 0.18); return free(p.x, p.z + d * MPP * 0.41 + (out || 0.8)); };
+  const hayBarn = (() => { const [, mx, my, w, d] = BLD('Hay barn'), p = toW(mx, my + d * 0.18); return {x: p.x, z: p.z, W: w * MPP * 0.9, D: d * MPP * 0.82}; })();
+  const tapAt = {x: PL.troughs.x + 1.1, z: PL.troughs.z - 1.9};
+  for (const [x, z, rad] of [...troughs.map(t => [t.x, t.z, 1.4]), [PL.hay.x, PL.hay.z, 1.8], [tapAt.x, tapAt.z, 0.5]]) for (let dz = -rad; dz <= rad; dz += 0.4) for (let dx = -rad; dx <= rad; dx += 0.4) if (dx * dx + dz * dz <= rad * rad) { const m = toM(x + dx, z + dz); blockAt(m.x, m.y); }
+  const SP = {
+    park: free(hayBarn.x + hayBarn.W / 2 + 2.8, hayBarn.z + 1), parkH: PI,
+    bale: {x: hayBarn.x, z: hayBarn.z + hayBarn.D / 2 + 2.2}, baleH: PI,
+    ring: {x: PL.hay.x, z: PL.hay.z},
+    tap: {x: tapAt.x, z: tapAt.z + 0.55}, tapH: PI,
+    coop: front('Chicken coop'), coopH: PI, feed: front('Feed shed'), feedH: PI, feedOut: free(PL.coop.x + 0.5, PL.coop.z + 2.3),
+    salt: free(PL.salt.x, PL.salt.z + 0.75), porch: front('House', 1), porchH: PI,
+    // along the wire fence by the plowed field, a step inside it
+    fence: T.fences.find(f => f.kind === 'wire').pts.map(([x, y]) => { const w = toW(x, y); return free(w.x + 1.6, w.z); }),
+    tractorSide: () => free(TRA.x + Math.cos(TRA.h) * -1.25 + Math.sin(TRA.h) * -0.55, TRA.z - Math.sin(TRA.h) * -1.25 + Math.cos(TRA.h) * -0.55),
+    here: () => free(view.x, view.z),
+  };
+  const rancher = makeRancher(), tractor = makeTractor(), yard = makeYardBits();
+  const crewBlob = blob(0.8, 0.8); rancher.root.add(crewBlob); tractor.root.add(blob(2.4, 3.6));
+  scene.add(rancher.root, tractor.root); yard.tap.position.set(tapAt.x, 0, tapAt.z); scene.add(yard.tap);
+  // where they are: the rancher starts at the house, the tractor parked by the hay barn
+  const C = {x: SP.porch.x, z: SP.porch.z, h: 0, speed: 0, pose: 'stand', onTractor: false};
+  const TRA = {x: SP.park.x, z: SP.park.z, h: SP.parkH, speed: 0, steer: 0, loader: 0.3, running: false, bale: false};
+  let speech = null;
+  function say(text) { speech = {text, until: wall + 3.6}; }
+  function climbOn() { tractor.seat.add(rancher.root); rancher.root.position.set(0, -0.74, 0); rancher.root.rotation.set(0, 0, 0); rancher.root.scale.setScalar(1); crewBlob.visible = false; }
+  function climbOff() { const s = SP.tractorSide(); scene.add(rancher.root); C.x = s.x; C.z = s.z; C.h = TRA.h; crewBlob.visible = true; }
+  const trough0 = troughs[0];
+  const orders = makeOrders({
+    crew: C, tractor: TRA, path: crewPath, spots: SP, say, climbOn, climbOff,
+    act: {
+      hayOut: () => hayLeft > 0, putOutHay: () => putOutHay(1.8),
+      fillTroughs: () => { fillTroughs(); yard.hose(scene, new THREE.Vector3(tapAt.x, 0.8, tapAt.z + 0.1), new THREE.Vector3(trough0.x + 0.6, 0.62, trough0.z - 0.5)); },
+      troughsFull: () => troughs.every(t => t.level > 0.5), hoseOff: () => yard.hose(scene, null),
+      chickensOut: () => CHICKENS[0].mode !== 'in', letChickensOut, fed: () => !!feed, feedChickens,
+      saltOut: () => !!salt.userData.out, setSalt: () => { salt.userData.out = true; SALT.block.visible = true; },
+      unseen: () => HERD.filter(c => !c.seen),
+      see: cow => { cow.seen = true; if (HERD.every(c => c.seen)) finish('look'); else renderToday(); },
+      lookFrom: cow => { const dx = C.x - cow.x, dz = C.z - cow.zz, d = Math.hypot(dx, dz) || 1, k = 1.6 + 1.2 * cow.z.look.size; return free(cow.x + dx / d * k, cow.zz + dz / d * k); },
+    },
+  });
+  // the rancher to follow with the camera, the way you follow an animal
+  const CREW = {name: 'Rancher', get x() { return C.onTractor ? TRA.x : C.x; }, get zz() { return C.onTractor ? TRA.z : C.z; }, get h() { return C.onTractor ? TRA.h : C.h; },
+    z: {get root() { return C.onTractor ? tractor.root : rancher.root; }, state: 'stand'}};
+  function stepCrew(dt, big) {
+    orders.tick(dt);
+    tractor.root.position.set(TRA.x, 0, TRA.z); tractor.root.rotation.y = TRA.h; tractor.root.scale.setScalar(big);
+    tractor.loader = TRA.loader; tractor.bale.visible = TRA.bale;
+    tractor.update(dt, wall, {speed: TRA.speed, steer: TRA.steer, running: TRA.running});
+    if (!C.onTractor) { rancher.root.position.set(C.x, 0, C.z); rancher.root.rotation.y = C.h; rancher.root.scale.setScalar(big); }
+    else { C.x = TRA.x; C.z = TRA.z; }
+    rancher.update(dt, wall, {speed: C.onTractor ? 0 : C.speed, pose: C.pose, steer: TRA.steer});
+    if (speech && wall > speech.until) speech = null;
   }
 
   // ---------- the camera ----------
@@ -311,6 +385,8 @@
     }
   }
   function tap(sx, sy) {
+    // the rancher under the finger?
+    { const v = new THREE.Vector3(CREW.x, 1.1 * CREW.z.root.scale.y, CREW.zz).project(camera), r = canvas.getBoundingClientRect(); if (v.z < 1 && Math.hypot((v.x + 1) / 2 * r.width + r.left - sx, (1 - v.y) / 2 * r.height + r.top - sy) < 40) { openCrew(); return; } }
     // a cow under the finger?
     let best = null, bd = 42;
     for (const c of HERD) { const v = new THREE.Vector3(c.x, 1.0 * c.z.root.scale.y, c.zz).project(camera); if (v.z > 1) continue; const r = canvas.getBoundingClientRect(), px = (v.x + 1) / 2 * r.width + r.left, py = (1 - v.y) / 2 * r.height + r.top, d = Math.hypot(px - sx, py - sy); if (d < bd) { bd = d; best = c; } }
@@ -328,6 +404,8 @@
   for (const k of ['hay', 'troughs', 'coop', 'pens', 'fence', 'pond', 'barn', 'house']) placeSigns[k] = sign(PL[k].label, '', () => openPlace(k), () => ({x: PL[k].x, y: k === 'fence' ? 2 : 4.5, z: PL[k].z, range: k === 'fence' ? 600 : 420}));
   placeSigns.salt = sign('Salt', '', () => openPlace('salt'), () => ({x: PL.salt.x, y: 2, z: PL.salt.z, range: salt.userData.out ? 300 : 0}));
   for (const c of HERD) c.sign = sign(c.name, 'cow', () => lookAt(c), () => ({x: c.x, y: (/lie|sleep/.test(c.z.state) ? 1.1 : 1.75) * c.z.root.scale.y, z: c.zz, range: 160}));
+  const crewSign = sign('Rancher', 'crew', () => openCrew(), () => ({x: CREW.x, y: (C.onTractor ? 2.75 : 2.1) * CREW.z.root.scale.y, z: CREW.zz, range: 320}));
+  function stepCrewSign() { const t = speech ? speech.text : 'Rancher'; if (crewSign.b.textContent !== t) { crewSign.b.textContent = t; crewSign.b.classList.toggle('talk', !!speech); } }
   const V = new THREE.Vector3();
   function stepSigns() {
     const r = canvas.getBoundingClientRect();
@@ -343,10 +421,10 @@
 
   // ---------- today's work ----------
   const JOBS = [
-    {id: 'hay', what: 'Feed the herd a bale of hay', how: 'Tap the Hay ring sign by the farmyard.'},
-    {id: 'water', what: 'Fill the water troughs', how: 'Tap the Water troughs sign, up by the house in the bottom-left corner.'},
-    {id: 'chickens', what: 'Let the chickens out and feed them', how: 'Tap the Chicken coop sign, by the same house.'},
-    {id: 'look', what: 'Look the cattle over', how: 'Tap each animal to look at it up close.'}
+    {id: 'hay', what: 'Feed the herd a bale of hay', how: 'Tap Rancher at the top and ask him to bring a bale. He fetches it from the hay barn with the tractor.'},
+    {id: 'water', what: 'Fill the water troughs', how: 'Ask the rancher to fill them. They are up by the house in the bottom-left corner.'},
+    {id: 'chickens', what: 'Let the chickens out and feed them', how: 'Ask the rancher to let them out, then to feed them. The coop is by the same house.'},
+    {id: 'look', what: 'Look the cattle over', how: 'Ask the rancher to look the herd over, or tap each animal to look at it yourself.'}
   ];
   const done = {};
   function renderToday() {
@@ -370,22 +448,42 @@
     const p = PL[k]; view.follow = null; sheetFor = k; $('today').hidden = true;
     // the coop is looked at from the north-east, so the house doesn't stand in front of the chickens
     if (k === 'coop') flyTo(p.x + 2, p.z + 2, 30, 2.4); else flyTo(p.x, p.z + 4, k === 'fence' ? 120 : 34);
-    if (k === 'hay') sheet('Hay ring', hayLeft > 0 ? 'There is hay in the ring. The herd will eat at it until it is gone.' : 'The herd comes here for hay. Bring a round bale over with the tractor and drop it in the ring.', [
-      {label: hayLeft > 0 ? 'Hay is out' : 'Put out a bale', main: true, disabled: hayLeft > 0, go: () => { putOutHay(); openPlace('hay'); }}]);
-    else if (k === 'troughs') sheet('Water troughs', waterOn ? 'The troughs are full. Thirsty cattle will come and drink.' : 'Two round troughs. They are low. Run the hose and fill them up.', [
-      {label: waterOn ? 'Full' : 'Fill the troughs', main: true, disabled: waterOn, go: () => { fillTroughs(); openPlace('troughs'); }}]);
-    else if (k === 'coop') { const out = CHICKENS[0].mode !== 'in'; sheet('Chicken coop', out ? (feed ? 'The chickens are out and pecking at their feed.' : 'The chickens are out. Scatter some feed for them.') : 'The chickens are still shut in for the night.', [
-      {label: out ? 'They are out' : 'Let them out', main: !out, disabled: out, go: () => { letChickensOut(); openPlace('coop'); }},
-      {label: feed ? 'Fed' : 'Scatter feed', main: out && !feed, disabled: !out || !!feed, go: () => { feedChickens(); openPlace('coop'); }}]); }
+    const ask = (id, label, doneLabel, isDone) => ({label: isDone ? doneLabel : orders.busyWith(id) ? 'The rancher is on it' : label, main: !isDone && !orders.busyWith(id), disabled: isDone || orders.busyWith(id), go: () => order(id)});
+    if (k === 'hay') sheet('Hay ring', hayLeft > 0 ? 'There is hay in the ring. The herd will eat at it until it is gone.' : 'The herd comes here for hay. The rancher brings a round bale from the hay barn on the tractor\'s spear and drops it in the ring.', [
+      ask('hay', 'Ask the rancher to bring a bale', 'Hay is out', hayLeft > 0)]);
+    else if (k === 'troughs') sheet('Water troughs', waterOn ? 'The troughs are full. Thirsty cattle will come and drink.' : 'Two round troughs. They are low. The rancher can run the hose from the tap and fill them.', [
+      ask('water', 'Ask the rancher to fill them', 'Full', waterOn)]);
+    else if (k === 'coop') { const out = CHICKENS[0].mode !== 'in'; sheet('Chicken coop', out ? (feed ? 'The chickens are out and pecking at their feed.' : 'The chickens are out. They need their feed.') : 'The chickens are still shut in for the night.', [
+      ask('chickens', 'Ask the rancher to let them out', 'They are out', out), ask('feed', 'Ask the rancher to feed them', 'Fed', !!feed)]); }
     else if (k === 'pens') sheet('Bull pens', 'Rowdy bulls are kept here and fed on their own. (Coming later.)', []);
-    else if (k === 'fence') sheet('Fence line', 'The wire fence along the plowed field. Walking it and fixing it comes later.', []);
+    else if (k === 'fence') sheet('Fence line', 'The wire fence along the plowed field. The rancher can walk it and look it over; fixing it comes later.', [ask('fence', 'Ask the rancher to walk it', '', false)]);
     else if (k === 'salt') sheet('Salt', 'A salt block, set out at the time of year the cattle need it.', []);
     else sheet(p.label, k === 'pond' ? 'The pond, with a little dock.' : k === 'barn' ? 'The big barn by the pond.' : 'One of the three homes on the ranch.', []);
   }
-  function putOutHay() { hayLeft = 1; bale.visible = true; bale.scale.set(1, 1, 1); bale.position.y = 4; finish('hay'); HERD.forEach((c, i) => setTimeout(() => { if (c.held <= 0) callToHay(c, i); }, 400 + i * 700)); }
+  function putOutHay(fromY) { hayLeft = 1; bale.visible = true; bale.scale.set(1, 1, 1); bale.position.y = fromY || 4; finish('hay'); HERD.forEach((c, i) => setTimeout(() => { if (c.held <= 0) callToHay(c, i); }, 400 + i * 700)); }
   function fillTroughs() { waterOn = true; finish('water'); HERD.forEach(c => { c.thirst = Math.max(c.thirst, 0.6); }); }
   function letChickensOut() { CHICKENS.forEach((c, i) => { c.mode = 'out'; c.wait = i * 0.3; c.x = PL.coop.x + rnd(-0.3, 0.3); c.z = PL.coop.z - 1; c.tx = c.x + rnd(-3, 3); c.tz = c.z + rnd(1.5, 5); c.t = rnd(1, 3); }); }
   function feedChickens() { feed = {x: PL.coop.x + 0.5, z: PL.coop.z + 3.2}; CHICKENS.forEach(c => { c.t = 0; }); finish('chickens'); const f = new THREE.Mesh(new THREE.CircleGeometry(1.4, 20), new THREE.MeshBasicMaterial({color: 0xd9b45a, transparent: true, opacity: 0.55, depthWrite: false})); f.rotation.x = -PI / 2; f.position.set(feed.x, 0.025, feed.z); scene.add(f); }
+
+  // the rancher's sheet: what he is doing, what is next, and the jobs you can give him
+  const CREW_JOBS = ['hay', 'water', 'chickens', 'feed', 'look', 'salt', 'fence', 'come', 'park', 'house'];
+  function crewText() {
+    const j = orders.job, q = orders.queue.map(id => orders.JOBS[id].label.toLowerCase());
+    return (j ? `Now he is ${j.doing}.` : 'He is waiting for a job.') + (q.length ? ` Next: ${q.join('; ')}.` : '') + ' Tap a job to add it to his list; he does them in turn.';
+  }
+  function crewSheet() {
+    crewSheet.text = crewText();
+    sheet('Rancher', crewSheet.text, [...CREW_JOBS.map(id => ({label: orders.JOBS[id].label, pressed: orders.busyWith(id), go: () => order(id)})),
+      {label: 'Stop', disabled: orders.idle, go: () => { orders.stop(); crewSheet(); }}, {label: view.follow === CREW ? 'Watching him' : 'Watch him', pressed: view.follow === CREW, go: watchCrew},
+      {label: 'Back to the map', main: true, go: closeSheet}]);
+  }
+  function openCrew() { sheetFor = 'crew'; $('today').hidden = true; crewSheet(); }
+  function watchCrew() { view.follow = CREW; flyTo(CREW.x, CREW.zz, C.onTractor ? 16 : 12, CREW.h + 0.65); if (sheetFor === 'crew') crewSheet(); }
+  function order(id) {
+    const msg = orders.give(id); if (msg) say(msg);
+    if (sheetFor === 'crew') crewSheet(); else if (typeof sheetFor === 'string' && PL[sheetFor]) openPlace(sheetFor);
+  }
+  $('crewBtn').addEventListener('click', () => { if (sheetFor === 'crew' && !$('sheet').hidden) closeSheet(); else openCrew(); });
 
   function lookAt(cow) {
     view.follow = cow; sheetFor = cow; $('today').hidden = true;
@@ -427,6 +525,7 @@
     // up close the cattle are their real size; far out they are drawn bigger so you can find them on the map
     const big = view.follow ? 1 : 1 + 4 * sstep(150, 750, view.d);
     for (const c of HERD) c.z.root.scale.setScalar(c.z.look.size * big);
+    stepCrew(dt, big);
     const near = view.d < 330, radius = cl(view.d * 1.35, 80, 260);
     stepPops(real, near, view.x, view.z, radius); stepTrees(real, near, view.x, view.z, radius);
     land.update(real, wall, camera, {x: view.x, z: view.z}, view.d, view.follow ? view.follow.z : null);
@@ -451,7 +550,8 @@
     keepUp(real);
     tick(real);
     renderer.info.reset(); land.render(camera, real, view.d);
-    stepSigns();
+    stepSigns(); stepCrewSign();
+    if (sheetFor === 'crew' && !$('sheet').hidden && crewText() !== crewSheet.text) crewSheet();
     if (frames === 3) { $('loading').classList.add('gone'); window.READY = true; }
     requestAnimationFrame(frame);
   }
@@ -461,6 +561,9 @@
     get tilesLoaded() { return tilesLoaded; }, get hayLeft() { return hayLeft; },
     screenOf(x, y, z) { const v = new THREE.Vector3(x, y, z).project(camera), r = canvas.getBoundingClientRect(); return {x: (v.x + 1) / 2 * r.width + r.left, y: (1 - v.y) / 2 * r.height + r.top}; },
     land, camera, get clock() { return clock; }, perf,
+    // how many 3D trees are standing in the pond (there should be none)
+    pondTrees() { const p = T.pond, c = toW(p.x, p.y); return TREES.filter(t => t.s > 0 && ((t.x - c.x) / (p.rx * MPP)) ** 2 + ((t.z - c.z) / (p.ry * MPP)) ** 2 < 0.8).length; },
+    orders, crew: C, tractor: TRA, rancher, tractorModel: tractor, order, openCrew, watchCrew, CREW, get speech() { return speech && speech.text; }, troughs, get chickensOut() { return CHICKENS[0].mode !== 'in'; }, salt,
     // for the checks: move the world on by some seconds without drawing each step (a computer with no graphics chip draws
     // this slowly)
     skip(seconds, fps) { fps = fps || 30; const n = Math.max(1, Math.round(seconds * fps)); for (let i = 0; i < n; i++) tick(1 / fps); },

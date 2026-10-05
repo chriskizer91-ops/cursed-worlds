@@ -81,12 +81,14 @@ const raw = execFileSync('convert', [path.join(top, 'map', 'ranch-map.webp'), '-
 const px = (x, y) => { const i = (y * MW + x) * 3; return [raw[i], raw[i + 1], raw[i + 2]]; };
 const dirt = ([r, g, b]) => r > 150 && r > g + 18 && b < 135;
 const dark = ([r, g, b]) => r < 82 && g < 112 && g > r;
+// in the pond, the dark water is as dark as the trees' crowns, but bluer: it isn't taken for trees
+const water = (x, y, [r, g, b]) => b >= g - 6 && ((x - POND.x) / POND.rx) ** 2 + ((y - POND.y) / POND.ry) ** 2 < 1.2;
 const inPoly = (x, y, P) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
 const G = new Array(GW * GH), treeMask = new Uint8Array(GW * GH);
 // with a Walking Paths file, a painted tree only blocks the way where the file still has a block over it
 for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
   let d = 0, k = 0;
-  for (let sy = 0; sy < CELL; sy++) for (let sx = 0; sx < CELL; sx++) { const p = px(gx * CELL + sx, gy * CELL + sy); if (dirt(p)) d++; else if (dark(p)) k++; }
+  for (let sy = 0; sy < CELL; sy++) for (let sx = 0; sx < CELL; sx++) { const p = px(gx * CELL + sx, gy * CELL + sy); if (dirt(p)) d++; else if (dark(p) && !water(gx * CELL + sx, gy * CELL + sy, p)) k++; }
   const cx = gx * CELL + 2, cy = gy * CELL + 2, i = gy * GW + gx;
   treeMask[i] = k >= 9 ? 1 : 0;
   let c = k >= 9 ? 'T' : d >= 5 ? 't' : 'g';
@@ -112,6 +114,7 @@ const trees = [];
 for (const i of cand) {
   const x = (i % GW) * CELL + 2, y = Math.floor(i / GW) * CELL + 2, r = Math.min(22, dist[i] * CELL + 3);
   if (trees.some(t => (t[0] - x) ** 2 + (t[1] - y) ** 2 < ((t[2] + r) * 0.62) ** 2)) continue;
+  if (((x - POND.x) / POND.rx) ** 2 + ((y - POND.y) / POND.ry) ** 2 < 0.9) continue;   // no tree stands in the pond
   trees.push([x, y, Math.round(r)]);
 }
 

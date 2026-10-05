@@ -43,4 +43,6 @@ Games Chris builds from what his son Dagr describes. Each game gets its own fold
   grass, buildings and water are drawn realistically, the way envoi's Colossus in the Meadow draws its meadow
   (`the-ranch/ranch-land.js`, built on `animal-3d-models/viewer/land-kit.js`, which Henry's pasture uses too).
 - Only Henry's name is real; the other cattle go by how they look until Chris knows their names.
+- The work is done by a cartoon rancher Chris gives jobs to (`ranch-orders.js`, a simple helper inside the game, never an
+  outside service), with a realistic tractor (`ranch-crew.js`). New jobs go to him as orders he works out into steps.
 - The ranch check (`the-ranch/tools/ranch-check.mjs`) must end with "all good" before a push.

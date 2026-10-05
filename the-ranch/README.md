@@ -28,12 +28,36 @@ draws its meadow:
 - The herd (Henry and the five others) are the same cartoon cattle as on Henry's own page. They graze along the cow
   trails, wander, lie down now and then, swat flies, shake their heads, lick their noses and moo. Henry leads; the others
   follow him, and the calf keeps by its mother.
-- **Today's work** (top left) has the first four jobs of your day: put out a bale in the hay ring (the herd walks in
-  along the trails to eat), fill the troughs up by the house in the bottom-left corner (thirsty cattle come to drink),
-  let the chickens out of the coop by the same house and feed them, and look the cattle over (tap each one to see it
-  up close, walk round it, and make it walk, eat, lie down, stand or moo).
+- **Today's work** (top left) has the first four jobs of your day: a bale in the hay ring (the herd walks in along the
+  trails to eat), the troughs filled up by the house in the bottom-left corner (thirsty cattle come to drink), the
+  chickens let out of the coop by the same house and fed, and the cattle looked over. The rancher does them when you
+  ask him (below). You can still look an animal over yourself: tap it to see it up close, walk round it, and make it
+  walk, eat, lie down, stand or moo.
+
+### The rancher and the tractor (October 5, 2026)
+
+A little cartoon rancher (straw hat, plaid shirt, jeans and boots) works the ranch, and a red tractor with a front
+loader and a bale spear is parked by the hay barn. He starts at the house.
+
+- Tap **Rancher** at the top (or tap him, or his name tag) to open his list. Tap a job to give it to him; he keeps
+  the jobs in a list and does them one after another. **Stop** clears the list; **Watch him** follows him with the
+  camera.
+- His jobs: **Bring a bale to the hay ring** (he walks to the tractor, climbs on, spears a round bale at the hay barn,
+  drives it to the ring, drops it in, parks and climbs off), **Fill the water troughs** (he runs the hose from the tap
+  and turns it off when they're full), **Let the chickens out**, **Feed the chickens** (he fetches feed from the feed
+  shed and scatters it; if they're still shut in, he lets them out first), **Look the herd over** (he walks to each
+  animal in turn, nearest first, and looks it over), **Set out salt**, **Walk the fence line** (fixing it comes later),
+  **Come to where I am looking**, **Park the tractor** and **Go to the house**.
+- The signs work with him too: the Hay ring, Water troughs, Chicken coop and Fence line signs each have a button that
+  asks the rancher to do that job.
+- He works it all out himself: which way to walk or drive round the trees, buildings and fences, when he needs the
+  tractor, and which animal to look at next (following it if it wanders). Over his head he says what he's doing. This
+  is a little helper made inside the game, not a program on the internet.
+- The cattle step out of the way of the tractor and the rancher.
 - **1×** makes time go four times faster. **Whole ranch** goes back to the full map.
 - If a phone can't keep up, the page lightens its picture by itself (fewer pixels first, then a little less grass).
+- No 3D tree stands in the pond: the map tracer no longer takes the pond's dark water for tree tops, and the game
+  never stands a tree where the painting shows water.
 
 Signs for the bull pens, the fence line, the salt, the pond, the barn and the house are there, but those jobs come later.
 
@@ -78,6 +102,8 @@ The street address on the satellite picture is covered, because this repository 
   the buildings, the yards, the pond, the fences and the places of the day's work. The cattle prefer the trails, the
   way real cattle do, and walk round the trees.
 - Each painted tree gets a 3D tree in the same spot, its green taken from the painting under it.
+- `ranch-crew.js` makes the rancher and the tractor; `ranch-orders.js` is the rancher's mind (his list of jobs, and the
+  steps he works each one out into).
 - `ranch-land.js` draws the world round the painted map. It works out from the painting's colors where grass grows
   and where the water is, lights the map, and builds the trees, buildings, fences and railroad. It uses the land kit that Henry's page uses
   too (`animal-3d-models/viewer/land-kit.js`: the sky, the sunlight, the wind, the grass and the painted textures) and

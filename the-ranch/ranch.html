@@ -12,6 +12,7 @@
   <div id="signs"></div>
   <header id="bar">
     <button id="todayBtn" class="chip" aria-expanded="false">Today <span id="todayCount">0 of 4</span></button>
+    <button id="crewBtn" class="chip" title="Give the rancher jobs">Rancher</button>
     <div class="spacer"></div>
     <button id="speedBtn" class="chip" aria-pressed="false" title="Make time go faster">1×</button>
     <button id="homeBtn" class="chip" title="See the whole ranch">Whole ranch</button>
@@ -19,7 +20,7 @@
   <section id="today" hidden>
     <h2>Today's work</h2>
     <ol id="todayList"></ol>
-    <p class="fine">Tap a sign on the map to go there. Tap a cow to look her over.</p>
+    <p class="fine">Tap a sign on the map to go there. Tap a cow to look her over. Tap Rancher to give him jobs.</p>
   </section>
   <section id="sheet" hidden>
     <div class="sheet-head"><h2 id="sheetTitle"></h2><button id="sheetClose" class="x" aria-label="Close">×</button></div>
@@ -37,6 +38,8 @@
 <script src="../animal-3d-models/viewer/land-kit.js"></script>
 <script src="map/trace.js"></script>
 <script src="ranch-land.js"></script>
+<script src="ranch-crew.js"></script>
+<script src="ranch-orders.js"></script>
 <script src="ranch.js"></script>
 </body>
 </html>

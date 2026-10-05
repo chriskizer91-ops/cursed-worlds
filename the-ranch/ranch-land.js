@@ -93,15 +93,15 @@
     const GROUND_FS = [
       ' float gWater = 0.;',
       ' { vec2 tdx = dFdx(vUv * 2048.), tdy = dFdy(vUv * 2048.); float lod = .5 * log2(max(max(dot(tdx, tdx), dot(tdy, tdy)), 1e-6));',
-      '   vec3 alb = unfilm(texture2D(map, vUv, max(0., 3. - lod) * uNear).rgb) / uIrr;',
+      '   vec3 alb = unfilm(texture2D(map, vUv, max(0., 3.8 - lod) * uNear).rgb) / uIrr;',
       '   if (uBeyond < .5) gWater = texture2D(uMask, vGp / uMap + .5).b * uNear;',
       '   float near = uDetail * uNear * (1. - smoothstep(30., 90., vDepth));',
       '   if (near > .001) {',
       '     vec2 wq = vGp + (vec2(mn(vGp * 1.1), mn(vGp * 1.1 + 7.3)) - .5) * 1.6;',
       '     vec4 mk = uBeyond > .5 ? vec4(1., 0., 0., 0.) : texture2D(uMask, wq / uMap + .5);',
       '     vec2 rq = mat2(.8, -.6, .6, .8) * vGp;',
-      '     vec3 gd = pow(texture2D(uGrassD, vGp / 3.6).rgb, vec3(2.2)) / uGrassM * mix(vec3(1.), pow(texture2D(uGrassD, rq / 9.7 + .3).rgb, vec3(2.2)) / uGrassM, .35);',
-      '     vec3 dd = pow(texture2D(uDirtD, vGp / 4.8).rgb, vec3(2.2)) / uDirtM;',
+      '     vec3 gd = pow(texture2D(uGrassD, vGp / 1.9).rgb, vec3(2.2)) / uGrassM * mix(vec3(1.), pow(texture2D(uGrassD, rq / 5.3 + .3).rgb, vec3(2.2)) / uGrassM, .4);',
+      '     vec3 dd = pow(texture2D(uDirtD, vGp / 2.6).rgb, vec3(2.2)) / uDirtM * mix(vec3(1.), pow(texture2D(uDirtD, rq / 7.1 + .6).rgb, vec3(2.2)) / uDirtM, .35);',
       '     vec3 det = mix(gd, dd, clamp(mk.g + mk.a, 0., 1.)); det = mix(det, vec3(1.), mk.b);',
       '     alb *= mix(vec3(1.), det, near);',
       '   }',
@@ -265,7 +265,9 @@
     // the painted trees, each with its kind, size, turn and color (the color is the painting's, once it has loaded)
     const TREES = T.trees.map(([mx, my, r], i) => {
       const w = toW(mx, my), h = Math.sin(i * 12.9898 + mx * .0789) * 43758.5453 % 1, k = Math.abs(h);
-      return {x: w.x, z: w.z, r: r * MPP * .95, seed: Math.abs(Math.sin(i * 7.31 + my) * 9973.1 % 1), kind: k < .55 ? 0 : k < .78 ? 2 : 1, hs: .9 + .25 * Math.abs(Math.sin(i * 3.7)), col: new THREE.Color(1, 1, 1), s: 0, v: 0, on: false, delay: 0};
+      // a tree never stands in the pond: not where the trace has the pond, nor where the painting shows water (wet)
+      const wet = !!pond && ((w.x - pond.x) / pond.rx) ** 2 + ((w.z - pond.z) / pond.ry) ** 2 < .95;
+      return {x: w.x, z: w.z, r: r * MPP * .95, wet, seed: Math.abs(Math.sin(i * 7.31 + my) * 9973.1 % 1), kind: k < .55 ? 0 : k < .78 ? 2 : 1, hs: .9 + .25 * Math.abs(Math.sin(i * 3.7)), col: new THREE.Color(1, 1, 1), s: 0, v: 0, on: false, delay: 0};
     });
     const counts = [0, 0, 0]; TREES.forEach(t => counts[t.kind]++);
     const TK = [0, 1, 2].map(kind => [true, false].map(near => {
@@ -469,7 +471,7 @@
     function salt() {
       const g = new THREE.Group(), post = new THREE.Mesh(new THREE.CylinderGeometry(.16, .18, .5, 10), cedarM); post.position.y = .25; g.add(post);
       const blk = new THREE.Mesh(new THREE.BoxGeometry(.28, .24, .28), std('salt', {color: LIN('#ead8d2'), roughness: .85})); blk.position.y = .62; g.add(blk);
-      shadows(g); return {group: g};
+      shadows(g); return {group: g, block: blk};
     }
 
     // ---------- the chickens: soft cartoons, like the cattle ----------
@@ -522,6 +524,8 @@
       // each tree takes the green under it, a little brighter, so it stands out from the painted ground
       const col = new THREE.Color();
       for (const t of TREES) {
+        const mx = cl(Math.round((t.x / MW + .5) * GW), 0, GW - 1), my = cl(Math.round((t.z / MH + .5) * GH), 0, GH - 1);
+        if (maskData[(my * GW + mx) * 4 + 2] > 100) t.wet = true;
         const x = cl(Math.round((t.x / MW + .5) * GW), 0, GW - 1), y = cl(Math.round((t.z / MH + .5) * GH), 0, GH - 1), k = (y * GW + x) * 4;
         col.setRGB(paintPx[k] / 255, paintPx[k + 1] / 255, paintPx[k + 2] / 255).convertSRGBToLinear();
         const l = Math.max(.01, (col.r + col.g + col.b) / 3);
